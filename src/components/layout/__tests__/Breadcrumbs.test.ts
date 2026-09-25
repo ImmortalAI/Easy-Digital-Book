@@ -61,4 +61,12 @@ describe("Breadcrumbs", () => {
         .map((item) => item.textContent?.trim()),
     ).toEqual(["Metadata"]);
   });
+
+  it("calls the stylesheet Styles", () => {
+    useLayoutStore().center = { kind: "css" };
+    renderBreadcrumbs();
+
+    const trail = screen.getByRole("navigation", { name: "Breadcrumbs" });
+    expect(within(trail).getByRole("listitem")).toHaveTextContent("Styles");
+  });
 });

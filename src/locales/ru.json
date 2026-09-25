@@ -118,7 +118,8 @@
     "title": "Проводник",
     "book": "Книга",
     "metadata": "Метаданные",
-    "createCss": "custom.css (создать)",
+    "createCss": "Стили (создать)",
+    "styles": "Стили",
     "chapters": "Главы",
     "newChapter": "Новая глава",
     "images": "Изображения"
@@ -129,7 +130,7 @@
     "setCover": "Сделать обложкой",
     "findUsage": "Найти использования",
     "usedAsCover": "Используется как обложка",
-    "usedInStyles": "Используется в custom.css",
+    "usedInStyles": "Используется в стилях",
     "unused": "не используется"
   },
   "chapters": {

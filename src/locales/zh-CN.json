@@ -118,7 +118,8 @@
     "title": "资源管理器",
     "book": "书籍",
     "metadata": "元数据",
-    "createCss": "custom.css（创建）",
+    "createCss": "样式（创建）",
+    "styles": "样式",
     "chapters": "章节",
     "newChapter": "新建章节",
     "images": "图片"
@@ -129,7 +130,7 @@
     "setCover": "设为封面",
     "findUsage": "查找使用位置",
     "usedAsCover": "用作封面",
-    "usedInStyles": "用于 custom.css",
+    "usedInStyles": "用于样式",
     "unused": "未使用"
   },
   "chapters": {

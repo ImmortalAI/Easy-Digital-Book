@@ -17,7 +17,7 @@ const { t } = useSafeI18n();
 const segments = computed<string[]>(() => {
   const center = layout.center;
   if (center.kind === "metadata") return [t("breadcrumbs.metadata", "Metadata")];
-  if (center.kind === "css") return ["custom.css"];
+  if (center.kind === "css") return [t("explorer.styles", "Styles")];
   if (center.kind === "image") return [center.path];
   if (center.kind === "settings") return [t("breadcrumbs.settings", "Settings")];
   const index = project.book?.chapters.findIndex((chapter) => chapter.id === center.id) ?? -1;

@@ -59,6 +59,22 @@ describe("ExplorerView boundaries", () => {
     expect(screen.getByRole("treeitem", { name: /^2\. Глава 2/ })).toBeTruthy();
   });
 
+  it.each([
+    ["en", null, "Styles (create)"],
+    ["en", "p { margin: 0 }", "Styles"],
+    ["ru", "p { margin: 0 }", "Стили"],
+  ] as const)("names the stylesheet row in %s (customCss %s) as %s", (locale, css, name) => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const book = twoChapterBook();
+    book.customCss = css;
+    useProjectStore().setBook(book);
+    render(ExplorerView, { global: { plugins: [pinia, createI18nPlugin(locale)] } });
+
+    expect(screen.getByRole("treeitem", { name })).toBeTruthy();
+    expect(screen.queryByText(/custom\.css/)).toBeNull();
+  });
+
   it("does not dirty the project when moving the first/last chapter out of bounds", async () => {
     const project = useProjectStore();
     const book = createBook({

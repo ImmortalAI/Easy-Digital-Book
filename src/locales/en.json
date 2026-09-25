@@ -118,7 +118,8 @@
     "title": "Explorer",
     "book": "Book",
     "metadata": "Metadata",
-    "createCss": "custom.css (create)",
+    "createCss": "Styles (create)",
+    "styles": "Styles",
     "chapters": "Chapters",
     "newChapter": "New chapter",
     "images": "Images"
@@ -129,7 +130,7 @@
     "setCover": "Make cover",
     "findUsage": "Find usages",
     "usedAsCover": "Used as the cover",
-    "usedInStyles": "Used in custom.css",
+    "usedInStyles": "Used in styles",
     "unused": "not used"
   },
   "chapters": {

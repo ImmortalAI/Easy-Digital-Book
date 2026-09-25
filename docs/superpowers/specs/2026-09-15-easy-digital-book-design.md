@@ -348,8 +348,8 @@ at the right line. Counter is the sum across the book.
 
 Collapsible sections:
 
-- **Book:** "Metadata", "custom.css" (if file does not exist — "custom.css
-  (create)").
+- **Book:** "Metadata", "Styles" — the book's `custom.css` (if the file does
+  not exist — "Styles (create)").
 - **Chapters** (counter in header, "+" on hover): number and title; chapter
   without heading — "Chapter N" in italics; chapters with warnings have yellow
   title and warning count. Navigation ↑/↓/Enter, reordering with drag&drop
@@ -455,7 +455,7 @@ Each change goes to the store immediately; validation errors — below the field
 
 ### 9.6. custom.css
 
-- Clicking "custom.css (create)" creates a file from a commented template
+- Clicking "Styles (create)" creates a file from a commented template
   (which NovLang classes are styled, how footnotes work) and opens it.
 - `CssEditor`: CodeMirror + `@codemirror/lang-css`, monospace font, line
   numbers. Text / Split / Preview modes work: preview shows the last opened
