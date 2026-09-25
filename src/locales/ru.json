@@ -74,6 +74,11 @@
     "fileChangedTitle": "Файл изменён",
     "imageReadFailed": "Не удалось прочитать изображение"
   },
+  "fileMenu": {
+    "open": "Открыть…",
+    "saveAs": "Сохранить как…",
+    "close": "Закрыть проект"
+  },
   "metadata": {
     "title": "Метаданные",
     "bookTitle": "Название",

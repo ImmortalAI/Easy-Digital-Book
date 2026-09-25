@@ -5,6 +5,7 @@ export interface GlobalShortcutHandlers {
   open?: () => void;
   save?: () => void;
   saveAs?: () => void;
+  closeProject?: () => void;
   exportEpub?: () => void;
   toggleSidebar?: () => void;
   explorer?: () => void;
@@ -54,19 +55,21 @@ export function handleGlobalShortcut(
               ? handlers.newBook
               : key === "o"
                 ? handlers.open
-                : key === "s"
-                  ? handlers.save
-                  : key === "e"
-                    ? handlers.exportEpub
-                    : key === "\\"
-                      ? handlers.toggleSidebar
-                      : key === "1"
-                        ? handlers.textMode
-                        : key === "2"
-                          ? handlers.splitMode
-                          : key === "3"
-                            ? handlers.previewMode
-                            : undefined;
+                : key === "w"
+                  ? handlers.closeProject
+                  : key === "s"
+                    ? handlers.save
+                    : key === "e"
+                      ? handlers.exportEpub
+                      : key === "\\"
+                        ? handlers.toggleSidebar
+                        : key === "1"
+                          ? handlers.textMode
+                          : key === "2"
+                            ? handlers.splitMode
+                            : key === "3"
+                              ? handlers.previewMode
+                              : undefined;
   if (!shortcut) {
     return false;
   }

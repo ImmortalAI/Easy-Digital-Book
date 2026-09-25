@@ -6,6 +6,7 @@ import { useLayoutStore, type LayoutMode } from "@/stores/layout";
 import { useProjectStore } from "@/stores/project";
 import type { DiagnosticPosition } from "@/types/diagnostics";
 import AppToolbar from "@/components/layout/AppToolbar.vue";
+import FileMenu from "@/components/layout/FileMenu.vue";
 import Breadcrumbs from "@/components/layout/Breadcrumbs.vue";
 import ResizableSplit from "@/components/layout/ResizableSplit.vue";
 import StatusBadge from "@/components/layout/StatusBadge.vue";
@@ -24,7 +25,7 @@ import { createSettingsActions } from "@/composables/use-settings-actions";
 import { useSettingsStore } from "@/stores/settings";
 import { useDiagnosticsStore } from "@/stores/diagnostics";
 import { useSafeI18n } from "@/composables/use-safe-i18n";
-import { IconAlertTriangle, IconPointFilled } from "@tabler/icons-vue";
+import { IconAlertTriangle } from "@tabler/icons-vue";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import {
   captureImageImportIdentity,
@@ -179,6 +180,7 @@ useShortcuts({
   open: files ? () => void files.open() : undefined,
   save: files ? () => void files.save() : undefined,
   saveAs: files ? () => void files.saveAs() : undefined,
+  closeProject: files ? () => void files.close() : undefined,
   toggleSidebar: () => {
     layout.toggleSidebar();
     persistLayout();
@@ -230,17 +232,15 @@ onMounted(findSourceScroller);
          chapters push it past the viewport and scroll the whole document,
          header included, instead of scrolling the pane that holds the text. -->
     <header class="flex min-h-13 items-center justify-between gap-4 border-b px-4">
-      <div class="flex min-w-0 items-center gap-1 text-sm">
-        <span class="truncate">{{
-          project.filePath ?? t("editor.unnamedBook", "Untitled book")
-        }}</span>
-        <IconPointFilled
-          v-if="project.dirty"
-          role="img"
-          :aria-label="t('editor.unsaved', 'Unsaved changes')"
-          class="size-3 shrink-0"
-        />
-      </div>
+      <FileMenu
+        :title="project.filePath ?? t('editor.unnamedBook', 'Untitled book')"
+        :dirty="project.dirty"
+        @new="files?.newBook()"
+        @open="files?.open()"
+        @save="files?.save()"
+        @save-as="files?.saveAs()"
+        @close="files?.close()"
+      />
       <AppToolbar @export="exportOpen = true" />
     </header>
     <!-- `shrink-0` keeps the strip from being squeezed away when a chapter is tall. -->

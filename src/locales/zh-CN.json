@@ -74,6 +74,11 @@
     "fileChangedTitle": "文件已修改",
     "imageReadFailed": "无法读取图片"
   },
+  "fileMenu": {
+    "open": "打开…",
+    "saveAs": "另存为…",
+    "close": "关闭项目"
+  },
   "metadata": {
     "title": "元数据",
     "bookTitle": "书名",

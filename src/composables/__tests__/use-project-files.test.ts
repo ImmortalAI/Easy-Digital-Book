@@ -7,6 +7,7 @@ import { useDiagnosticsStore } from "@/stores/diagnostics";
 import { useProjectStore } from "@/stores/project";
 import { useLayoutStore } from "@/stores/layout";
 import type { WindowCloseEvent } from "@/types/platform";
+import type { UnsavedAction, UnsavedDecision } from "@/composables/use-unsaved-guard";
 import { createProjectFiles } from "../use-project-files";
 
 const makeBook = () =>
@@ -133,7 +134,7 @@ describe("project files", () => {
     project.setBook(book, "book.edb", { dirty: false });
     useDiagnosticsStore().setReadWarnings([{ code: "x", message: "stale" }] as never);
     const remove = vi.spyOn(services.recovery, "remove");
-    const decide = vi.fn(async () => "cancel" as const);
+    const decide = vi.fn<(action: UnsavedAction) => Promise<UnsavedDecision>>(async () => "cancel");
     const files = createProjectFiles({ services, requestDecision: decide });
 
     await expect(files.close()).resolves.toBe(true);
@@ -150,7 +151,9 @@ describe("project files", () => {
     const project = useProjectStore();
     project.configure(services);
     project.setBook(makeBook(), null, { dirty: true });
-    const decide = vi.fn(async () => "discard" as const);
+    const decide = vi.fn<(action: UnsavedAction) => Promise<UnsavedDecision>>(
+      async () => "discard",
+    );
     const files = createProjectFiles({ services, requestDecision: decide });
 
     await expect(files.close()).resolves.toBe(true);
