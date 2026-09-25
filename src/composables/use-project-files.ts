@@ -51,6 +51,8 @@ export interface ProjectFilesController {
   saveAs(path?: string): Promise<boolean>;
   /** Closes the project (after the unsaved-changes check) and returns to the start screen. */
   close(): Promise<boolean>;
+  /** Throws away a recovery session listed on the start screen. */
+  deleteRecovery(bookId: string): Promise<void>;
   startLifecycle(): Promise<void>;
   disposeLifecycle(): Promise<void>;
   pickImage(): Promise<ImageFile | null>;
@@ -298,6 +300,15 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
     return target ? project.save(target) : false;
   }
 
+  async function deleteRecovery(bookId: string): Promise<void> {
+    try {
+      await services.recovery.remove(bookId);
+    } catch (error) {
+      services.logger.warn("Could not delete recovery session", { error });
+    }
+    await refreshRecovery();
+  }
+
   async function restoreRecovery(bookId: string): Promise<boolean> {
     if (!(await guard.guard("open"))) return false;
     const recovered = await services.recovery.restore(bookId);
@@ -391,6 +402,7 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
     open,
     openPath,
     restoreRecovery,
+    deleteRecovery,
     save,
     saveAs,
     close,

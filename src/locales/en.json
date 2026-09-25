@@ -5,7 +5,10 @@
     "newProject": "New project",
     "openProject": "Open project",
     "recovery": "Unsaved changes",
-    "recent": "Recent"
+    "recent": "Recent",
+    "deleteRecovery": "Delete {title}",
+    "deleteRecoveryTitle": "Delete unsaved changes",
+    "deleteRecoveryMessage": "The unsaved changes to this book will be lost for good."
   },
   "common": {
     "cancel": "Cancel",

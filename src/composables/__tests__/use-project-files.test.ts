@@ -192,6 +192,29 @@ describe("project files", () => {
     expect(project.book).toBeNull();
   });
 
+  it("deletes a recovery session and drops it from the start screen's list", async () => {
+    const services = createInMemoryPlatformServices();
+    const book = makeBook();
+    await services.recovery.writeChanges(
+      book,
+      {
+        changedChapters: new Set(["chapter1"]),
+        removedChapters: new Set(),
+        changedResources: new Set(),
+        removedResources: new Set(),
+      },
+      null,
+    );
+    const files = createProjectFiles({ services });
+    await files.refreshRecovery();
+    expect(files.recoverySessions.value).toHaveLength(1);
+
+    await files.deleteRecovery(book.metadata.id);
+
+    expect(files.recoverySessions.value).toEqual([]);
+    expect(await services.recovery.restore(book.metadata.id)).toBeNull();
+  });
+
   it("prevents native close when the unsaved guard is cancelled", async () => {
     const services = createInMemoryPlatformServices();
     const project = useProjectStore();

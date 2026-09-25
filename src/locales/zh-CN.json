@@ -5,7 +5,10 @@
     "newProject": "新建项目",
     "openProject": "打开项目",
     "recovery": "未保存的更改",
-    "recent": "最近项目"
+    "recent": "最近项目",
+    "deleteRecovery": "删除 {title}",
+    "deleteRecoveryTitle": "删除未保存的更改",
+    "deleteRecoveryMessage": "这本书未保存的更改将永久丢失。"
   },
   "common": {
     "cancel": "取消",

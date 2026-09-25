@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { inject, useId } from "vue";
+import { inject, ref, useId } from "vue";
 import { useI18n } from "vue-i18n";
-import { IconClock, IconFilePlus, IconFolderOpen, IconHistory } from "@tabler/icons-vue";
+import { IconClock, IconFilePlus, IconFolderOpen, IconHistory, IconTrash } from "@tabler/icons-vue";
+import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Item, ItemContent, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
@@ -11,6 +12,26 @@ const { t } = useI18n();
 const files = inject(projectFilesKey) ?? injectProjectFiles();
 const recoveryId = useId();
 const recentId = useId();
+
+// A recovery session is the only copy of unsaved work, so deleting one asks
+// first, the same way deleting a chapter does, unless deletions are not confirmed.
+const pendingDelete = ref<{ bookId: string; title: string } | null>(null);
+function requestDelete(session: { bookId: string; title: string }) {
+  if (!files.settings.confirmDelete) {
+    void files.deleteRecovery(session.bookId);
+    return;
+  }
+  pendingDelete.value = session;
+}
+function confirmDelete(value: { askAgain: boolean }) {
+  const target = pendingDelete.value;
+  pendingDelete.value = null;
+  if (target) void files.deleteRecovery(target.bookId);
+  if (!value.askAgain) {
+    files.settings.confirmDelete = false;
+    void files.settings.persist();
+  }
+}
 </script>
 
 <template>
@@ -41,22 +62,32 @@ const recentId = useId();
             v-for="session in files.recoverySessions.value"
             :key="session.bookId"
             role="listitem"
+            class="flex items-center gap-1"
           >
             <Item
               as="button"
               type="button"
               variant="outline"
               size="sm"
-              class="text-left hover:bg-muted"
+              class="min-w-0 flex-1 text-left hover:bg-muted"
               @click="void files.restoreRecovery(session.bookId)"
             >
               <ItemMedia variant="icon">
                 <IconHistory aria-hidden="true" />
               </ItemMedia>
-              <ItemContent>
-                <ItemTitle>{{ session.title }}</ItemTitle>
+              <ItemContent class="min-w-0">
+                <ItemTitle class="w-full truncate">{{ session.title }}</ItemTitle>
               </ItemContent>
             </Item>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              :aria-label="t('welcome.deleteRecovery', { title: session.title })"
+              @click="requestDelete(session)"
+            >
+              <IconTrash aria-hidden="true" />
+            </Button>
           </div>
         </ItemGroup>
       </CardContent>
@@ -84,5 +115,14 @@ const recentId = useId();
         </ItemGroup>
       </CardContent>
     </Card>
+    <ConfirmDialog
+      :open="pendingDelete !== null"
+      :title="t('welcome.deleteRecoveryTitle')"
+      :message="t('welcome.deleteRecoveryMessage')"
+      :details="pendingDelete?.title"
+      :ask-again-label="t('common.doNotAskAgain')"
+      @cancel="pendingDelete = null"
+      @confirm="confirmDelete"
+    />
   </main>
 </template>
