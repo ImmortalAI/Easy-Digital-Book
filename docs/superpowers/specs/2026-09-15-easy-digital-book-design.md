@@ -261,9 +261,10 @@ new UUID, `created` = now.
 - **Modes** Text / Split / Preview (buttons and Mod+1/2/3) apply to
   `chapter` and `css`; for other views buttons are inactive. Source and preview
   are not less than 240 px; double-click on edge returns to 50/50.
-- Dividers span the full height; no full-width status bar. Counters
-  (⚠ warnings for the book, chapter words and characters) — a badge in the
-  bottom right of the source panel.
+- Dividers span down to a full-width status bar at the bottom of the window,
+  VS Code style, running under the activity bar too. Left: ⚠ warnings for the
+  book (opens the warnings list). Right: save state (Saved / Unsaved changes /
+  Saving…) and, when a chapter is open, its words and characters.
 - Window title: file name and "•" for unsaved changes.
 - Widths, sidebar visibility, mode, and active view — in app settings, not
   in `.edb`. Window size and position — `tauri-plugin-window-state`.

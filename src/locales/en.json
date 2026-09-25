@@ -39,6 +39,9 @@
     "status": "{words} words · {characters} characters",
     "openProblems": "{count} problems found when opening",
     "unsaved": "Unsaved changes",
+    "saved": "Saved",
+    "saving": "Saving…",
+    "statusBar": "Status bar",
     "sourceLabel": "Chapter text",
     "cssLabel": "Custom CSS"
   },

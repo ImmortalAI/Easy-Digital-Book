@@ -9,10 +9,9 @@ import AppToolbar from "@/components/layout/AppToolbar.vue";
 import FileMenu from "@/components/layout/FileMenu.vue";
 import Breadcrumbs from "@/components/layout/Breadcrumbs.vue";
 import ResizableSplit from "@/components/layout/ResizableSplit.vue";
-import StatusBadge from "@/components/layout/StatusBadge.vue";
+import StatusBar, { type SaveState } from "@/components/layout/StatusBar.vue";
 import PreviewPane from "@/components/editor/PreviewPane.vue";
 import SourceEditor from "@/components/editor/SourceEditor.vue";
-import WarningsPopover from "@/components/editor/WarningsPopover.vue";
 import ActivityBar from "@/components/sidebar/ActivityBar.vue";
 import ExplorerView from "@/components/sidebar/ExplorerView.vue";
 import SearchView from "@/components/sidebar/SearchView.vue";
@@ -87,13 +86,8 @@ const wordCount = computed(
   () => selectedChapter.value?.source.trim().split(/\s+/).filter(Boolean).length ?? 0,
 );
 const characterCount = computed(() => selectedChapter.value?.source.length ?? 0);
-const statusLabel = computed(() =>
-  t("editor.status", "{words} words · {characters} characters", {
-    words: wordCount.value,
-    characters: characterCount.value,
-  })
-    .replace("{words}", String(wordCount.value))
-    .replace("{characters}", String(characterCount.value)),
+const saveState = computed<SaveState>(() =>
+  project.saving ? "saving" : project.dirty ? "unsaved" : "saved",
 );
 const imageImport = useImageImport({ pickFile: files?.pickImage });
 
@@ -327,14 +321,6 @@ onMounted(findSourceScroller);
             <div v-else class="grid flex-1 place-items-center text-muted-foreground">
               {{ t("editor.chooseChapter", "Select a chapter") }}
             </div>
-            <div class="absolute right-3 bottom-3 flex items-center gap-2">
-              <WarningsPopover
-                v-if="!singlePane"
-                :chapter-id="selectedChapterId || previewChapterId"
-                @select="selectWarning"
-              />
-              <StatusBadge :label="statusLabel" />
-            </div>
           </div>
         </template>
         <template #preview>
@@ -346,6 +332,12 @@ onMounted(findSourceScroller);
         </template>
       </ResizableSplit>
     </div>
+    <StatusBar
+      :save-state="saveState"
+      :counts="selectedChapter ? { words: wordCount, characters: characterCount } : null"
+      :chapter-id="selectedChapterId || previewChapterId"
+      @select-warning="selectWarning"
+    />
     <ExportDialog
       v-if="exportController"
       v-model:open="exportOpen"

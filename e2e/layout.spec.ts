@@ -3,7 +3,6 @@ import { test } from "./fixtures/platform";
 
 const VIEWPORT = { width: 1280, height: 800 };
 
-const SHELL = "[data-shell]";
 const BODY = "[data-shell-body]";
 const SIDEBAR = "[data-sidebar]";
 const SINGLE_PANE = "[data-single-pane]";
@@ -30,15 +29,27 @@ test.describe("shell fills the window height", () => {
     expect(split).toBeCloseTo(body, 0);
   });
 
-  test("editor and preview panes reach the bottom of the window", async ({ page }) => {
-    const shellBottom = await page
-      .locator(SHELL)
-      .evaluate((el) => el.getBoundingClientRect().bottom);
+  test("editor and preview panes reach the status bar", async ({ page }) => {
+    const barTop = await page
+      .getByRole("region", { name: "Status bar" })
+      .evaluate((el) => el.getBoundingClientRect().top);
 
     for (const pane of ['[data-pane="source"]', '[data-pane="preview"]']) {
       const bottom = await page.locator(pane).evaluate((el) => el.getBoundingClientRect().bottom);
-      expect(bottom).toBeCloseTo(shellBottom, 0);
+      expect(bottom).toBeCloseTo(barTop, 0);
     }
+  });
+
+  test("the status bar spans the bottom of the window, under the activity bar", async ({
+    page,
+  }) => {
+    const bar = (await page.getByRole("region", { name: "Status bar" }).boundingBox())!;
+    expect(bar.x).toBe(0);
+    expect(bar.width).toBe(VIEWPORT.width);
+    expect(bar.y + bar.height).toBeCloseTo(VIEWPORT.height, 0);
+
+    const activity = (await page.locator("[data-activity-bar]").boundingBox())!;
+    expect(activity.y + activity.height).toBeCloseTo(bar.y, 0);
   });
 
   test("the sidebar stretches to the full split height", async ({ page }) => {

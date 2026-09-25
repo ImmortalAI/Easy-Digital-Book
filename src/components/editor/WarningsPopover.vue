@@ -60,12 +60,12 @@ function select(item: { chapterId?: string; position?: { line: number; column: n
 <template>
   <Popover v-model:open="open">
     <PopoverTrigger as-child>
-      <Button variant="ghost" size="sm" :aria-label="countLabel">
+      <Button variant="ghost" size="xs" :aria-label="countLabel">
         <IconAlertTriangle aria-hidden="true" />
         <Badge :variant="count ? 'destructive' : 'secondary'" aria-hidden="true">{{ count }}</Badge>
       </Button>
     </PopoverTrigger>
-    <PopoverContent side="top" align="end" class="w-80 p-0">
+    <PopoverContent side="top" align="start" class="w-80 p-0">
       <!-- The viewport carries the cap: the root's height is indefinite, so a
            max-height on the root alone would clip instead of scroll. -->
       <ScrollArea class="[&>[data-slot=scroll-area-viewport]]:max-h-80">

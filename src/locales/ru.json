@@ -39,6 +39,9 @@
     "status": "{words} слов · {characters} символов",
     "openProblems": "При открытии обнаружено проблем: {count}",
     "unsaved": "Есть несохранённые изменения",
+    "saved": "Сохранено",
+    "saving": "Сохранение…",
+    "statusBar": "Строка состояния",
     "sourceLabel": "Текст главы",
     "cssLabel": "Пользовательский CSS"
   },

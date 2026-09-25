@@ -39,6 +39,9 @@
     "status": "{words} 个词 · {characters} 个字符",
     "openProblems": "打开时发现 {count} 个问题",
     "unsaved": "有未保存的更改",
+    "saved": "已保存",
+    "saving": "正在保存…",
+    "statusBar": "状态栏",
     "sourceLabel": "章节文本",
     "cssLabel": "自定义 CSS"
   },
