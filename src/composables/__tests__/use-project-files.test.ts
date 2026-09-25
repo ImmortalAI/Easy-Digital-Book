@@ -125,6 +125,70 @@ describe("project files", () => {
     await files.disposeLifecycle();
   });
 
+  it("closes a saved project and returns to no project", async () => {
+    const services = createInMemoryPlatformServices();
+    const project = useProjectStore();
+    project.configure(services);
+    const book = makeBook();
+    project.setBook(book, "book.edb", { dirty: false });
+    useDiagnosticsStore().setReadWarnings([{ code: "x", message: "stale" }] as never);
+    const remove = vi.spyOn(services.recovery, "remove");
+    const decide = vi.fn(async () => "cancel" as const);
+    const files = createProjectFiles({ services, requestDecision: decide });
+
+    await expect(files.close()).resolves.toBe(true);
+
+    expect(decide).not.toHaveBeenCalled();
+    expect(project.book).toBeNull();
+    expect(project.filePath).toBeNull();
+    expect(useDiagnosticsStore().read).toEqual([]);
+    expect(remove).toHaveBeenCalledWith(book.metadata.id);
+  });
+
+  it("asks about unsaved changes before closing, and closes on Don't save", async () => {
+    const services = createInMemoryPlatformServices();
+    const project = useProjectStore();
+    project.configure(services);
+    project.setBook(makeBook(), null, { dirty: true });
+    const decide = vi.fn(async () => "discard" as const);
+    const files = createProjectFiles({ services, requestDecision: decide });
+
+    await expect(files.close()).resolves.toBe(true);
+
+    expect(decide).toHaveBeenCalledWith("close");
+    expect(project.book).toBeNull();
+  });
+
+  it("keeps the project open when closing is cancelled", async () => {
+    const services = createInMemoryPlatformServices();
+    const project = useProjectStore();
+    project.configure(services);
+    const book = makeBook();
+    project.setBook(book, null, { dirty: true });
+    const remove = vi.spyOn(services.recovery, "remove");
+    const files = createProjectFiles({ services, requestDecision: async () => "cancel" });
+
+    await expect(files.close()).resolves.toBe(false);
+
+    expect(project.book?.metadata.id).toBe(book.metadata.id);
+    expect(project.dirty).toBe(true);
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  it("closes even when the recovery copy cannot be removed", async () => {
+    const services = createInMemoryPlatformServices();
+    const project = useProjectStore();
+    project.configure(services);
+    project.setBook(makeBook(), null, { dirty: false });
+    services.recovery.remove = async () => {
+      throw new Error("recovery unavailable");
+    };
+    const files = createProjectFiles({ services });
+
+    await expect(files.close()).resolves.toBe(true);
+    expect(project.book).toBeNull();
+  });
+
   it("prevents native close when the unsaved guard is cancelled", async () => {
     const services = createInMemoryPlatformServices();
     const project = useProjectStore();

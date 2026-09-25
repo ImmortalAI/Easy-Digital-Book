@@ -49,6 +49,8 @@ export interface ProjectFilesController {
   restoreRecovery(bookId: string): Promise<boolean>;
   save(): Promise<boolean>;
   saveAs(path?: string): Promise<boolean>;
+  /** Closes the project (after the unsaved-changes check) and returns to the start screen. */
+  close(): Promise<boolean>;
   startLifecycle(): Promise<void>;
   disposeLifecycle(): Promise<void>;
   pickImage(): Promise<ImageFile | null>;
@@ -329,6 +331,26 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
     await openQueue;
   }
 
+  /** Stops autosave for the open book and removes its recovery session. */
+  async function discardRecovery(): Promise<void> {
+    if (!project.book) return;
+    project.invalidateRecovery();
+    try {
+      await services.recovery.remove(project.book.metadata.id);
+    } catch (error) {
+      services.logger.warn("Could not remove recovery session on close", { error });
+    }
+  }
+
+  async function close(): Promise<boolean> {
+    if (!(await guard.guard("close"))) return false;
+    await discardRecovery();
+    project.reset();
+    diagnostics.clear();
+    await refreshRecovery();
+    return true;
+  }
+
   async function startLifecycle(): Promise<void> {
     if (lifecycleStarted) return;
     lifecycleStarted = true;
@@ -340,14 +362,7 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
         event.preventDefault();
         return;
       }
-      if (project.book) {
-        project.invalidateRecovery();
-        try {
-          await services.recovery.remove(project.book.metadata.id);
-        } catch (error) {
-          services.logger.warn("Could not remove recovery session on close", { error });
-        }
-      }
+      await discardRecovery();
     });
     cleanup = [unlistenOpen, unlistenClose];
     await drainOpenPaths();
@@ -378,6 +393,7 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
     restoreRecovery,
     save,
     saveAs,
+    close,
     pickImage,
     startLifecycle,
     disposeLifecycle,
