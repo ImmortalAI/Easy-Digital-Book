@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ComponentPublicInstance } from "vue";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +29,16 @@ const props = withDefaults(
   { showAskAgain: true },
 );
 const emit = defineEmits<{ confirm: [value: { askAgain: boolean }]; cancel: [] }>();
-const askAgainChoice = ref(true);
+// The box reads "Do not ask again", so ticking it is what stops the asking.
+// It starts unticked on every opening; a choice left in a cancelled dialog
+// does not carry over.
+const stopAsking = ref(false);
+watch(
+  () => props.open,
+  (open) => {
+    if (open) stopAsking.value = false;
+  },
+);
 const confirmButton = ref<ComponentPublicInstance | null>(null);
 const { t } = useSafeI18n();
 
@@ -53,7 +62,7 @@ function focusConfirm(event: Event) {
         </AlertDialogDescription>
       </AlertDialogHeader>
       <div v-if="showAskAgain" class="flex items-center gap-2">
-        <Checkbox id="confirm-dialog-ask-again" v-model="askAgainChoice" />
+        <Checkbox id="confirm-dialog-ask-again" v-model="stopAsking" />
         <Label for="confirm-dialog-ask-again">
           {{ askAgainLabel ?? t("common.doNotAskAgain", "Do not ask again") }}
         </Label>
@@ -65,7 +74,7 @@ function focusConfirm(event: Event) {
         <AlertDialogAction
           ref="confirmButton"
           variant="destructive"
-          @click="emit('confirm', { askAgain: askAgainChoice })"
+          @click="emit('confirm', { askAgain: !stopAsking })"
         >
           {{ confirmLabel ?? t("common.delete", "Delete") }}
         </AlertDialogAction>
