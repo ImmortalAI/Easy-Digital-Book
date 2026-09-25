@@ -119,3 +119,46 @@ test.describe("shell fills the window height", () => {
     expect(reachable).toBe(true);
   });
 });
+
+test.describe("sidebar geometry", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.goto("/");
+    await page.locator('[data-action="new-project"]').click();
+    await page.locator(".cm-content").waitFor();
+  });
+
+  test("activity buttons sit centred in the activity bar", async ({ page }) => {
+    // The interior, not the border box: the bar's right border is not part of it.
+    const centre = await page
+      .locator("[data-activity-bar]")
+      .evaluate((el) => el.getBoundingClientRect().x + el.clientWidth / 2);
+    for (const activity of ["explorer", "search", "settings"]) {
+      const button = await page.locator(`[data-activity="${activity}"]`).boundingBox();
+      expect(button!.x + button!.width / 2).toBeCloseTo(centre, 0);
+    }
+  });
+
+  test("activity buttons are separate buttons, each rounded on every corner", async ({ page }) => {
+    for (const activity of ["explorer", "search", "settings"]) {
+      const corners = await page.locator(`[data-activity="${activity}"]`).evaluate((el) => {
+        const style = getComputedStyle(el);
+        return [
+          style.borderTopLeftRadius,
+          style.borderTopRightRadius,
+          style.borderBottomRightRadius,
+          style.borderBottomLeftRadius,
+        ].map((value) => parseFloat(value));
+      });
+      for (const corner of corners) expect(corner).toBeGreaterThan(0);
+      expect(new Set(corners).size).toBe(1);
+    }
+  });
+
+  test("explorer rows use the sidebar's width, padded only once", async ({ page }) => {
+    const sidebar = await page.locator(SIDEBAR).boundingBox();
+    const row = await page.getByRole("treeitem").first().boundingBox();
+    expect(row!.x - sidebar!.x).toBeLessThanOrEqual(8);
+    expect(sidebar!.x + sidebar!.width - (row!.x + row!.width)).toBeLessThanOrEqual(9);
+  });
+});

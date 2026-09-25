@@ -267,7 +267,8 @@ onMounted(findSourceScroller);
           <ActivityBar :active="activeActivity" @select="selectActivity" />
         </template>
         <template #sidebar>
-          <div class="min-w-0 flex-1 overflow-auto p-3 text-xs">
+          <!-- Each view pads itself; padding here too would inset its rows twice. -->
+          <div class="min-w-0 flex-1 overflow-auto text-xs">
             <ExplorerView v-if="layout.activeView === 'explorer'" @import="importImage" />
             <SearchView v-else @select="selectSearchResult" />
           </div>

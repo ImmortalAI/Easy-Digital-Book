@@ -31,12 +31,15 @@ function onUpdate(value: unknown) {
 
 <template>
   <TooltipProvider>
+    <!-- A non-zero spacing keeps these separate buttons: at 0 the group joins
+         its items into one segmented control, rounding only the outer ends. -->
     <ToggleGroup
       type="single"
       orientation="vertical"
       :model-value="active"
       :aria-label="t('activity.label', 'Activity')"
-      class="flex h-full flex-col items-center gap-3 rounded-none bg-transparent py-3"
+      :spacing="3"
+      class="h-full w-full items-center rounded-none bg-transparent py-3 data-vertical:items-center"
       @update:model-value="onUpdate"
     >
       <Tooltip v-for="item in items" :key="item.value">
