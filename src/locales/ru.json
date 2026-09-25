@@ -184,6 +184,8 @@
     "title": "Настройки",
     "language": "Язык интерфейса",
     "export": "Экспорт",
+    "exportImages": "Изображения",
+    "exportBook": "Книга",
     "confirmDelete": "Подтверждать удаление",
     "checkUpdates": "Проверить обновления",
     "updateAlreadyChecked": "Обновления уже проверялись за последние сутки",

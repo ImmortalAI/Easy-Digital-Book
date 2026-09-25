@@ -184,6 +184,8 @@
     "title": "设置",
     "language": "界面语言",
     "export": "导出",
+    "exportImages": "图片",
+    "exportBook": "书籍",
     "confirmDelete": "确认删除",
     "checkUpdates": "检查更新",
     "updateAlreadyChecked": "最近一天内已经检查过更新",

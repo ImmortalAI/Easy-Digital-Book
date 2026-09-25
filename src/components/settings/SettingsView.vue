@@ -14,7 +14,7 @@ import type { SupportedLocale } from "@/plugins/i18n";
 import type { SettingsActions } from "@/composables/use-settings-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldGroup, FieldLegend, FieldSet } from "@/components/ui/field";
+import { Field, FieldGroup, FieldLegend, FieldSeparator, FieldSet } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -41,11 +41,14 @@ const themes = [
   { value: "system", icon: IconDeviceDesktop, key: "settings.themeSystem", fallback: "System" },
 ] as const;
 
-const exportSwitches = [
+const imageSwitches = [
   { field: "grayscale", key: "export.grayscale", fallback: "Grayscale" },
+] as const;
+const bookSwitches = [
   { field: "titlePage", key: "export.titlePage", fallback: "Add title page" },
   { field: "versionInTitle", key: "export.versionInTitle", fallback: "Add version to title" },
 ] as const;
+type ExportSwitch = (typeof imageSwitches)[number] | (typeof bookSwitches)[number];
 
 const persist = () => props.actions.persist();
 
@@ -69,7 +72,7 @@ async function changePreset(value: unknown) {
 }
 
 async function changeExportSwitch(
-  field: (typeof exportSwitches)[number]["field"],
+  field: ExportSwitch["field"],
   value: ExportSettings[typeof field],
 ) {
   props.settings.exportSettings[field] = value;
@@ -177,38 +180,59 @@ const openLogs = () => props.actions.openLogs();
       <CardContent>
         <FieldGroup>
           <FieldSet>
-            <FieldLegend id="settings-preset-legend" variant="label">
-              {{ t("export.preset", "Image preset") }}
-            </FieldLegend>
-            <RadioGroup
-              aria-labelledby="settings-preset-legend"
-              :model-value="settings.exportSettings.imagePreset"
-              @update:model-value="changePreset"
-            >
-              <Field orientation="horizontal">
-                <RadioGroupItem id="settings-preset-kindle" value="kindle-paperwhite" />
-                <Label for="settings-preset-kindle">
-                  {{ t("export.kindle", "Kindle Paperwhite") }}
+            <FieldLegend>{{ t("settings.exportImages", "Images") }}</FieldLegend>
+            <FieldGroup>
+              <FieldSet>
+                <FieldLegend id="settings-preset-legend" variant="label">
+                  {{ t("export.preset", "Image preset") }}
+                </FieldLegend>
+                <RadioGroup
+                  aria-labelledby="settings-preset-legend"
+                  :model-value="settings.exportSettings.imagePreset"
+                  @update:model-value="changePreset"
+                >
+                  <Field orientation="horizontal">
+                    <RadioGroupItem id="settings-preset-kindle" value="kindle-paperwhite" />
+                    <Label for="settings-preset-kindle">
+                      {{ t("export.kindle", "Kindle Paperwhite") }}
+                    </Label>
+                  </Field>
+                  <Field orientation="horizontal">
+                    <RadioGroupItem id="settings-preset-original" value="original" />
+                    <Label for="settings-preset-original">
+                      {{ t("export.original", "Without changes") }}
+                    </Label>
+                  </Field>
+                </RadioGroup>
+              </FieldSet>
+              <Field v-for="item in imageSwitches" :key="item.field" orientation="horizontal">
+                <Label :for="`settings-export-${item.field}`" class="flex-auto">
+                  {{ t(item.key, item.fallback) }}
                 </Label>
+                <Switch
+                  :id="`settings-export-${item.field}`"
+                  :model-value="settings.exportSettings[item.field]"
+                  @update:model-value="changeExportSwitch(item.field, $event)"
+                />
               </Field>
-              <Field orientation="horizontal">
-                <RadioGroupItem id="settings-preset-original" value="original" />
-                <Label for="settings-preset-original">
-                  {{ t("export.original", "Without changes") }}
-                </Label>
-              </Field>
-            </RadioGroup>
+            </FieldGroup>
           </FieldSet>
-          <Field v-for="item in exportSwitches" :key="item.field" orientation="horizontal">
-            <Label :for="`settings-export-${item.field}`" class="flex-auto">
-              {{ t(item.key, item.fallback) }}
-            </Label>
-            <Switch
-              :id="`settings-export-${item.field}`"
-              :model-value="settings.exportSettings[item.field]"
-              @update:model-value="changeExportSwitch(item.field, $event)"
-            />
-          </Field>
+          <FieldSeparator />
+          <FieldSet>
+            <FieldLegend>{{ t("settings.exportBook", "Book") }}</FieldLegend>
+            <FieldGroup>
+              <Field v-for="item in bookSwitches" :key="item.field" orientation="horizontal">
+                <Label :for="`settings-export-${item.field}`" class="flex-auto">
+                  {{ t(item.key, item.fallback) }}
+                </Label>
+                <Switch
+                  :id="`settings-export-${item.field}`"
+                  :model-value="settings.exportSettings[item.field]"
+                  @update:model-value="changeExportSwitch(item.field, $event)"
+                />
+              </Field>
+            </FieldGroup>
+          </FieldSet>
         </FieldGroup>
       </CardContent>
     </Card>

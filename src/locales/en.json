@@ -184,6 +184,8 @@
     "title": "Settings",
     "language": "Interface language",
     "export": "Export",
+    "exportImages": "Images",
+    "exportBook": "Book",
     "confirmDelete": "Confirm deletions",
     "checkUpdates": "Check for updates",
     "updateAlreadyChecked": "Updates were checked within the last day",
