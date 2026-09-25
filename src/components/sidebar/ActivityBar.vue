@@ -7,7 +7,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 type Activity = "explorer" | "search" | "settings";
 
-const props = defineProps<{ active: Activity }>();
+// `null` when no sidebar view is showing and Settings is not open.
+const props = defineProps<{ active: Activity | null }>();
 const emit = defineEmits<{ select: [value: Activity] }>();
 const { t } = useSafeI18n();
 
@@ -25,7 +26,7 @@ const items = computed<Array<{ value: Activity; icon: typeof IconFiles; label: s
 // the selection itself must never go empty, and the item stays pressed.
 function onUpdate(value: unknown) {
   if (value === "explorer" || value === "search" || value === "settings") emit("select", value);
-  else emit("select", props.active);
+  else if (props.active) emit("select", props.active);
 }
 </script>
 

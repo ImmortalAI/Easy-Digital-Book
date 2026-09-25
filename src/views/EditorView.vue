@@ -2,7 +2,7 @@
 import { computed, inject, nextTick, onMounted, ref, watch } from "vue";
 import { useShortcuts } from "@/composables/use-shortcuts";
 import { projectFilesKey } from "@/composables/use-project-files";
-import { useLayoutStore, type LayoutMode } from "@/stores/layout";
+import { useLayoutStore, type CenterView, type LayoutMode } from "@/stores/layout";
 import { useProjectStore } from "@/stores/project";
 import type { DiagnosticPosition } from "@/types/diagnostics";
 import AppToolbar from "@/components/layout/AppToolbar.vue";
@@ -76,9 +76,13 @@ const selectedChapter = computed(() =>
 );
 const canUseModes = computed(() => ["chapter", "css"].includes(layout.center.kind));
 const singlePane = computed(() => ["metadata", "image", "settings"].includes(layout.center.kind));
+// The highlighted tile is the sidebar view on screen; with the sidebar hidden,
+// Settings when it is the open page, otherwise none.
 const activeActivity = computed(() =>
-  layout.center.kind === "settings" ? "settings" : layout.activeView,
+  layout.sidebarVisible ? layout.activeView : layout.center.kind === "settings" ? "settings" : null,
 );
+// The page Settings replaced, so leaving Settings for a sidebar view goes back to it.
+const centerBeforeSettings = ref<CenterView | null>(null);
 const wordCount = computed(
   () => selectedChapter.value?.source.trim().split(/\s+/).filter(Boolean).length ?? 0,
 );
@@ -138,8 +142,21 @@ function showSidebarView(view: "explorer" | "search") {
 
 function selectActivity(view: "explorer" | "search" | "settings") {
   if (view === "settings") {
+    if (layout.center.kind !== "settings") centerBeforeSettings.value = layout.center;
     layout.center = { kind: "settings" };
     layout.setSidebarVisible(false);
+    persistLayout();
+    return;
+  }
+  if (layout.center.kind === "settings") {
+    // A chapter the page pointed at may have been deleted meanwhile; the
+    // center watcher then falls back to the first chapter.
+    layout.center = centerBeforeSettings.value ?? {
+      kind: "chapter",
+      id: previewChapterId.value,
+    };
+    layout.activeView = view;
+    layout.setSidebarVisible(true);
     persistLayout();
     return;
   }
