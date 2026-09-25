@@ -128,31 +128,38 @@ test.describe("sidebar geometry", () => {
     await page.locator(".cm-content").waitFor();
   });
 
-  test("activity buttons sit centred in the activity bar", async ({ page }) => {
-    // The interior, not the border box: the bar's right border is not part of it.
-    const centre = await page
+  test("activity buttons are square tiles filling the bar's width, like VS Code", async ({
+    page,
+  }) => {
+    const bar = await page
       .locator("[data-activity-bar]")
-      .evaluate((el) => el.getBoundingClientRect().x + el.clientWidth / 2);
+      .evaluate((el) => ({ x: el.getBoundingClientRect().x, width: el.clientWidth }));
+    const tiles = [];
     for (const activity of ["explorer", "search", "settings"]) {
-      const button = await page.locator(`[data-activity="${activity}"]`).boundingBox();
-      expect(button!.x + button!.width / 2).toBeCloseTo(centre, 0);
+      const tile = page.locator(`[data-activity="${activity}"]`);
+      const box = (await tile.boundingBox())!;
+      expect(box.x).toBeCloseTo(bar.x, 0);
+      expect(box.width).toBeCloseTo(bar.width, 0);
+      expect(box.height).toBeCloseTo(box.width, 0);
+      const radius = await tile.evaluate((el) => parseFloat(getComputedStyle(el).borderRadius));
+      expect(radius).toBe(0);
+      tiles.push(box);
     }
-  });
-
-  test("activity buttons are separate buttons, each rounded on every corner", async ({ page }) => {
-    for (const activity of ["explorer", "search", "settings"]) {
-      const corners = await page.locator(`[data-activity="${activity}"]`).evaluate((el) => {
-        const style = getComputedStyle(el);
-        return [
-          style.borderTopLeftRadius,
-          style.borderTopRightRadius,
-          style.borderBottomRightRadius,
-          style.borderBottomLeftRadius,
-        ].map((value) => parseFloat(value));
-      });
-      for (const corner of corners) expect(corner).toBeGreaterThan(0);
-      expect(new Set(corners).size).toBe(1);
-    }
+    // The active tile is marked by an edge bar, not a filled background.
+    const marks = await page.locator("[data-activity]").evaluateAll((els) =>
+      els.map((el) => ({
+        background: getComputedStyle(el).backgroundColor,
+        edge: getComputedStyle(el, "::before").backgroundColor,
+      })),
+    );
+    const clear = "rgba(0, 0, 0, 0)";
+    expect(marks[0]).toEqual({
+      background: clear,
+      edge: expect.not.stringMatching(/^rgba\(0, 0, 0, 0\)$/),
+    });
+    expect(marks[1]).toEqual({ background: clear, edge: clear });
+    // Explorer and Search stack with no gap between them.
+    expect(tiles[1]!.y).toBeCloseTo(tiles[0]!.y + tiles[0]!.height, 0);
   });
 
   test("explorer rows use the sidebar's width, padded only once", async ({ page }) => {
