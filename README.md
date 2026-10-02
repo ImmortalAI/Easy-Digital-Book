@@ -15,6 +15,11 @@ pnpm check
 pnpm build
 ```
 
+Chapter text is written in NovLang, a small Markdown-like markup language.
+The markup guide lists every supported construct with examples:
+[English](docs/en/markup.md) · [Русский](docs/ru/markup.md) ·
+[简体中文](docs/zh-CN/markup.md).
+
 The project file is a single `.edb` ZIP container. Exported books are `.epub`
 files; the app does not send books to Kindle automatically.
 
