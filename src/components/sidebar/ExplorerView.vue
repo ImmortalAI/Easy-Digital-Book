@@ -81,7 +81,7 @@ function imageUsageDetails(path: string): string {
   if (chapters.length)
     return `${t("images.usedIn", "Used in")}: ${chapters.map(chapterDisplayName).join(", ")}`;
   if (book.value?.metadata.cover === path) return t("images.usedAsCover", "Used as the cover");
-  if (usedImages.value.has(path)) return t("images.usedInStyles", "Used in custom.css");
+  if (usedImages.value.has(path)) return t("images.usedInStyles", "Used in styles");
   return t("images.unused", "not used");
 }
 const deleteTitle = computed(() => {
@@ -391,7 +391,9 @@ const emit = defineEmits<{ import: []; "image-context-menu": [path: string, even
             t("explorer.metadata", "Metadata")
           }}</span>
           <span v-else class="truncate">{{
-            book.customCss === null ? t("explorer.createCss", "custom.css (create)") : "custom.css"
+            book.customCss === null
+              ? t("explorer.createCss", "Styles (create)")
+              : t("explorer.styles", "Styles")
           }}</span>
         </TreeItem>
         <ChapterItem

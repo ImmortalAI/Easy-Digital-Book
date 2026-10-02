@@ -5,7 +5,10 @@
     "newProject": "Новый проект",
     "openProject": "Открыть проект",
     "recovery": "Несохранённые изменения",
-    "recent": "Недавние"
+    "recent": "Недавние",
+    "deleteRecovery": "Удалить {title}",
+    "deleteRecoveryTitle": "Удалить несохранённые изменения",
+    "deleteRecoveryMessage": "Несохранённые изменения этой книги будут потеряны безвозвратно."
   },
   "common": {
     "cancel": "Отмена",
@@ -36,6 +39,9 @@
     "status": "{words} слов · {characters} символов",
     "openProblems": "При открытии обнаружено проблем: {count}",
     "unsaved": "Есть несохранённые изменения",
+    "saved": "Сохранено",
+    "saving": "Сохранение…",
+    "statusBar": "Строка состояния",
     "sourceLabel": "Текст главы",
     "cssLabel": "Пользовательский CSS"
   },
@@ -74,6 +80,11 @@
     "fileChangedTitle": "Файл изменён",
     "imageReadFailed": "Не удалось прочитать изображение"
   },
+  "fileMenu": {
+    "open": "Открыть…",
+    "saveAs": "Сохранить как…",
+    "close": "Закрыть проект"
+  },
   "metadata": {
     "title": "Метаданные",
     "bookTitle": "Название",
@@ -107,7 +118,8 @@
     "title": "Проводник",
     "book": "Книга",
     "metadata": "Метаданные",
-    "createCss": "custom.css (создать)",
+    "createCss": "Стили (создать)",
+    "styles": "Стили",
     "chapters": "Главы",
     "newChapter": "Новая глава",
     "images": "Изображения"
@@ -118,7 +130,7 @@
     "setCover": "Сделать обложкой",
     "findUsage": "Найти использования",
     "usedAsCover": "Используется как обложка",
-    "usedInStyles": "Используется в custom.css",
+    "usedInStyles": "Используется в стилях",
     "unused": "не используется"
   },
   "chapters": {
@@ -176,6 +188,8 @@
     "title": "Настройки",
     "language": "Язык интерфейса",
     "export": "Экспорт",
+    "exportImages": "Изображения",
+    "exportBook": "Книга",
     "confirmDelete": "Подтверждать удаление",
     "checkUpdates": "Проверить обновления",
     "updateAlreadyChecked": "Обновления уже проверялись за последние сутки",

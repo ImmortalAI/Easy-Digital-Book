@@ -19,6 +19,19 @@ describe("global shortcut filtering", () => {
     expect(handleGlobalShortcut(eventFor(editor, "b"), { save })).toBe(false);
   });
 
+  it("closes the project with Mod+W, from the editor too", () => {
+    const editor = document.createElement("div");
+    editor.className = "cm-editor";
+    document.body.append(editor);
+    const closeProject = vi.fn<() => void>();
+
+    const event = eventFor(editor, "w", { cancelable: true });
+    expect(handleGlobalShortcut(event, { closeProject })).toBe(true);
+    expect(closeProject).toHaveBeenCalledOnce();
+    // The browser's own Mod+W would close the tab or window instead.
+    expect(event.defaultPrevented).toBe(true);
+  });
+
   it("ignores global commands from ordinary editable controls", () => {
     const input = document.createElement("input");
     const save = vi.fn<() => void>();

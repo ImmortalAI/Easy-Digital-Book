@@ -2,16 +2,16 @@
 import { computed, inject, nextTick, onMounted, ref, watch } from "vue";
 import { useShortcuts } from "@/composables/use-shortcuts";
 import { projectFilesKey } from "@/composables/use-project-files";
-import { useLayoutStore, type LayoutMode } from "@/stores/layout";
+import { useLayoutStore, type CenterView, type LayoutMode } from "@/stores/layout";
 import { useProjectStore } from "@/stores/project";
 import type { DiagnosticPosition } from "@/types/diagnostics";
 import AppToolbar from "@/components/layout/AppToolbar.vue";
+import FileMenu from "@/components/layout/FileMenu.vue";
 import Breadcrumbs from "@/components/layout/Breadcrumbs.vue";
 import ResizableSplit from "@/components/layout/ResizableSplit.vue";
-import StatusBadge from "@/components/layout/StatusBadge.vue";
+import StatusBar, { type SaveState } from "@/components/layout/StatusBar.vue";
 import PreviewPane from "@/components/editor/PreviewPane.vue";
 import SourceEditor from "@/components/editor/SourceEditor.vue";
-import WarningsPopover from "@/components/editor/WarningsPopover.vue";
 import ActivityBar from "@/components/sidebar/ActivityBar.vue";
 import ExplorerView from "@/components/sidebar/ExplorerView.vue";
 import SearchView from "@/components/sidebar/SearchView.vue";
@@ -24,7 +24,7 @@ import { createSettingsActions } from "@/composables/use-settings-actions";
 import { useSettingsStore } from "@/stores/settings";
 import { useDiagnosticsStore } from "@/stores/diagnostics";
 import { useSafeI18n } from "@/composables/use-safe-i18n";
-import { IconAlertTriangle, IconPointFilled } from "@tabler/icons-vue";
+import { IconAlertTriangle } from "@tabler/icons-vue";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import {
   captureImageImportIdentity,
@@ -75,20 +75,19 @@ const selectedChapter = computed(() =>
 );
 const canUseModes = computed(() => ["chapter", "css"].includes(layout.center.kind));
 const singlePane = computed(() => ["metadata", "image", "settings"].includes(layout.center.kind));
+// The highlighted tile is the sidebar view on screen; with the sidebar hidden,
+// Settings when it is the open page, otherwise none.
 const activeActivity = computed(() =>
-  layout.center.kind === "settings" ? "settings" : layout.activeView,
+  layout.sidebarVisible ? layout.activeView : layout.center.kind === "settings" ? "settings" : null,
 );
+// The page Settings replaced, so leaving Settings for a sidebar view goes back to it.
+const centerBeforeSettings = ref<CenterView | null>(null);
 const wordCount = computed(
   () => selectedChapter.value?.source.trim().split(/\s+/).filter(Boolean).length ?? 0,
 );
 const characterCount = computed(() => selectedChapter.value?.source.length ?? 0);
-const statusLabel = computed(() =>
-  t("editor.status", "{words} words · {characters} characters", {
-    words: wordCount.value,
-    characters: characterCount.value,
-  })
-    .replace("{words}", String(wordCount.value))
-    .replace("{characters}", String(characterCount.value)),
+const saveState = computed<SaveState>(() =>
+  project.saving ? "saving" : project.dirty ? "unsaved" : "saved",
 );
 const imageImport = useImageImport({ pickFile: files?.pickImage });
 
@@ -137,8 +136,21 @@ function showSidebarView(view: "explorer" | "search") {
 
 function selectActivity(view: "explorer" | "search" | "settings") {
   if (view === "settings") {
+    if (layout.center.kind !== "settings") centerBeforeSettings.value = layout.center;
     layout.center = { kind: "settings" };
     layout.setSidebarVisible(false);
+    persistLayout();
+    return;
+  }
+  if (layout.center.kind === "settings") {
+    // A chapter the page pointed at may have been deleted meanwhile; the
+    // center watcher then falls back to the first chapter.
+    layout.center = centerBeforeSettings.value ?? {
+      kind: "chapter",
+      id: previewChapterId.value,
+    };
+    layout.activeView = view;
+    layout.setSidebarVisible(true);
     persistLayout();
     return;
   }
@@ -179,6 +191,7 @@ useShortcuts({
   open: files ? () => void files.open() : undefined,
   save: files ? () => void files.save() : undefined,
   saveAs: files ? () => void files.saveAs() : undefined,
+  closeProject: files ? () => void files.close() : undefined,
   toggleSidebar: () => {
     layout.toggleSidebar();
     persistLayout();
@@ -230,17 +243,15 @@ onMounted(findSourceScroller);
          chapters push it past the viewport and scroll the whole document,
          header included, instead of scrolling the pane that holds the text. -->
     <header class="flex min-h-13 items-center justify-between gap-4 border-b px-4">
-      <div class="flex min-w-0 items-center gap-1 text-sm">
-        <span class="truncate">{{
-          project.filePath ?? t("editor.unnamedBook", "Untitled book")
-        }}</span>
-        <IconPointFilled
-          v-if="project.dirty"
-          role="img"
-          :aria-label="t('editor.unsaved', 'Unsaved changes')"
-          class="size-3 shrink-0"
-        />
-      </div>
+      <FileMenu
+        :title="project.filePath ?? t('editor.unnamedBook', 'Untitled book')"
+        :dirty="project.dirty"
+        @new="files?.newBook()"
+        @open="files?.open()"
+        @save="files?.save()"
+        @save-as="files?.saveAs()"
+        @close="files?.close()"
+      />
       <AppToolbar @export="exportOpen = true" />
     </header>
     <!-- `shrink-0` keeps the strip from being squeezed away when a chapter is tall. -->
@@ -267,7 +278,8 @@ onMounted(findSourceScroller);
           <ActivityBar :active="activeActivity" @select="selectActivity" />
         </template>
         <template #sidebar>
-          <div class="min-w-0 flex-1 overflow-auto p-3 text-xs">
+          <!-- Each view pads itself; padding here too would inset its rows twice. -->
+          <div class="min-w-0 flex-1 overflow-auto text-xs">
             <ExplorerView v-if="layout.activeView === 'explorer'" @import="importImage" />
             <SearchView v-else @select="selectSearchResult" />
           </div>
@@ -309,14 +321,6 @@ onMounted(findSourceScroller);
             <div v-else class="grid flex-1 place-items-center text-muted-foreground">
               {{ t("editor.chooseChapter", "Select a chapter") }}
             </div>
-            <div class="absolute right-3 bottom-3 flex items-center gap-2">
-              <WarningsPopover
-                v-if="!singlePane"
-                :chapter-id="selectedChapterId || previewChapterId"
-                @select="selectWarning"
-              />
-              <StatusBadge :label="statusLabel" />
-            </div>
           </div>
         </template>
         <template #preview>
@@ -328,6 +332,12 @@ onMounted(findSourceScroller);
         </template>
       </ResizableSplit>
     </div>
+    <StatusBar
+      :save-state="saveState"
+      :counts="selectedChapter ? { words: wordCount, characters: characterCount } : null"
+      :chapter-id="selectedChapterId || previewChapterId"
+      @select-warning="selectWarning"
+    />
     <ExportDialog
       v-if="exportController"
       v-model:open="exportOpen"

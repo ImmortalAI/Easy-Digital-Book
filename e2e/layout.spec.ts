@@ -3,7 +3,6 @@ import { test } from "./fixtures/platform";
 
 const VIEWPORT = { width: 1280, height: 800 };
 
-const SHELL = "[data-shell]";
 const BODY = "[data-shell-body]";
 const SIDEBAR = "[data-sidebar]";
 const SINGLE_PANE = "[data-single-pane]";
@@ -30,15 +29,27 @@ test.describe("shell fills the window height", () => {
     expect(split).toBeCloseTo(body, 0);
   });
 
-  test("editor and preview panes reach the bottom of the window", async ({ page }) => {
-    const shellBottom = await page
-      .locator(SHELL)
-      .evaluate((el) => el.getBoundingClientRect().bottom);
+  test("editor and preview panes reach the status bar", async ({ page }) => {
+    const barTop = await page
+      .getByRole("region", { name: "Status bar" })
+      .evaluate((el) => el.getBoundingClientRect().top);
 
     for (const pane of ['[data-pane="source"]', '[data-pane="preview"]']) {
       const bottom = await page.locator(pane).evaluate((el) => el.getBoundingClientRect().bottom);
-      expect(bottom).toBeCloseTo(shellBottom, 0);
+      expect(bottom).toBeCloseTo(barTop, 0);
     }
+  });
+
+  test("the status bar spans the bottom of the window, under the activity bar", async ({
+    page,
+  }) => {
+    const bar = (await page.getByRole("region", { name: "Status bar" }).boundingBox())!;
+    expect(bar.x).toBe(0);
+    expect(bar.width).toBe(VIEWPORT.width);
+    expect(bar.y + bar.height).toBeCloseTo(VIEWPORT.height, 0);
+
+    const activity = (await page.locator("[data-activity-bar]").boundingBox())!;
+    expect(activity.y + activity.height).toBeCloseTo(bar.y, 0);
   });
 
   test("the sidebar stretches to the full split height", async ({ page }) => {
@@ -117,5 +128,55 @@ test.describe("shell fills the window height", () => {
       return view.getBoundingClientRect().bottom <= window.innerHeight + 1;
     });
     expect(reachable).toBe(true);
+  });
+});
+
+test.describe("sidebar geometry", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(VIEWPORT);
+    await page.goto("/");
+    await page.locator('[data-action="new-project"]').click();
+    await page.locator(".cm-content").waitFor();
+  });
+
+  test("activity buttons are square tiles filling the bar's width, like VS Code", async ({
+    page,
+  }) => {
+    const bar = await page
+      .locator("[data-activity-bar]")
+      .evaluate((el) => ({ x: el.getBoundingClientRect().x, width: el.clientWidth }));
+    const tiles = [];
+    for (const activity of ["explorer", "search", "settings"]) {
+      const tile = page.locator(`[data-activity="${activity}"]`);
+      const box = (await tile.boundingBox())!;
+      expect(box.x).toBeCloseTo(bar.x, 0);
+      expect(box.width).toBeCloseTo(bar.width, 0);
+      expect(box.height).toBeCloseTo(box.width, 0);
+      const radius = await tile.evaluate((el) => parseFloat(getComputedStyle(el).borderRadius));
+      expect(radius).toBe(0);
+      tiles.push(box);
+    }
+    // The active tile is marked by an edge bar, not a filled background.
+    const marks = await page.locator("[data-activity]").evaluateAll((els) =>
+      els.map((el) => ({
+        background: getComputedStyle(el).backgroundColor,
+        edge: getComputedStyle(el, "::before").backgroundColor,
+      })),
+    );
+    const clear = "rgba(0, 0, 0, 0)";
+    expect(marks[0]).toEqual({
+      background: clear,
+      edge: expect.not.stringMatching(/^rgba\(0, 0, 0, 0\)$/),
+    });
+    expect(marks[1]).toEqual({ background: clear, edge: clear });
+    // Explorer and Search stack with no gap between them.
+    expect(tiles[1]!.y).toBeCloseTo(tiles[0]!.y + tiles[0]!.height, 0);
+  });
+
+  test("explorer rows use the sidebar's width, padded only once", async ({ page }) => {
+    const sidebar = await page.locator(SIDEBAR).boundingBox();
+    const row = await page.getByRole("treeitem").first().boundingBox();
+    expect(row!.x - sidebar!.x).toBeLessThanOrEqual(8);
+    expect(sidebar!.x + sidebar!.width - (row!.x + row!.width)).toBeLessThanOrEqual(9);
   });
 });

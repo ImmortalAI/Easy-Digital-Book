@@ -261,9 +261,10 @@ new UUID, `created` = now.
 - **Modes** Text / Split / Preview (buttons and Mod+1/2/3) apply to
   `chapter` and `css`; for other views buttons are inactive. Source and preview
   are not less than 240 px; double-click on edge returns to 50/50.
-- Dividers span the full height; no full-width status bar. Counters
-  (⚠ warnings for the book, chapter words and characters) — a badge in the
-  bottom right of the source panel.
+- Dividers span down to a full-width status bar at the bottom of the window,
+  VS Code style, running under the activity bar too. Left: ⚠ warnings for the
+  book (opens the warnings list). Right: save state (Saved / Unsaved changes /
+  Saving…) and, when a chapter is open, its words and characters.
 - Window title: file name and "•" for unsaved changes.
 - Widths, sidebar visibility, mode, and active view — in app settings, not
   in `.edb`. Window size and position — `tauri-plugin-window-state`.
@@ -347,8 +348,8 @@ at the right line. Counter is the sum across the book.
 
 Collapsible sections:
 
-- **Book:** "Metadata", "custom.css" (if file does not exist — "custom.css
-  (create)").
+- **Book:** "Metadata", "Styles" — the book's `custom.css` (if the file does
+  not exist — "Styles (create)").
 - **Chapters** (counter in header, "+" on hover): number and title; chapter
   without heading — "Chapter N" in italics; chapters with warnings have yellow
   title and warning count. Navigation ↑/↓/Enter, reordering with drag&drop
@@ -454,7 +455,7 @@ Each change goes to the store immediately; validation errors — below the field
 
 ### 9.6. custom.css
 
-- Clicking "custom.css (create)" creates a file from a commented template
+- Clicking "Styles (create)" creates a file from a commented template
   (which NovLang classes are styled, how footnotes work) and opens it.
 - `CssEditor`: CodeMirror + `@codemirror/lang-css`, monospace font, line
   numbers. Text / Split / Preview modes work: preview shows the last opened

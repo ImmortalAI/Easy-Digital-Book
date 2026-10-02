@@ -113,6 +113,61 @@ describe("EditorView Task 13 integration", () => {
     wrapper.unmount();
   });
 
+  it("highlights only the sidebar view that is showing", async () => {
+    const layout = useLayoutStore();
+    layout.activeView = "explorer";
+    layout.setSidebarVisible(true);
+    const wrapper = mount(EditorView);
+    const pressed = () =>
+      wrapper
+        .findAll("[data-activity]")
+        .filter((tile) => tile.attributes("aria-pressed") === "true")
+        .map((tile) => tile.attributes("data-activity"));
+    expect(pressed()).toEqual(["explorer"]);
+
+    await wrapper.get('[data-activity="explorer"]').trigger("click");
+
+    expect(layout.sidebarVisible).toBe(false);
+    expect(pressed()).toEqual([]);
+    wrapper.unmount();
+  });
+
+  it.each(["explorer", "search"] as const)(
+    "leaves settings for the page open before it when %s is chosen",
+    async (view) => {
+      const layout = useLayoutStore();
+      layout.center = { kind: "chapter", id: "chapter2" };
+      const wrapper = mount(EditorView);
+      const pressed = () =>
+        wrapper
+          .findAll("[data-activity]")
+          .filter((tile) => tile.attributes("aria-pressed") === "true")
+          .map((tile) => tile.attributes("data-activity"));
+
+      await wrapper.get('[data-activity="settings"]').trigger("click");
+      expect(pressed()).toEqual(["settings"]);
+      await wrapper.get(`[data-activity="${view}"]`).trigger("click");
+
+      expect(layout.center).toEqual({ kind: "chapter", id: "chapter2" });
+      expect(layout.activeView).toBe(view);
+      expect(layout.sidebarVisible).toBe(true);
+      expect(pressed()).toEqual([view]);
+      wrapper.unmount();
+    },
+  );
+
+  it("returns from settings to metadata when metadata was open", async () => {
+    const layout = useLayoutStore();
+    layout.center = { kind: "metadata" };
+    const wrapper = mount(EditorView);
+
+    await wrapper.get('[data-activity="settings"]').trigger("click");
+    await wrapper.get('[data-activity="explorer"]').trigger("click");
+
+    expect(layout.center).toEqual({ kind: "metadata" });
+    wrapper.unmount();
+  });
+
   it("opens settings as a single-pane activity and persists the global sidebar toggle", async () => {
     const layout = useLayoutStore();
     const services = createInMemoryPlatformServices();

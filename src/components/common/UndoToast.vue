@@ -61,6 +61,7 @@ function updateOpen(value: boolean) {
     :open="open"
     :duration="notification.duration ?? 8000"
     :variant="notification.kind === 'error' ? 'destructive' : 'default'"
+    :data-kind="notification.kind"
     class="undo-toast flex items-center gap-2 pr-2"
     @pause="paused = true"
     @resume="paused = false"
@@ -114,6 +115,13 @@ function updateOpen(value: boolean) {
 :global(.undo-toast[data-state="closed"]) {
   animation: toast-exit 160ms cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
 }
+/* The bar and its dot follow the toast's kind: an error counts down in red. */
+:global(.undo-toast) {
+  --undo-accent: var(--primary);
+}
+:global(.undo-toast[data-kind="error"]) {
+  --undo-accent: var(--destructive);
+}
 .undo-progress {
   position: absolute;
   right: 0;
@@ -121,7 +129,7 @@ function updateOpen(value: boolean) {
   left: 0;
   height: 2px;
   transform-origin: left;
-  background: var(--primary);
+  background: var(--undo-accent);
   animation: undo-progress linear forwards;
 }
 /* Rides the end of the bar, fading and shrinking as time runs out. */
@@ -132,8 +140,8 @@ function updateOpen(value: boolean) {
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background: var(--primary);
-  box-shadow: 0 0 0.5rem 0.125rem var(--primary);
+  background: var(--undo-accent);
+  box-shadow: 0 0 0.5rem 0.125rem var(--undo-accent);
   transform: translate(-50%, 50%);
   animation: undo-progress-dot linear forwards;
 }

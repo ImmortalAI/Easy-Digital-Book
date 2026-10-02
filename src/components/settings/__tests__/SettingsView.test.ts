@@ -1,5 +1,5 @@
 import { createPinia, setActivePinia } from "pinia";
-import { cleanup, render, screen } from "@testing-library/vue";
+import { cleanup, render, screen, within } from "@testing-library/vue";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import SettingsView from "@/components/settings/SettingsView.vue";
@@ -85,6 +85,21 @@ describe("SettingsView", () => {
     expect(settings.confirmDelete).toBe(false);
     expect(settings.exportSettings.imagePreset).toBe("original");
     expect(actions.persist).toHaveBeenCalledTimes(3);
+  });
+
+  it("groups the export settings into image and book settings", () => {
+    const settings = useSettingsStore();
+    render(SettingsView, { props: { settings, actions: createActions() } });
+
+    const images = screen.getByRole("group", { name: "Images" });
+    expect(within(images).getByRole("radiogroup", { name: "Image preset" })).toBeTruthy();
+    expect(within(images).getByRole("switch", { name: "Grayscale" })).toBeTruthy();
+    expect(within(images).queryByRole("switch", { name: "Add title page" })).toBeNull();
+
+    const book = screen.getByRole("group", { name: "Book" });
+    expect(within(book).getByRole("switch", { name: "Add title page" })).toBeTruthy();
+    expect(within(book).getByRole("switch", { name: "Add version to title" })).toBeTruthy();
+    expect(within(book).queryByRole("switch", { name: "Grayscale" })).toBeNull();
   });
 
   it("checks for updates at most once per day and logs network failures", async () => {

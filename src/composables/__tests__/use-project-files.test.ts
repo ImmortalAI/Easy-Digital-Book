@@ -7,6 +7,7 @@ import { useDiagnosticsStore } from "@/stores/diagnostics";
 import { useProjectStore } from "@/stores/project";
 import { useLayoutStore } from "@/stores/layout";
 import type { WindowCloseEvent } from "@/types/platform";
+import type { UnsavedAction, UnsavedDecision } from "@/composables/use-unsaved-guard";
 import { createProjectFiles } from "../use-project-files";
 
 const makeBook = () =>
@@ -123,6 +124,95 @@ describe("project files", () => {
     await files.startLifecycle();
     expect(useProjectStore().filePath).toBe("book.edb");
     await files.disposeLifecycle();
+  });
+
+  it("closes a saved project and returns to no project", async () => {
+    const services = createInMemoryPlatformServices();
+    const project = useProjectStore();
+    project.configure(services);
+    const book = makeBook();
+    project.setBook(book, "book.edb", { dirty: false });
+    useDiagnosticsStore().setReadWarnings([{ code: "x", message: "stale" }] as never);
+    const remove = vi.spyOn(services.recovery, "remove");
+    const decide = vi.fn<(action: UnsavedAction) => Promise<UnsavedDecision>>(async () => "cancel");
+    const files = createProjectFiles({ services, requestDecision: decide });
+
+    await expect(files.close()).resolves.toBe(true);
+
+    expect(decide).not.toHaveBeenCalled();
+    expect(project.book).toBeNull();
+    expect(project.filePath).toBeNull();
+    expect(useDiagnosticsStore().read).toEqual([]);
+    expect(remove).toHaveBeenCalledWith(book.metadata.id);
+  });
+
+  it("asks about unsaved changes before closing, and closes on Don't save", async () => {
+    const services = createInMemoryPlatformServices();
+    const project = useProjectStore();
+    project.configure(services);
+    project.setBook(makeBook(), null, { dirty: true });
+    const decide = vi.fn<(action: UnsavedAction) => Promise<UnsavedDecision>>(
+      async () => "discard",
+    );
+    const files = createProjectFiles({ services, requestDecision: decide });
+
+    await expect(files.close()).resolves.toBe(true);
+
+    expect(decide).toHaveBeenCalledWith("close");
+    expect(project.book).toBeNull();
+  });
+
+  it("keeps the project open when closing is cancelled", async () => {
+    const services = createInMemoryPlatformServices();
+    const project = useProjectStore();
+    project.configure(services);
+    const book = makeBook();
+    project.setBook(book, null, { dirty: true });
+    const remove = vi.spyOn(services.recovery, "remove");
+    const files = createProjectFiles({ services, requestDecision: async () => "cancel" });
+
+    await expect(files.close()).resolves.toBe(false);
+
+    expect(project.book?.metadata.id).toBe(book.metadata.id);
+    expect(project.dirty).toBe(true);
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  it("closes even when the recovery copy cannot be removed", async () => {
+    const services = createInMemoryPlatformServices();
+    const project = useProjectStore();
+    project.configure(services);
+    project.setBook(makeBook(), null, { dirty: false });
+    services.recovery.remove = async () => {
+      throw new Error("recovery unavailable");
+    };
+    const files = createProjectFiles({ services });
+
+    await expect(files.close()).resolves.toBe(true);
+    expect(project.book).toBeNull();
+  });
+
+  it("deletes a recovery session and drops it from the start screen's list", async () => {
+    const services = createInMemoryPlatformServices();
+    const book = makeBook();
+    await services.recovery.writeChanges(
+      book,
+      {
+        changedChapters: new Set(["chapter1"]),
+        removedChapters: new Set(),
+        changedResources: new Set(),
+        removedResources: new Set(),
+      },
+      null,
+    );
+    const files = createProjectFiles({ services });
+    await files.refreshRecovery();
+    expect(files.recoverySessions.value).toHaveLength(1);
+
+    await files.deleteRecovery(book.metadata.id);
+
+    expect(files.recoverySessions.value).toEqual([]);
+    expect(await services.recovery.restore(book.metadata.id)).toBeNull();
   });
 
   it("prevents native close when the unsaved guard is cancelled", async () => {

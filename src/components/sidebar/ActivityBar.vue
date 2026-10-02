@@ -7,7 +7,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 type Activity = "explorer" | "search" | "settings";
 
-const props = defineProps<{ active: Activity }>();
+// `null` when no sidebar view is showing and Settings is not open.
+const props = defineProps<{ active: Activity | null }>();
 const emit = defineEmits<{ select: [value: Activity] }>();
 const { t } = useSafeI18n();
 
@@ -25,18 +26,21 @@ const items = computed<Array<{ value: Activity; icon: typeof IconFiles; label: s
 // the selection itself must never go empty, and the item stays pressed.
 function onUpdate(value: unknown) {
   if (value === "explorer" || value === "search" || value === "settings") emit("select", value);
-  else emit("select", props.active);
+  else if (props.active) emit("select", props.active);
 }
 </script>
 
 <template>
   <TooltipProvider>
+    <!-- VS Code's activity bar: square tiles as wide as the bar, touching each
+         other. The active one is marked by a bar on its left edge and a
+         brighter icon, not by a filled background. -->
     <ToggleGroup
       type="single"
       orientation="vertical"
       :model-value="active"
       :aria-label="t('activity.label', 'Activity')"
-      class="flex h-full flex-col items-center gap-3 rounded-none bg-transparent py-3"
+      class="h-full w-full rounded-none bg-transparent"
       @update:model-value="onUpdate"
     >
       <Tooltip v-for="item in items" :key="item.value">
@@ -45,9 +49,20 @@ function onUpdate(value: unknown) {
             :value="item.value"
             :data-activity="item.value"
             :aria-label="item.label"
-            :class="['size-9 rounded-md', item.value === 'settings' ? 'mt-auto' : '']"
+            :class="[
+              // `!` beats the joined-group rounding the toggle group gives its
+              // first and last items.
+              'relative aspect-square h-auto w-full rounded-none! text-muted-foreground',
+              'hover:bg-transparent hover:text-foreground focus-visible:ring-inset',
+              // The tooltip trigger shares this element and overwrites its
+              // `data-state`, so the pressed state is read from aria-pressed.
+              'aria-pressed:bg-transparent aria-pressed:text-foreground',
+              'before:absolute before:inset-y-0 before:left-0 before:w-0.5',
+              'aria-pressed:before:bg-foreground',
+              item.value === 'settings' ? 'mt-auto' : '',
+            ]"
           >
-            <component :is="item.icon" class="size-5" aria-hidden="true" />
+            <component :is="item.icon" class="size-6" aria-hidden="true" />
           </ToggleGroupItem>
         </TooltipTrigger>
         <TooltipContent side="right">{{ item.label }}</TooltipContent>

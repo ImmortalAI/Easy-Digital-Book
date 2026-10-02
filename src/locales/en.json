@@ -5,7 +5,10 @@
     "newProject": "New project",
     "openProject": "Open project",
     "recovery": "Unsaved changes",
-    "recent": "Recent"
+    "recent": "Recent",
+    "deleteRecovery": "Delete {title}",
+    "deleteRecoveryTitle": "Delete unsaved changes",
+    "deleteRecoveryMessage": "The unsaved changes to this book will be lost for good."
   },
   "common": {
     "cancel": "Cancel",
@@ -36,6 +39,9 @@
     "status": "{words} words · {characters} characters",
     "openProblems": "{count} problems found when opening",
     "unsaved": "Unsaved changes",
+    "saved": "Saved",
+    "saving": "Saving…",
+    "statusBar": "Status bar",
     "sourceLabel": "Chapter text",
     "cssLabel": "Custom CSS"
   },
@@ -74,6 +80,11 @@
     "fileChangedTitle": "File changed",
     "imageReadFailed": "Could not read the image"
   },
+  "fileMenu": {
+    "open": "Open…",
+    "saveAs": "Save as…",
+    "close": "Close project"
+  },
   "metadata": {
     "title": "Metadata",
     "bookTitle": "Title",
@@ -107,7 +118,8 @@
     "title": "Explorer",
     "book": "Book",
     "metadata": "Metadata",
-    "createCss": "custom.css (create)",
+    "createCss": "Styles (create)",
+    "styles": "Styles",
     "chapters": "Chapters",
     "newChapter": "New chapter",
     "images": "Images"
@@ -118,7 +130,7 @@
     "setCover": "Make cover",
     "findUsage": "Find usages",
     "usedAsCover": "Used as the cover",
-    "usedInStyles": "Used in custom.css",
+    "usedInStyles": "Used in styles",
     "unused": "not used"
   },
   "chapters": {
@@ -176,6 +188,8 @@
     "title": "Settings",
     "language": "Interface language",
     "export": "Export",
+    "exportImages": "Images",
+    "exportBook": "Book",
     "confirmDelete": "Confirm deletions",
     "checkUpdates": "Check for updates",
     "updateAlreadyChecked": "Updates were checked within the last day",

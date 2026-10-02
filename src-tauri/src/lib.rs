@@ -1,5 +1,7 @@
 mod error;
 mod fs_scope;
+#[cfg(target_os = "macos")]
+mod menu;
 mod open_paths;
 
 use std::path::Path;
@@ -57,7 +59,11 @@ pub fn run() {
     #[cfg(not(debug_assertions))]
     let log_level = LevelFilter::Info;
 
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    #[cfg(target_os = "macos")]
+    let builder = builder.menu(menu::app_menu);
+
+    builder
         .manage(OpenPathQueue::default())
         .plugin(tauri_plugin_single_instance::init(handle_open_args))
         .plugin(

@@ -49,6 +49,10 @@ export interface ProjectFilesController {
   restoreRecovery(bookId: string): Promise<boolean>;
   save(): Promise<boolean>;
   saveAs(path?: string): Promise<boolean>;
+  /** Closes the project (after the unsaved-changes check) and returns to the start screen. */
+  close(): Promise<boolean>;
+  /** Throws away a recovery session listed on the start screen. */
+  deleteRecovery(bookId: string): Promise<void>;
   startLifecycle(): Promise<void>;
   disposeLifecycle(): Promise<void>;
   pickImage(): Promise<ImageFile | null>;
@@ -296,6 +300,15 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
     return target ? project.save(target) : false;
   }
 
+  async function deleteRecovery(bookId: string): Promise<void> {
+    try {
+      await services.recovery.remove(bookId);
+    } catch (error) {
+      services.logger.warn("Could not delete recovery session", { error });
+    }
+    await refreshRecovery();
+  }
+
   async function restoreRecovery(bookId: string): Promise<boolean> {
     if (!(await guard.guard("open"))) return false;
     const recovered = await services.recovery.restore(bookId);
@@ -329,6 +342,26 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
     await openQueue;
   }
 
+  /** Stops autosave for the open book and removes its recovery session. */
+  async function discardRecovery(): Promise<void> {
+    if (!project.book) return;
+    project.invalidateRecovery();
+    try {
+      await services.recovery.remove(project.book.metadata.id);
+    } catch (error) {
+      services.logger.warn("Could not remove recovery session on close", { error });
+    }
+  }
+
+  async function close(): Promise<boolean> {
+    if (!(await guard.guard("close"))) return false;
+    await discardRecovery();
+    project.reset();
+    diagnostics.clear();
+    await refreshRecovery();
+    return true;
+  }
+
   async function startLifecycle(): Promise<void> {
     if (lifecycleStarted) return;
     lifecycleStarted = true;
@@ -340,14 +373,7 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
         event.preventDefault();
         return;
       }
-      if (project.book) {
-        project.invalidateRecovery();
-        try {
-          await services.recovery.remove(project.book.metadata.id);
-        } catch (error) {
-          services.logger.warn("Could not remove recovery session on close", { error });
-        }
-      }
+      await discardRecovery();
     });
     cleanup = [unlistenOpen, unlistenClose];
     await drainOpenPaths();
@@ -376,8 +402,10 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
     open,
     openPath,
     restoreRecovery,
+    deleteRecovery,
     save,
     saveAs,
+    close,
     pickImage,
     startLifecycle,
     disposeLifecycle,

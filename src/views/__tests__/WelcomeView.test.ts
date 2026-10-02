@@ -65,7 +65,42 @@ describe("WelcomeView", () => {
     expect(openPath).toHaveBeenCalledWith("/books/my-novel.edb");
 
     const recoveryList = screen.getByRole("list", { name: /unsaved changes/i });
-    await userEvent.click(within(recoveryList).getByRole("button", { name: /lost draft/i }));
+    await userEvent.click(within(recoveryList).getByRole("button", { name: "Lost draft" }));
     expect(restore).toHaveBeenCalledWith("550e8400-e29b-41d4-a716-446655440001");
+  });
+
+  const lostDraft = {
+    bookId: "550e8400-e29b-41d4-a716-446655440001",
+    originalPath: null,
+    title: "Lost draft",
+    version: null,
+    updatedAt: 0,
+  };
+
+  it("deletes an unsaved session after confirming", async () => {
+    const files = createFiles();
+    files.recoverySessions.value = [lostDraft];
+    const remove = vi.spyOn(files, "deleteRecovery").mockResolvedValue();
+    renderWelcome(files);
+
+    await userEvent.click(screen.getByRole("button", { name: "Delete Lost draft" }));
+    expect(remove).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole("alertdialog");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    expect(remove).toHaveBeenCalledWith(lostDraft.bookId);
+  });
+
+  it("deletes at once when deletions are not confirmed", async () => {
+    const files = createFiles();
+    files.settings.confirmDelete = false;
+    files.recoverySessions.value = [lostDraft];
+    const remove = vi.spyOn(files, "deleteRecovery").mockResolvedValue();
+    renderWelcome(files);
+
+    await userEvent.click(screen.getByRole("button", { name: "Delete Lost draft" }));
+
+    expect(remove).toHaveBeenCalledWith(lostDraft.bookId);
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 });
