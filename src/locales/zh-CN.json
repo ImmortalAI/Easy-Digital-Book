@@ -126,6 +126,16 @@
     "newChapter": "新建章节",
     "images": "图片"
   },
+  "gallery": {
+    "cover": "封面",
+    "filter": "显示",
+    "all": "全部",
+    "used": "已使用",
+    "unused": "未使用",
+    "add": "添加…",
+    "rename": "重命名…",
+    "empty": "没有图片。请使用上方按钮添加，或将文件拖到这里。"
+  },
   "images": {
     "usedIn": "使用于",
     "insert": "插入文本",

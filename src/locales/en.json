@@ -126,6 +126,16 @@
     "newChapter": "New chapter",
     "images": "Images"
   },
+  "gallery": {
+    "cover": "Cover",
+    "filter": "Show",
+    "all": "All",
+    "used": "Used",
+    "unused": "Unused",
+    "add": "Add…",
+    "rename": "Rename…",
+    "empty": "No images. Add them with the button above or drop files here."
+  },
   "images": {
     "usedIn": "Used in",
     "insert": "Insert in text",

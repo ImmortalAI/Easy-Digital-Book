@@ -120,6 +120,17 @@ async function importCover(file: ImageFile, identity: ImageImportIdentity) {
     project.applyMutation(setCover(project.book, result.path));
 }
 
+async function importImage() {
+  await imageImport.pickAndImport();
+  layout.center = { kind: "images" };
+}
+
+async function importDroppedImages(dropped: ImageFile[]) {
+  const identity = captureImageImportIdentity(project);
+  for (const file of dropped) await imageImport.importFile(file, undefined, undefined, identity);
+  layout.center = { kind: "images" };
+}
+
 async function pickCover() {
   const identity = captureImageImportIdentity(project);
   if (!identity) return;
@@ -309,7 +320,11 @@ onMounted(findSourceScroller);
               :on-pick-cover="pickCover"
               :on-import-cover="importCover"
             />
-            <ImageGallery v-else-if="layout.center.kind === 'images'" />
+            <ImageGallery
+              v-else-if="layout.center.kind === 'images'"
+              :on-import="importImage"
+              :on-drop-files="importDroppedImages"
+            />
             <ImageView v-else-if="layout.center.kind === 'image'" :path="layout.center.path" />
             <SettingsView
               v-else-if="layout.center.kind === 'settings'"
