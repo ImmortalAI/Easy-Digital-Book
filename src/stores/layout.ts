@@ -8,6 +8,7 @@ export type CenterView =
   | { kind: "metadata" }
   | { kind: "css" }
   | { kind: "image"; path: string }
+  | { kind: "images" }
   | { kind: "settings" };
 export interface LayoutSettings {
   sidebarVisible: boolean;

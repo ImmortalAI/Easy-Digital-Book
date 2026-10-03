@@ -17,6 +17,7 @@ import ExplorerView from "@/components/sidebar/ExplorerView.vue";
 import SearchView from "@/components/sidebar/SearchView.vue";
 import MetadataForm from "@/components/metadata/MetadataForm.vue";
 import CssEditor from "@/components/editor/CssEditor.vue";
+import ImageGallery from "@/components/images/ImageGallery.vue";
 import ImageView from "@/components/editor/ImageView.vue";
 import SettingsView from "@/components/settings/SettingsView.vue";
 import ExportDialog from "@/components/export/ExportDialog.vue";
@@ -74,7 +75,9 @@ const selectedChapter = computed(() =>
   project.book?.chapters.find((chapter) => chapter.id === selectedChapterId.value),
 );
 const canUseModes = computed(() => ["chapter", "css"].includes(layout.center.kind));
-const singlePane = computed(() => ["metadata", "image", "settings"].includes(layout.center.kind));
+const singlePane = computed(() =>
+  ["metadata", "image", "images", "settings"].includes(layout.center.kind),
+);
 // The highlighted tile is the sidebar view on screen; with the sidebar hidden,
 // Settings when it is the open page, otherwise none.
 const activeActivity = computed(() =>
@@ -90,10 +93,6 @@ const saveState = computed<SaveState>(() =>
   project.saving ? "saving" : project.dirty ? "unsaved" : "saved",
 );
 const imageImport = useImageImport({ pickFile: files?.pickImage });
-
-async function importImage() {
-  await imageImport.pickAndImport();
-}
 
 async function insertImageFromFile(position: number) {
   const chapter = selectedChapter.value;
@@ -290,7 +289,7 @@ onMounted(findSourceScroller);
         <template #sidebar>
           <!-- Each view pads itself; padding here too would inset its rows twice. -->
           <div class="min-w-0 flex-1 overflow-auto text-xs">
-            <ExplorerView v-if="layout.activeView === 'explorer'" @import="importImage" />
+            <ExplorerView v-if="layout.activeView === 'explorer'" />
             <SearchView v-else @select="selectSearchResult" />
           </div>
         </template>
@@ -310,6 +309,7 @@ onMounted(findSourceScroller);
               :on-pick-cover="pickCover"
               :on-import-cover="importCover"
             />
+            <ImageGallery v-else-if="layout.center.kind === 'images'" />
             <ImageView v-else-if="layout.center.kind === 'image'" :path="layout.center.path" />
             <SettingsView
               v-else-if="layout.center.kind === 'settings'"
