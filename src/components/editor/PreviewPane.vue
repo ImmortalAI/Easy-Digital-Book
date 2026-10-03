@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { renderToHTML } from "novlang-js";
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
 import { chapterParseResults } from "@/composables/use-novlang-parse";
 import { useProjectStore } from "@/stores/project";
 import { useSafeI18n } from "@/composables/use-safe-i18n";
 import { previewCss } from "@/assets/epub/preview.css";
 import { themeCss } from "@/assets/epub/theme.css";
+import { firstNoteNumber, renderPreviewHtml } from "./preview-notes";
 import { createResourceUrlCache, rewriteResourcePaths } from "./preview-resources";
 
 const props = defineProps<{ chapterId: string; sourceScroller?: HTMLElement | null }>();
@@ -16,8 +16,17 @@ const cache = createResourceUrlCache();
 const currentResult = computed(() => chapterParseResults.get(props.chapterId));
 let boundSourceScroller: HTMLElement | null = null;
 
+function previewHtml() {
+  if (!currentResult.value) return "";
+  const ids = project.book?.chapters.map((chapter) => chapter.id) ?? [];
+  return renderPreviewHtml(
+    currentResult.value.document,
+    firstNoteNumber(ids, props.chapterId, chapterParseResults),
+  );
+}
+
 function styles() {
-  return `${themeCss}\ndiv.footnote-def { margin: 1em 0; padding: 0.75em 0; border-top: 1px solid #ddd; }\n${previewCss}\nbody { font-family: Georgia, 'Times New Roman', serif; }`;
+  return `${themeCss}\nsection.preview-notes { margin-top: 2em; padding-top: 0.75em; border-top: 1px solid #ddd; }\n${previewCss}\nbody { font-family: Georgia, 'Times New Roman', serif; }`;
 }
 
 function documentMarkup(html: string, css: string) {
@@ -33,7 +42,7 @@ function initialDocument() {
     book.resources,
     cache.resolve,
   );
-  const html = currentResult.value ? renderToHTML(currentResult.value.document) : "";
+  const html = previewHtml();
   return documentMarkup(rewriteResourcePaths(html, book.resources, cache.resolve), css);
 }
 
@@ -51,7 +60,7 @@ function renderPreview() {
       book.resources,
       cache.resolve,
     );
-  const html = currentResult.value ? renderToHTML(currentResult.value.document) : "";
+  const html = previewHtml();
   document.body.innerHTML = rewriteResourcePaths(html, book.resources, cache.resolve);
 }
 
