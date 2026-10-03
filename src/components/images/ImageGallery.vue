@@ -38,6 +38,7 @@ const items = computed(() =>
         : !used.value.has(path),
   ),
 );
+const tabStop = computed(() => Math.max(0, Math.min(focusedIndex.value, items.value.length - 1)));
 const unusedCount = computed(() => all.value.filter((path) => !used.value.has(path)).length);
 
 function open(path: string) {
@@ -132,18 +133,20 @@ async function drop(event: DragEvent) {
       @keydown="onKeydown"
       @focusin="onFocusin"
     >
-      <ImageTile
-        v-for="(path, index) in items"
-        :key="path"
-        :path="path"
-        :url="url(path)"
-        :cover="project.book?.metadata.cover === path"
-        :unused="!used.has(path)"
-        :selected="false"
-        :focused="index === focusedIndex"
-        @open="open(path)"
-        @context-action="contextAction(path, $event)"
-      />
+      <div role="row" class="contents">
+        <ImageTile
+          v-for="(path, index) in items"
+          :key="path"
+          :path="path"
+          :url="url(path)"
+          :cover="project.book?.metadata.cover === path"
+          :unused="!used.has(path)"
+          :selected="false"
+          :focused="index === tabStop"
+          @open="open(path)"
+          @context-action="contextAction(path, $event)"
+        />
+      </div>
     </div>
     <p v-if="items.length === 0" class="text-sm text-muted-foreground">
       {{ t("gallery.empty", "No images. Add them with the button above or drop files here.") }}

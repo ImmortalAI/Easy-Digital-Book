@@ -77,4 +77,12 @@ describe("ImageGallery", () => {
     await userEvent.keyboard("{ArrowRight}");
     expect(document.activeElement).toBe(screen.getAllByRole("gridcell")[1]);
   });
+
+  it("keeps one tab stop after the filter shrinks the list", async () => {
+    mountGallery();
+    screen.getAllByRole("gridcell")[2]!.focus();
+    await userEvent.click(screen.getByRole("button", { name: /^unused$/i }));
+    const stops = screen.getAllByRole("gridcell").filter((c) => c.getAttribute("tabindex") === "0");
+    expect(stops).toHaveLength(1);
+  });
 });
