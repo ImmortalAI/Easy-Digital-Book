@@ -188,6 +188,7 @@
   },
   "settings": {
     "title": "Settings",
+    "editor": "Editor",
     "language": "Interface language",
     "export": "Export",
     "exportImages": "Images",

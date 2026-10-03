@@ -188,6 +188,7 @@
   },
   "settings": {
     "title": "设置",
+    "editor": "编辑器",
     "language": "界面语言",
     "export": "导出",
     "exportImages": "图片",

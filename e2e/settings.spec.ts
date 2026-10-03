@@ -36,3 +36,14 @@ test("the theme switcher darkens the window", async ({ page }) => {
   await page.getByRole("option", { name: "Light" }).click();
   await expect(page.locator("html")).not.toHaveClass(/\bdark\b/);
 });
+
+test("settings use two columns on a wide window", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "New project" }).click();
+  await page.locator('[data-activity="settings"]').click();
+  const appearance = await page.getByRole("heading", { name: "Appearance" }).boundingBox();
+  const exportHeading = await page.getByRole("heading", { name: "Export" }).boundingBox();
+  expect(exportHeading!.x).toBeGreaterThan(appearance!.x + 200);
+  expect(Math.abs(exportHeading!.y - appearance!.y)).toBeLessThan(4);
+});

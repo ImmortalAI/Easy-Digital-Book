@@ -122,3 +122,17 @@ describe("SettingsView", () => {
     expect(actions.checkUpdates).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("SettingsView layout", () => {
+  beforeEach(() => setActivePinia(createPinia()));
+  afterEach(cleanup);
+
+  it("groups delete confirmation under Editor and puts both maintenance buttons in one row", () => {
+    render(SettingsView, { props: { actions: createActions(), settings: useSettingsStore() } });
+    const editor = screen.getByRole("heading", { name: /editor/i }).closest('[data-slot="card"]')!;
+    expect(within(editor as HTMLElement).getByRole("switch", { name: /confirm/i })).toBeTruthy();
+    const updates = screen.getByRole("button", { name: /check for updates/i });
+    const logs = screen.getByRole("button", { name: /log folder/i });
+    expect(updates.parentElement).toBe(logs.parentElement);
+  });
+});

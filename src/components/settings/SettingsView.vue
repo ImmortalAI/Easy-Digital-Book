@@ -107,7 +107,7 @@ const openLogs = () => props.actions.openLogs();
 
 <template>
   <section
-    class="flex max-w-2xl flex-col gap-6 p-8"
+    class="@container flex flex-col gap-6 p-8"
     aria-labelledby="settings-title"
     data-settings-view
   >
@@ -115,159 +115,180 @@ const openLogs = () => props.actions.openLogs();
       {{ t("settings.title", "Settings") }}
     </h1>
 
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h2>{{ t("settings.appearance", "Appearance") }}</h2>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <FieldGroup>
-          <Field orientation="horizontal">
-            <Label for="settings-locale" class="flex-auto">
-              {{ t("settings.language", "Interface language") }}
-            </Label>
-            <Select
-              :model-value="settings.locale ?? currentLocale"
-              @update:model-value="changeLocale"
-            >
-              <SelectTrigger id="settings-locale" class="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ru">Русский</SelectItem>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="zh-CN">简体中文</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field orientation="horizontal">
-            <Label for="settings-theme" class="flex-auto">
-              {{ t("settings.theme", "Theme") }}
-            </Label>
-            <Select :model-value="settings.theme" @update:model-value="changeTheme">
-              <SelectTrigger id="settings-theme" class="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="theme in themes" :key="theme.value" :value="theme.value">
-                  <component :is="theme.icon" aria-hidden="true" />
-                  {{ t(theme.key, theme.fallback) }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field orientation="horizontal">
-            <Label for="settings-confirm-delete" class="flex-auto">
-              {{ t("settings.confirmDelete", "Confirm deletions") }}
-            </Label>
-            <Switch
-              id="settings-confirm-delete"
-              :model-value="settings.confirmDelete"
-              @update:model-value="changeConfirmDelete"
-            />
-          </Field>
-        </FieldGroup>
-      </CardContent>
-    </Card>
+    <div class="grid max-w-6xl items-start gap-6 @4xl:grid-cols-2">
+      <div class="flex min-w-0 flex-col gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h2>{{ t("settings.appearance", "Appearance") }}</h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FieldGroup>
+              <Field orientation="horizontal">
+                <Label for="settings-locale" class="flex-auto">
+                  {{ t("settings.language", "Interface language") }}
+                </Label>
+                <Select
+                  :model-value="settings.locale ?? currentLocale"
+                  @update:model-value="changeLocale"
+                >
+                  <SelectTrigger id="settings-locale" class="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ru">Русский</SelectItem>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="zh-CN">简体中文</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field orientation="horizontal">
+                <Label for="settings-theme" class="flex-auto">
+                  {{ t("settings.theme", "Theme") }}
+                </Label>
+                <Select :model-value="settings.theme" @update:model-value="changeTheme">
+                  <SelectTrigger id="settings-theme" class="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="theme in themes" :key="theme.value" :value="theme.value">
+                      <component :is="theme.icon" aria-hidden="true" />
+                      {{ t(theme.key, theme.fallback) }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </FieldGroup>
+          </CardContent>
+        </Card>
 
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h2>{{ t("settings.export", "Export") }}</h2>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <FieldGroup>
-          <FieldSet>
-            <FieldLegend>{{ t("settings.exportImages", "Images") }}</FieldLegend>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h2>{{ t("settings.editor", "Editor") }}</h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FieldGroup>
+              <Field orientation="horizontal">
+                <Label for="settings-confirm-delete" class="flex-auto">
+                  {{ t("settings.confirmDelete", "Confirm deletions") }}
+                </Label>
+                <Switch
+                  id="settings-confirm-delete"
+                  :model-value="settings.confirmDelete"
+                  @update:model-value="changeConfirmDelete"
+                />
+              </Field>
+            </FieldGroup>
+          </CardContent>
+        </Card>
+      </div>
+      <div class="flex min-w-0 flex-col gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h2>{{ t("settings.export", "Export") }}</h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <FieldGroup>
               <FieldSet>
-                <FieldLegend id="settings-preset-legend" variant="label">
-                  {{ t("export.preset", "Image preset") }}
-                </FieldLegend>
-                <RadioGroup
-                  aria-labelledby="settings-preset-legend"
-                  :model-value="settings.exportSettings.imagePreset"
-                  @update:model-value="changePreset"
-                >
-                  <Field orientation="horizontal">
-                    <RadioGroupItem id="settings-preset-kindle" value="kindle-paperwhite" />
-                    <Label for="settings-preset-kindle">
-                      {{ t("export.kindle", "Kindle Paperwhite") }}
+                <FieldLegend class="text-sm font-semibold text-muted-foreground">{{
+                  t("settings.exportImages", "Images")
+                }}</FieldLegend>
+                <FieldGroup>
+                  <FieldSet>
+                    <FieldLegend id="settings-preset-legend" variant="label">
+                      {{ t("export.preset", "Image preset") }}
+                    </FieldLegend>
+                    <RadioGroup
+                      aria-labelledby="settings-preset-legend"
+                      :model-value="settings.exportSettings.imagePreset"
+                      @update:model-value="changePreset"
+                    >
+                      <Field orientation="horizontal">
+                        <RadioGroupItem id="settings-preset-kindle" value="kindle-paperwhite" />
+                        <Label for="settings-preset-kindle">
+                          {{ t("export.kindle", "Kindle Paperwhite") }}
+                        </Label>
+                      </Field>
+                      <Field orientation="horizontal">
+                        <RadioGroupItem id="settings-preset-original" value="original" />
+                        <Label for="settings-preset-original">
+                          {{ t("export.original", "Without changes") }}
+                        </Label>
+                      </Field>
+                    </RadioGroup>
+                  </FieldSet>
+                  <Field v-for="item in imageSwitches" :key="item.field" orientation="horizontal">
+                    <Label :for="`settings-export-${item.field}`" class="flex-auto">
+                      {{ t(item.key, item.fallback) }}
                     </Label>
+                    <Switch
+                      :id="`settings-export-${item.field}`"
+                      :model-value="settings.exportSettings[item.field]"
+                      @update:model-value="changeExportSwitch(item.field, $event)"
+                    />
                   </Field>
-                  <Field orientation="horizontal">
-                    <RadioGroupItem id="settings-preset-original" value="original" />
-                    <Label for="settings-preset-original">
-                      {{ t("export.original", "Without changes") }}
-                    </Label>
-                  </Field>
-                </RadioGroup>
+                </FieldGroup>
               </FieldSet>
-              <Field v-for="item in imageSwitches" :key="item.field" orientation="horizontal">
-                <Label :for="`settings-export-${item.field}`" class="flex-auto">
-                  {{ t(item.key, item.fallback) }}
-                </Label>
-                <Switch
-                  :id="`settings-export-${item.field}`"
-                  :model-value="settings.exportSettings[item.field]"
-                  @update:model-value="changeExportSwitch(item.field, $event)"
-                />
-              </Field>
+              <FieldSeparator />
+              <FieldSet>
+                <FieldLegend class="text-sm font-semibold text-muted-foreground">{{
+                  t("settings.exportBook", "Book")
+                }}</FieldLegend>
+                <FieldGroup>
+                  <Field v-for="item in bookSwitches" :key="item.field" orientation="horizontal">
+                    <Label :for="`settings-export-${item.field}`" class="flex-auto">
+                      {{ t(item.key, item.fallback) }}
+                    </Label>
+                    <Switch
+                      :id="`settings-export-${item.field}`"
+                      :model-value="settings.exportSettings[item.field]"
+                      @update:model-value="changeExportSwitch(item.field, $event)"
+                    />
+                  </Field>
+                </FieldGroup>
+              </FieldSet>
             </FieldGroup>
-          </FieldSet>
-          <FieldSeparator />
-          <FieldSet>
-            <FieldLegend>{{ t("settings.exportBook", "Book") }}</FieldLegend>
-            <FieldGroup>
-              <Field v-for="item in bookSwitches" :key="item.field" orientation="horizontal">
-                <Label :for="`settings-export-${item.field}`" class="flex-auto">
-                  {{ t(item.key, item.fallback) }}
-                </Label>
-                <Switch
-                  :id="`settings-export-${item.field}`"
-                  :model-value="settings.exportSettings[item.field]"
-                  @update:model-value="changeExportSwitch(item.field, $event)"
-                />
-              </Field>
-            </FieldGroup>
-          </FieldSet>
-        </FieldGroup>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
 
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h2>{{ t("settings.maintenance", "Maintenance") }}</h2>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <FieldGroup>
-          <Field orientation="horizontal" class="flex-wrap">
-            <Button variant="outline" @click="checkUpdates">
-              <IconRefresh aria-hidden="true" />
-              {{ t("settings.checkUpdates", "Check for updates") }}
-            </Button>
-            <span role="status" class="text-muted-foreground text-sm">{{ updateMessage }}</span>
-            <Button
-              v-if="update"
-              variant="link"
-              :aria-label="`${t('settings.openUpdate', 'Open release')} ${update.version}`"
-              @click="actions.openUpdate(update.url)"
-            >
-              {{ update.version }}
-            </Button>
-          </Field>
-          <Field orientation="horizontal">
-            <Button variant="outline" @click="openLogs">
-              <IconFolderOpen aria-hidden="true" />
-              {{ t("settings.openLogs", "Open log folder") }}
-            </Button>
-          </Field>
-        </FieldGroup>
-      </CardContent>
-    </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h2>{{ t("settings.maintenance", "Maintenance") }}</h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FieldGroup>
+              <Field orientation="horizontal" class="flex-wrap">
+                <Button variant="outline" @click="checkUpdates">
+                  <IconRefresh aria-hidden="true" />
+                  {{ t("settings.checkUpdates", "Check for updates") }}
+                </Button>
+                <Button variant="outline" @click="openLogs">
+                  <IconFolderOpen aria-hidden="true" />
+                  {{ t("settings.openLogs", "Open log folder") }}
+                </Button>
+              </Field>
+              <Field orientation="horizontal" class="flex-wrap">
+                <span role="status" class="text-muted-foreground text-sm">{{ updateMessage }}</span>
+                <Button
+                  v-if="update"
+                  variant="link"
+                  :aria-label="`${t('settings.openUpdate', 'Open release')} ${update.version}`"
+                  @click="actions.openUpdate(update.url)"
+                >
+                  {{ update.version }}
+                </Button>
+              </Field>
+            </FieldGroup>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   </section>
 </template>
