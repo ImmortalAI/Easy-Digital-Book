@@ -42,7 +42,7 @@ describe("Task 15 fix round domain boundaries", () => {
 
   it("ships the documented custom CSS starter template", () => {
     expect(customCssTemplate).toContain(".novlang-scene-break");
-    expect(customCssTemplate).toContain("footnote");
+    expect(customCssTemplate).toContain("Footnotes");
   });
 
   it("reads PNG dimensions without relying on DOM image loading", () => {
