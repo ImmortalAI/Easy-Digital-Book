@@ -19,12 +19,12 @@ primary format; AZW3 is a second export target.
 
 ## 2. Target devices and format
 
-| | Paperwhite 3 (7th gen, 2015) | Paperwhite 12th gen (2024) |
-| --- | --- | --- |
-| Reads natively | AZW3 (KF8), AZW, MOBI without DRM, PRC, TXT, PDF | same |
-| EPUB | only after conversion (Send to Kindle or Calibre) | same |
-| Screen | 6″, 1072×1448, 300 ppi, greyscale | 7″, 1264×1680, 300 ppi, greyscale |
-| Popup footnotes | yes, with bidirectional links | yes |
+|                 | Paperwhite 3 (7th gen, 2015)                      | Paperwhite 12th gen (2024)        |
+| --------------- | ------------------------------------------------- | --------------------------------- |
+| Reads natively  | AZW3 (KF8), AZW, MOBI without DRM, PRC, TXT, PDF  | same                              |
+| EPUB            | only after conversion (Send to Kindle or Calibre) | same                              |
+| Screen          | 6″, 1072×1448, 300 ppi, greyscale                 | 7″, 1264×1680, 300 ppi, greyscale |
+| Popup footnotes | yes, with bidirectional links                     | yes                               |
 
 - The target is **AZW3 (KF8)**. Legacy MOBI 6 (the "joint" MOBI 6 + KF8
   file) is out of scope: it handles CSS poorly and both devices read KF8.

@@ -33,30 +33,32 @@
 
 ## File Structure
 
-| Area | Files | Responsibility |
-| --- | --- | --- |
-| Footnotes | `src/services/epub/footnotes.ts` (new) | pull definitions out of a NovLang document, number references, swap markers for links |
-| EPUB | `src/services/epub/{chapter,notes(new),opf,nav,ncx,build,labels}.ts`, `src/assets/epub/{theme,custom}.css.ts` | chapter XHTML with note links, `notes.xhtml`, packaging |
-| Preview | `src/components/editor/{PreviewPane.vue,preview-notes.ts(new)}` | preview with notes at the chapter end |
-| Cover | `src/components/metadata/CoverPicker.vue`, `src/components/editor/ImageView.vue` | thumbnail geometry, real aspect ratio, size hint |
-| CSS editor | `src/components/editor/{CssEditor.vue,css-language.ts(new)}`, `src/assets/style.css` | highlighting and editing aids |
-| Settings | `src/components/settings/SettingsView.vue` | two-column layout |
-| Header | `src/components/layout/{ResizableSplit,Breadcrumbs,ContentHeader(new)}.vue`, `src/views/EditorView.vue` | one header row over the content area |
-| Toolbar | `src/components/editor/{editor-commands.ts,FormatToolbar.vue(new),ImagePickerPopover.vue(new)}` | formatting commands and their buttons |
-| Images | `src/components/images/{ImageGallery,ImageTile,RenameImagesDialog}.vue` (new), `src/components/images/gallery-selection.ts` (new), `src/composables/{use-resource-urls,use-long-press-select,use-image-actions}.ts` (new) | gallery, selection, delete, rename |
-| Book ops | `src/services/book/{resources,rename-resources(new)}.ts`, `src/utils/paths.ts` | `removeResources`, rename planning and application, file name rules |
-| Explorer | `src/components/sidebar/ExplorerView.vue`, `src/stores/layout.ts` | Images entry under Book, `center.kind = "images"` |
-| Docs | spec, `AGENTS.md`, `docs/release-checklist.md` | record the changed decisions |
+| Area       | Files                                                                                                                                                                                                                     | Responsibility                                                                        |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Footnotes  | `src/services/epub/footnotes.ts` (new)                                                                                                                                                                                    | pull definitions out of a NovLang document, number references, swap markers for links |
+| EPUB       | `src/services/epub/{chapter,notes(new),opf,nav,ncx,build,labels}.ts`, `src/assets/epub/{theme,custom}.css.ts`                                                                                                             | chapter XHTML with note links, `notes.xhtml`, packaging                               |
+| Preview    | `src/components/editor/{PreviewPane.vue,preview-notes.ts(new)}`                                                                                                                                                           | preview with notes at the chapter end                                                 |
+| Cover      | `src/components/metadata/CoverPicker.vue`, `src/components/editor/ImageView.vue`                                                                                                                                          | thumbnail geometry, real aspect ratio, size hint                                      |
+| CSS editor | `src/components/editor/{CssEditor.vue,css-language.ts(new)}`, `src/assets/style.css`                                                                                                                                      | highlighting and editing aids                                                         |
+| Settings   | `src/components/settings/SettingsView.vue`                                                                                                                                                                                | two-column layout                                                                     |
+| Header     | `src/components/layout/{ResizableSplit,Breadcrumbs,ContentHeader(new)}.vue`, `src/views/EditorView.vue`                                                                                                                   | one header row over the content area                                                  |
+| Toolbar    | `src/components/editor/{editor-commands.ts,FormatToolbar.vue(new),ImagePickerPopover.vue(new)}`                                                                                                                           | formatting commands and their buttons                                                 |
+| Images     | `src/components/images/{ImageGallery,ImageTile,RenameImagesDialog}.vue` (new), `src/components/images/gallery-selection.ts` (new), `src/composables/{use-resource-urls,use-long-press-select,use-image-actions}.ts` (new) | gallery, selection, delete, rename                                                    |
+| Book ops   | `src/services/book/{resources,rename-resources(new)}.ts`, `src/utils/paths.ts`                                                                                                                                            | `removeResources`, rename planning and application, file name rules                   |
+| Explorer   | `src/components/sidebar/ExplorerView.vue`, `src/stores/layout.ts`                                                                                                                                                         | Images entry under Book, `center.kind = "images"`                                     |
+| Docs       | spec, `AGENTS.md`, `docs/release-checklist.md`                                                                                                                                                                            | record the changed decisions                                                          |
 
 ---
 
 ### Task 1: Footnote extraction helpers
 
 **Files:**
+
 - Create: `src/services/epub/footnotes.ts`
 - Test: `src/services/epub/__tests__/footnotes.test.ts`
 
 **Interfaces:**
+
 - Consumes: `parse`, `NovLangDocument`, `BlockNode`, `InlineNode` from `novlang-js`.
 - Produces:
   - `interface ExtractedNote { number: number; label: string; referenced: boolean; children: BlockNode[] }`
@@ -125,9 +127,7 @@ describe("extractFootnotes", () => {
 
   it("turns references inside a note into plain text", () => {
     const { notes } = render("A[^1]\n\n[^1]: See[^1]");
-    expect(renderToHTML({ type: "document", children: notes[0]!.children })).toBe(
-      "<p>See[1]</p>",
-    );
+    expect(renderToHTML({ type: "document", children: notes[0]!.children })).toBe("<p>See[1]</p>");
   });
 });
 
@@ -278,10 +278,12 @@ git commit -m "feat(epub): extract and number footnotes outside the chapter flow
 ### Task 2: Chapters link to book-wide endnotes
 
 **Files:**
+
 - Modify: `src/services/epub/chapter.ts` (`RenderedChapter`, `renderChapter`)
 - Test: `src/services/epub/__tests__/chapter.test.ts`
 
 **Interfaces:**
+
 - Consumes: `extractFootnotes`, `replaceNoteMarkers` (Task 1).
 - Produces:
   - `interface RenderedNote { number: number; referenced: boolean; xhtml: string }`
@@ -291,36 +293,36 @@ git commit -m "feat(epub): extract and number footnotes outside the chapter flow
 - [ ] **Step 1: Write the failing tests** (append to the existing `describe("renderChapter")`)
 
 ```ts
-  it("moves footnotes out of the chapter and links them to notes.xhtml", () => {
-    const result = renderChapter(
-      { id: "abc12345", source: "# T\n\nA[^1] and again[^1].\n\n[^1]: Note *text*" },
-      0,
-      book,
-      new Map(),
-      true,
-      7,
-    );
-    expect(result.xhtml).not.toContain("<aside");
-    expect(result.xhtml).toContain(
-      '<sup><a epub:type="noteref" class="noteref" id="fnref-7" href="notes.xhtml#fn-7">7</a></sup>',
-    );
-    expect(result.xhtml.match(/id="fnref-7"/g)).toHaveLength(1);
-    expect(result.xhtml).toContain('href="notes.xhtml#fn-7">7</a></sup>.');
-    expect(result.notes).toEqual([
-      { number: 7, referenced: true, xhtml: "<p>Note <em>text</em></p>" },
-    ]);
-  });
+it("moves footnotes out of the chapter and links them to notes.xhtml", () => {
+  const result = renderChapter(
+    { id: "abc12345", source: "# T\n\nA[^1] and again[^1].\n\n[^1]: Note *text*" },
+    0,
+    book,
+    new Map(),
+    true,
+    7,
+  );
+  expect(result.xhtml).not.toContain("<aside");
+  expect(result.xhtml).toContain(
+    '<sup><a epub:type="noteref" class="noteref" id="fnref-7" href="notes.xhtml#fn-7">7</a></sup>',
+  );
+  expect(result.xhtml.match(/id="fnref-7"/g)).toHaveLength(1);
+  expect(result.xhtml).toContain('href="notes.xhtml#fn-7">7</a></sup>.');
+  expect(result.notes).toEqual([
+    { number: 7, referenced: true, xhtml: "<p>Note <em>text</em></p>" },
+  ]);
+});
 
-  it("keeps images referenced only from a footnote", () => {
-    const result = renderChapter(
-      { id: "abc12345", source: "A[^1]\n\n[^1]: ![](images/a.png)" },
-      0,
-      book,
-      new Map([["images/a.png", "images/a.jpg"]]),
-    );
-    expect(result.referencedPaths).toEqual(["images/a.png"]);
-    expect(result.notes[0]!.xhtml).toContain('src="images/a.jpg"');
-  });
+it("keeps images referenced only from a footnote", () => {
+  const result = renderChapter(
+    { id: "abc12345", source: "A[^1]\n\n[^1]: ![](images/a.png)" },
+    0,
+    book,
+    new Map([["images/a.png", "images/a.jpg"]]),
+  );
+  expect(result.referencedPaths).toEqual(["images/a.png"]);
+  expect(result.notes[0]!.xhtml).toContain('src="images/a.jpg"');
+});
 ```
 
 - [ ] **Step 2: Run and see them fail**
@@ -403,11 +405,13 @@ git commit -m "feat(epub): link footnote references to book-wide endnotes"
 ### Task 3: `notes.xhtml`, packaging and the theme
 
 **Files:**
+
 - Create: `src/services/epub/notes.ts`
 - Modify: `src/services/epub/{labels,opf,nav,ncx,build}.ts`, `src/assets/epub/theme.css.ts`, `src/assets/epub/custom.css.ts`
 - Test: `src/services/epub/__tests__/{notes,labels,nav,build}.test.ts`
 
 **Interfaces:**
+
 - Consumes: `RenderedChapter.notes` (Task 2), `prependToFirstParagraph` (Task 1).
 - Produces:
   - `notesXhtml(chapters: RenderedChapter[], language: string, includeCustomCss: boolean): string | null`
@@ -465,53 +469,51 @@ describe("notesXhtml", () => {
 Add to `labels.test.ts`:
 
 ```ts
-  it("names the notes page in the book language", () => {
-    expect(getLabels("ru").notes).toBe("Примечания");
-    expect(getLabels("en").notes).toBe("Notes");
-    expect(getLabels("zh-CN").notes).toBe("注释");
-  });
+it("names the notes page in the book language", () => {
+  expect(getLabels("ru").notes).toBe("Примечания");
+  expect(getLabels("en").notes).toBe("Notes");
+  expect(getLabels("zh-CN").notes).toBe("注释");
+});
 ```
 
 Add to `build.test.ts` (the fixture book's chapter `one` already has `[^a]`):
 
 ```ts
-  it("puts endnotes last in the spine and in both tables of contents", async () => {
-    const deps = { imageProcessor: processor, now: () => new Date("2026-01-02T03:04:05Z") };
-    const zip = await JSZip.loadAsync(
-      await buildEpub(
-        book,
-        { imagePreset: "original", grayscale: false, titlePage: false, versionInTitle: false },
-        deps,
-      ),
-    );
-    const opfText = await zip.file("OEBPS/content.opf")!.async("string");
-    expect(opfText).toMatch(/<itemref idref="chapter-2"\/><itemref idref="notes"\/><\/spine>/);
-    expect(await zip.file("OEBPS/nav.xhtml")!.async("string")).toContain(
-      '<li><a href="notes.xhtml">Notes</a></li>',
-    );
-    expect(await zip.file("OEBPS/toc.ncx")!.async("string")).toContain(
-      '<content src="notes.xhtml"/>',
-    );
-    const notes = await zip.file("OEBPS/notes.xhtml")!.async("string");
-    expect(notes).toContain('id="fn-1"');
-    expect(await zip.file("OEBPS/c-one.xhtml")!.async("string")).toContain(
-      'href="notes.xhtml#fn-1"',
-    );
-    expect(await zip.file("OEBPS/theme.css")!.async("string")).not.toContain("display: none");
-  });
+it("puts endnotes last in the spine and in both tables of contents", async () => {
+  const deps = { imageProcessor: processor, now: () => new Date("2026-01-02T03:04:05Z") };
+  const zip = await JSZip.loadAsync(
+    await buildEpub(
+      book,
+      { imagePreset: "original", grayscale: false, titlePage: false, versionInTitle: false },
+      deps,
+    ),
+  );
+  const opfText = await zip.file("OEBPS/content.opf")!.async("string");
+  expect(opfText).toMatch(/<itemref idref="chapter-2"\/><itemref idref="notes"\/><\/spine>/);
+  expect(await zip.file("OEBPS/nav.xhtml")!.async("string")).toContain(
+    '<li><a href="notes.xhtml">Notes</a></li>',
+  );
+  expect(await zip.file("OEBPS/toc.ncx")!.async("string")).toContain(
+    '<content src="notes.xhtml"/>',
+  );
+  const notes = await zip.file("OEBPS/notes.xhtml")!.async("string");
+  expect(notes).toContain('id="fn-1"');
+  expect(await zip.file("OEBPS/c-one.xhtml")!.async("string")).toContain('href="notes.xhtml#fn-1"');
+  expect(await zip.file("OEBPS/theme.css")!.async("string")).not.toContain("display: none");
+});
 
-  it("writes no notes page for a book without footnotes", async () => {
-    const plain = { ...book, chapters: [{ id: "two", source: "No heading" }] };
-    const zip = await JSZip.loadAsync(
-      await buildEpub(
-        plain,
-        { imagePreset: "original", grayscale: false, titlePage: false, versionInTitle: false },
-        { imageProcessor: processor, now: () => new Date("2026-01-02T03:04:05Z") },
-      ),
-    );
-    expect(zip.file("OEBPS/notes.xhtml")).toBeNull();
-    expect(await zip.file("OEBPS/content.opf")!.async("string")).not.toContain("notes");
-  });
+it("writes no notes page for a book without footnotes", async () => {
+  const plain = { ...book, chapters: [{ id: "two", source: "No heading" }] };
+  const zip = await JSZip.loadAsync(
+    await buildEpub(
+      plain,
+      { imagePreset: "original", grayscale: false, titlePage: false, versionInTitle: false },
+      { imageProcessor: processor, now: () => new Date("2026-01-02T03:04:05Z") },
+    ),
+  );
+  expect(zip.file("OEBPS/notes.xhtml")).toBeNull();
+  expect(await zip.file("OEBPS/content.opf")!.async("string")).not.toContain("notes");
+});
 ```
 
 - [ ] **Step 2: Run and see them fail**
@@ -602,23 +604,23 @@ export function notesXhtml(
 and the spine:
 
 ```ts
-  const spine = `${includeTitle ? '<itemref idref="title-page"/>' : ""}${chapters.map((_, i) => `<itemref idref="chapter-${i + 1}"/>`).join("")}${includeNotes ? '<itemref idref="notes"/>' : ""}`;
+const spine = `${includeTitle ? '<itemref idref="title-page"/>' : ""}${chapters.map((_, i) => `<itemref idref="chapter-${i + 1}"/>`).join("")}${includeNotes ? '<itemref idref="notes"/>' : ""}`;
 ```
 
 `nav.ts`: add the parameter `notesTitle: string | null = null`:
 
 ```ts
-  const entries =
-    chapters.map((c) => `<li><a href="c-${esc(c.id)}.xhtml">${esc(c.title)}</a></li>`).join("") +
-    (notesTitle ? `<li><a href="notes.xhtml">${esc(notesTitle)}</a></li>` : "");
+const entries =
+  chapters.map((c) => `<li><a href="c-${esc(c.id)}.xhtml">${esc(c.title)}</a></li>`).join("") +
+  (notesTitle ? `<li><a href="notes.xhtml">${esc(notesTitle)}</a></li>` : "");
 ```
 
 `ncx.ts`: add the parameter `notesTitle: string | null = null`:
 
 ```ts
-  const notesPoint = notesTitle
-    ? `<navPoint id="navPoint-notes" playOrder="${chapters.length + 1}"><navLabel><text>${esc(notesTitle)}</text></navLabel><content src="notes.xhtml"/></navPoint>`
-    : "";
+const notesPoint = notesTitle
+  ? `<navPoint id="navPoint-notes" playOrder="${chapters.length + 1}"><navLabel><text>${esc(notesTitle)}</text></navLabel><content src="notes.xhtml"/></navPoint>`
+  : "";
 ```
 
 and emit `<navMap>${points}${notesPoint}</navMap>`.
@@ -629,30 +631,30 @@ and emit `<navMap>${points}${notesPoint}</navMap>`.
 import { notesXhtml } from "./notes";
 import { getLabels } from "./labels";
 // …
-  const chapters: RenderedChapter[] = [];
-  let nextNote = 1;
-  for (let i = 0; i < book.chapters.length; i++) {
-    check(deps.signal);
-    const rendered = renderChapter(
-      book.chapters[i],
-      i,
-      book,
-      allMap,
-      Boolean(book.customCss),
-      nextNote,
-    );
-    nextNote += rendered.notes.length;
-    chapters.push(rendered);
-    deps.onProgress?.({ stage: "chapters", done: i + 1, total: book.chapters.length });
-  }
-  const notes = notesXhtml(chapters, book.metadata.language, Boolean(book.customCss));
-  const notesTitle = notes ? getLabels(book.metadata.language).notes : null;
+const chapters: RenderedChapter[] = [];
+let nextNote = 1;
+for (let i = 0; i < book.chapters.length; i++) {
+  check(deps.signal);
+  const rendered = renderChapter(
+    book.chapters[i],
+    i,
+    book,
+    allMap,
+    Boolean(book.customCss),
+    nextNote,
+  );
+  nextNote += rendered.notes.length;
+  chapters.push(rendered);
+  deps.onProgress?.({ stage: "chapters", done: i + 1, total: book.chapters.length });
+}
+const notes = notesXhtml(chapters, book.metadata.language, Boolean(book.customCss));
+const notesTitle = notes ? getLabels(book.metadata.language).notes : null;
 ```
 
 Pass `notes !== null` as the last `opf(...)` argument and `notesTitle` to `navXhtml` and `ncx`. After the chapter entries:
 
 ```ts
-  if (notes) entries.push(["OEBPS/notes.xhtml", notes]);
+if (notes) entries.push(["OEBPS/notes.xhtml", notes]);
 ```
 
 - [ ] **Step 6: Replace the hiding rule in the theme**
@@ -697,11 +699,13 @@ directions, which Kindle needs for popups."
 ### Task 4: Preview shows notes at the chapter end with the book's numbers
 
 **Files:**
+
 - Create: `src/components/editor/preview-notes.ts`
 - Modify: `src/components/editor/PreviewPane.vue`
 - Test: `src/components/editor/__tests__/preview-notes.test.ts`
 
 **Interfaces:**
+
 - Consumes: `extractFootnotes`, `replaceNoteMarkers`, `prependToFirstParagraph`, `countFootnotes` (Task 1); `chapterParseResults` (`src/composables/use-novlang-parse.ts`).
 - Produces: `renderPreviewHtml(document: NovLangDocument, firstNumber: number): string`, `firstNoteNumber(chapterIds: string[], chapterId: string, documents: Map<string, { document: NovLangDocument }>): number`.
 
@@ -834,11 +838,13 @@ git commit -m "feat(preview): show chapter notes at the end with book-wide numbe
 ### Task 5: Cover thumbnail keeps its shape
 
 **Files:**
+
 - Modify: `src/components/metadata/CoverPicker.vue`, `src/components/editor/ImageView.vue`
 - Modify: `src/locales/{ru,en,zh-CN}.json` (`metadata.coverSize`, `metadata.coverSmall`)
 - Test: `src/components/metadata/__tests__/CoverPicker.test.ts`, `src/components/editor/__tests__/ImageView.test.ts`
 
 **Interfaces:**
+
 - Consumes: `imageDimensions(bytes, mediaType)` from `src/services/book/image-dimensions.ts`, `useProjectStore().book.resources`.
 - Produces: nothing for later tasks.
 
@@ -853,32 +859,32 @@ function png(width: number, height: number): Uint8Array {
   return bytes;
 }
 
-  it("bounds the thumbnail width outside the aspect box and keeps the real ratio", () => {
-    const project = useProjectStore();
-    const book = project.book!;
-    project.setBook({
-      ...book,
-      resources: new Map([["images/c.png", { mediaType: "image/png", bytes: png(1000, 1500) }]]),
-    });
-    const wrapper = mount(CoverPicker, { props: { cover: "images/c.png", preview: "blob:x" } });
-    const inner = wrapper.get('[data-slot="aspect-ratio"]');
-    const outer = inner.element.parentElement!;
-    expect(outer.parentElement!.className).toContain("w-32");
-    expect(inner.classes()).not.toContain("w-32");
-    expect(outer.getAttribute("style")).toContain("padding-bottom: 150%");
-    expect(wrapper.get("img").classes()).toContain("object-contain");
-    expect(wrapper.text()).toContain("1000×1500");
+it("bounds the thumbnail width outside the aspect box and keeps the real ratio", () => {
+  const project = useProjectStore();
+  const book = project.book!;
+  project.setBook({
+    ...book,
+    resources: new Map([["images/c.png", { mediaType: "image/png", bytes: png(1000, 1500) }]]),
   });
+  const wrapper = mount(CoverPicker, { props: { cover: "images/c.png", preview: "blob:x" } });
+  const inner = wrapper.get('[data-slot="aspect-ratio"]');
+  const outer = inner.element.parentElement!;
+  expect(outer.parentElement!.className).toContain("w-32");
+  expect(inner.classes()).not.toContain("w-32");
+  expect(outer.getAttribute("style")).toContain("padding-bottom: 150%");
+  expect(wrapper.get("img").classes()).toContain("object-contain");
+  expect(wrapper.text()).toContain("1000×1500");
+});
 ```
 
 Append to `ImageView.test.ts` (reuse its existing setup for a tall image):
 
 ```ts
-  it("caps a tall image to the window height", () => {
-    // mount ImageView for a 1000×3000 PNG with the file's existing helpers
-    const box = wrapper.get('[data-image-frame]');
-    expect(box.attributes("style")).toContain("max-width: calc(70vh * 0.3333");
-  });
+it("caps a tall image to the window height", () => {
+  // mount ImageView for a 1000×3000 PNG with the file's existing helpers
+  const box = wrapper.get("[data-image-frame]");
+  expect(box.attributes("style")).toContain("max-width: calc(70vh * 0.3333");
+});
 ```
 
 - [ ] **Step 2: Run and see them fail**
@@ -914,7 +920,7 @@ const small = computed(
 Template: the card is the drop target, the width lives on a wrapper and the image is contained:
 
 ```vue
-  <Card @dragover.prevent @drop="drop">
+<Card @dragover.prevent @drop="drop">
     <CardContent class="flex flex-col gap-3">
       <!-- Reka's AspectRatio puts classes on its inner box; the width must
            bound the outer box, or its padding-based height follows the card. -->
@@ -946,11 +952,7 @@ Locale keys: `metadata.coverSize` — ru «Размер», en "Size", zh-CN "尺
 - [ ] **Step 4: Cap the image view height** — `ImageView.vue`:
 
 ```vue
-        <div
-          class="mx-auto w-full"
-          data-image-frame
-          :style="{ maxWidth: `calc(70vh * ${ratio})` }"
-        >
+<div class="mx-auto w-full" data-image-frame :style="{ maxWidth: `calc(70vh * ${ratio})` }">
           <AspectRatio :ratio="ratio" class="overflow-hidden rounded-lg bg-muted">
             <img :src="src" :alt="path" class="size-full object-contain" />
           </AspectRatio>
@@ -974,11 +976,13 @@ git commit -m "fix(metadata): keep the cover thumbnail's shape and show its size
 ### Task 6: CSS editor highlighting and editing aids
 
 **Files:**
+
 - Create: `src/components/editor/css-language.ts`
 - Modify: `src/components/editor/CssEditor.vue`, `src/assets/style.css`, `package.json`
 - Test: `src/components/editor/__tests__/css-language.test.ts`
 
 **Interfaces:**
+
 - Produces: `cssHighlightStyle: HighlightStyle`, `cssEditingExtensions(): Extension[]`.
 
 - [ ] **Step 1: Add the autocomplete package** (it is only a transitive dependency today, and pnpm does not expose transitive packages)
@@ -999,7 +1003,10 @@ import { cssEditingExtensions } from "@/components/editor/css-language";
 
 describe("cssEditingExtensions", () => {
   it("assigns a highlight class to every CSS token family", () => {
-    const state = EditorState.create({ doc: "p { color: red; }", extensions: cssEditingExtensions() });
+    const state = EditorState.create({
+      doc: "p { color: red; }",
+      extensions: cssEditingExtensions(),
+    });
     for (const tag of [
       tags.comment,
       tags.tagName,
@@ -1029,23 +1036,23 @@ Expected: FAIL, the module is missing.
 - [ ] **Step 4: Add syntax tokens to the theme** — in `src/assets/style.css`, inside `:root`:
 
 ```css
-  --syntax-comment: oklch(0.55 0.01 220);
-  --syntax-selector: oklch(0.48 0.16 300);
-  --syntax-property: oklch(0.47 0.14 250);
-  --syntax-value: oklch(0.48 0.12 160);
-  --syntax-string: oklch(0.52 0.14 60);
-  --syntax-keyword: oklch(0.52 0.18 20);
+--syntax-comment: oklch(0.55 0.01 220);
+--syntax-selector: oklch(0.48 0.16 300);
+--syntax-property: oklch(0.47 0.14 250);
+--syntax-value: oklch(0.48 0.12 160);
+--syntax-string: oklch(0.52 0.14 60);
+--syntax-keyword: oklch(0.52 0.18 20);
 ```
 
 and inside `.dark`:
 
 ```css
-  --syntax-comment: oklch(0.65 0.01 220);
-  --syntax-selector: oklch(0.78 0.12 300);
-  --syntax-property: oklch(0.78 0.11 250);
-  --syntax-value: oklch(0.8 0.11 160);
-  --syntax-string: oklch(0.82 0.12 75);
-  --syntax-keyword: oklch(0.75 0.15 20);
+--syntax-comment: oklch(0.65 0.01 220);
+--syntax-selector: oklch(0.78 0.12 300);
+--syntax-property: oklch(0.78 0.11 250);
+--syntax-value: oklch(0.8 0.11 160);
+--syntax-string: oklch(0.82 0.12 75);
+--syntax-keyword: oklch(0.75 0.15 20);
 ```
 
 - [ ] **Step 5: Implement `css-language.ts`**
@@ -1139,6 +1146,7 @@ git commit -m "feat(css-editor): add syntax highlighting, completion and bracket
 ### Task 7: Settings use the free width
 
 **Files:**
+
 - Modify: `src/components/settings/SettingsView.vue`, `src/locales/{ru,en,zh-CN}.json` (`settings.editor`)
 - Test: `src/components/settings/__tests__/SettingsView.test.ts`, `e2e/settings.spec.ts`
 
@@ -1147,14 +1155,14 @@ git commit -m "feat(css-editor): add syntax highlighting, completion and bracket
 Unit (append):
 
 ```ts
-  it("groups delete confirmation under Editor and puts both maintenance buttons in one row", () => {
-    // render as the file's other tests do
-    const editor = screen.getByRole("heading", { name: /editor/i }).closest('[data-slot="card"]')!;
-    expect(within(editor as HTMLElement).getByRole("switch", { name: /confirm/i })).toBeTruthy();
-    const updates = screen.getByRole("button", { name: /check for updates/i });
-    const logs = screen.getByRole("button", { name: /log folder/i });
-    expect(updates.parentElement).toBe(logs.parentElement);
-  });
+it("groups delete confirmation under Editor and puts both maintenance buttons in one row", () => {
+  // render as the file's other tests do
+  const editor = screen.getByRole("heading", { name: /editor/i }).closest('[data-slot="card"]')!;
+  expect(within(editor as HTMLElement).getByRole("switch", { name: /confirm/i })).toBeTruthy();
+  const updates = screen.getByRole("button", { name: /check for updates/i });
+  const logs = screen.getByRole("button", { name: /log folder/i });
+  expect(updates.parentElement).toBe(logs.parentElement);
+});
 ```
 
 e2e (append to `e2e/settings.spec.ts`):
@@ -1182,11 +1190,11 @@ Expected: FAIL, there is no "Editor" card and the cards form one column.
 The section becomes a size container. The cards split into two column stacks, so narrow windows keep the reading order Appearance → Editor → Export → Maintenance:
 
 ```vue
-  <section
-    class="@container flex flex-col gap-6 p-8"
-    aria-labelledby="settings-title"
-    data-settings-view
-  >
+<section
+  class="@container flex flex-col gap-6 p-8"
+  aria-labelledby="settings-title"
+  data-settings-view
+>
     <h1 id="settings-title" class="text-xl font-semibold">
       {{ t("settings.title", "Settings") }}
     </h1>
@@ -1222,7 +1230,7 @@ for both "Images" and "Book".
 Maintenance: one row with both buttons, and the status under it:
 
 ```vue
-        <FieldGroup>
+<FieldGroup>
           <Field orientation="horizontal" class="flex-wrap">
             <Button variant="outline" @click="checkUpdates">…</Button>
             <Button variant="outline" @click="openLogs">…</Button>
@@ -1253,11 +1261,13 @@ git commit -m "feat(settings): lay out settings cards in two columns when wide"
 ### Task 8: One content header over source and preview
 
 **Files:**
+
 - Create: `src/components/layout/ContentHeader.vue`
 - Modify: `src/components/layout/ResizableSplit.vue` (new `header` slot), `src/components/layout/Breadcrumbs.vue` (no own border, truncation), `src/views/EditorView.vue`
 - Test: `src/components/layout/__tests__/ResizableSplit.test.ts`, `e2e/layout.spec.ts`
 
 **Interfaces:**
+
 - Produces: `ResizableSplit` slot `header` rendered once above both the single pane and the source/preview group. `ContentHeader` has a default slot for the toolbar on the right (Task 10 fills it).
 
 - [ ] **Step 1: Write the failing tests**
@@ -1265,37 +1275,35 @@ git commit -m "feat(settings): lay out settings cards in two columns when wide"
 Unit (append to `ResizableSplit.test.ts`; mount the way the file already does):
 
 ```ts
-  it("renders the header once above the panes in split and single modes", async () => {
-    const wrapper = mountSplit({ slots: { header: "<div data-test-header />" } });
-    expect(wrapper.findAll("[data-test-header]")).toHaveLength(1);
-    const header = wrapper.get("[data-test-header]").element;
-    const source = wrapper.get('[data-pane="source"]').element;
-    expect(header.compareDocumentPosition(source) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    await wrapper.setProps({ singlePane: true });
-    expect(wrapper.findAll("[data-test-header]")).toHaveLength(1);
-  });
+it("renders the header once above the panes in split and single modes", async () => {
+  const wrapper = mountSplit({ slots: { header: "<div data-test-header />" } });
+  expect(wrapper.findAll("[data-test-header]")).toHaveLength(1);
+  const header = wrapper.get("[data-test-header]").element;
+  const source = wrapper.get('[data-pane="source"]').element;
+  expect(header.compareDocumentPosition(source) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  await wrapper.setProps({ singlePane: true });
+  expect(wrapper.findAll("[data-test-header]")).toHaveLength(1);
+});
 ```
 
 e2e (`e2e/layout.spec.ts`): replace "a single pane view stretches to the full body height" with:
 
 ```ts
-  test("the content header spans source and preview, and panes fill the rest", async ({
-    page,
-  }) => {
-    const header = (await page.locator("[data-content-header]").boundingBox())!;
-    const source = (await page.locator('[data-pane="source"]').boundingBox())!;
-    const preview = (await page.locator('[data-pane="preview"]').boundingBox())!;
-    expect(header.x).toBeCloseTo(source.x, 0);
-    expect(header.x + header.width).toBeCloseTo(preview.x + preview.width, 0);
-    expect(source.y).toBeCloseTo(header.y + header.height, 0);
+test("the content header spans source and preview, and panes fill the rest", async ({ page }) => {
+  const header = (await page.locator("[data-content-header]").boundingBox())!;
+  const source = (await page.locator('[data-pane="source"]').boundingBox())!;
+  const preview = (await page.locator('[data-pane="preview"]').boundingBox())!;
+  expect(header.x).toBeCloseTo(source.x, 0);
+  expect(header.x + header.width).toBeCloseTo(preview.x + preview.width, 0);
+  expect(source.y).toBeCloseTo(header.y + header.height, 0);
 
-    await page.locator('[data-activity="settings"]').click();
-    await page.locator(SETTINGS).waitFor();
-    const body = await heightOf(page, BODY);
-    const pane = await heightOf(page, SINGLE_PANE);
-    const headerHeight = await heightOf(page, "[data-content-header]");
-    expect(pane + headerHeight).toBeCloseTo(body, 0);
-  });
+  await page.locator('[data-activity="settings"]').click();
+  await page.locator(SETTINGS).waitFor();
+  const body = await heightOf(page, BODY);
+  const pane = await heightOf(page, SINGLE_PANE);
+  const headerHeight = await heightOf(page, "[data-content-header]");
+  expect(pane + headerHeight).toBeCloseTo(body, 0);
+});
 ```
 
 - [ ] **Step 2: Run and see them fail**
@@ -1306,7 +1314,7 @@ Expected: FAIL, there is no `header` slot or `[data-content-header]`.
 - [ ] **Step 3: Implement the slot** — `ResizableSplit.vue`, inside the content `SplitterPanel`:
 
 ```vue
-      <SplitterPanel ref="content" :order="2" class="flex min-w-0">
+<SplitterPanel ref="content" :order="2" class="flex min-w-0">
         <div class="flex min-w-0 flex-1 flex-col">
           <slot name="header" />
           <section
@@ -1355,7 +1363,7 @@ import Breadcrumbs from "@/components/layout/Breadcrumbs.vue";
 In `Breadcrumbs.vue`, drop `border-b` from the root class (the header draws it), and let long titles shrink:
 
 ```vue
-  <Breadcrumb :aria-label="t('breadcrumbs.aria', 'Breadcrumbs')" class="min-w-0 px-3 py-2">
+<Breadcrumb :aria-label="t('breadcrumbs.aria', 'Breadcrumbs')" class="min-w-0 px-3 py-2">
     <BreadcrumbList class="flex-nowrap text-xs">
       <template v-for="(segment, index) in segments" :key="index">
         <BreadcrumbSeparator v-if="index > 0" />
@@ -1373,9 +1381,9 @@ In `Breadcrumbs.vue`, drop `border-b` from the root class (the header draws it),
 In `EditorView.vue`: remove `<Breadcrumbs />` from `#single` and `#source`, remove the `Breadcrumbs` import and add:
 
 ```vue
-        <template #header>
-          <ContentHeader />
-        </template>
+<template #header>
+  <ContentHeader />
+</template>
 ```
 
 with `import ContentHeader from "@/components/layout/ContentHeader.vue";`.
@@ -1397,10 +1405,12 @@ git commit -m "feat(layout): one breadcrumb header across source and preview"
 ### Task 9: Heading, quote, scene break and image editor commands
 
 **Files:**
+
 - Modify: `src/components/editor/editor-commands.ts`
 - Test: `src/components/editor/__tests__/editor-commands.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `toggleHeading(state: EditorState): Transaction`
   - `toggleBlockquote(state: EditorState): Transaction`
@@ -1577,11 +1587,13 @@ git commit -m "feat(editor): commands for heading, quote, scene break and images
 ### Task 10: Formatting toolbar in the content header
 
 **Files:**
+
 - Create: `src/components/editor/FormatToolbar.vue`, `src/components/editor/ImagePickerPopover.vue`
 - Modify: `src/components/layout/ContentHeader.vue` (render the toolbar), `src/views/EditorView.vue` (image-from-file handler), `src/locales/{ru,en,zh-CN}.json` (`format.*`)
 - Test: `src/components/editor/__tests__/FormatToolbar.test.ts`
 
 **Interfaces:**
+
 - Consumes: `toggleMarkup`, `insertFootnote`, `toggleHeading`, `toggleBlockquote`, `insertSceneBreak`, `insertImageReference`, `activeMarkup`, `chapterEditorTick`, `chapterEditorViews` (Task 9 and existing); `undo`, `redo`, `undoDepth`, `redoDepth` from `@codemirror/commands`; `openSearchPanel` from `@codemirror/search`; `useResourceUrls` (Task 12 builds it; this task creates it, see Step 3).
 - Produces: `<FormatToolbar :chapter-id :disabled @insert-image-from-file="(position: number) => void" />`.
 
@@ -1597,10 +1609,7 @@ import { EditorView } from "@codemirror/view";
 import { createPinia, setActivePinia } from "pinia";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import FormatToolbar from "@/components/editor/FormatToolbar.vue";
-import {
-  chapterEditorViews,
-  registerChapterEditorView,
-} from "@/components/editor/editor-commands";
+import { chapterEditorViews, registerChapterEditorView } from "@/components/editor/editor-commands";
 
 let view: EditorView;
 beforeEach(() => {
@@ -1802,19 +1811,75 @@ function fromBook(path: string) {
 }
 
 const primary = computed(() => [
-  { id: "bold", icon: IconBold, label: t("format.bold", "Bold"), keys: "Mod+B", pressed: markup.value.bold, action: () => run((s) => toggleMarkup(s, "**")) },
-  { id: "italic", icon: IconItalic, label: t("format.italic", "Italic"), keys: "Mod+I", pressed: markup.value.italic, action: () => run((s) => toggleMarkup(s, "*")) },
-  { id: "footnote", icon: IconSuperscript, label: t("format.footnote", "Footnote"), keys: "Mod+Alt+F", action: () => run(insertFootnote) },
+  {
+    id: "bold",
+    icon: IconBold,
+    label: t("format.bold", "Bold"),
+    keys: "Mod+B",
+    pressed: markup.value.bold,
+    action: () => run((s) => toggleMarkup(s, "**")),
+  },
+  {
+    id: "italic",
+    icon: IconItalic,
+    label: t("format.italic", "Italic"),
+    keys: "Mod+I",
+    pressed: markup.value.italic,
+    action: () => run((s) => toggleMarkup(s, "*")),
+  },
+  {
+    id: "footnote",
+    icon: IconSuperscript,
+    label: t("format.footnote", "Footnote"),
+    keys: "Mod+Alt+F",
+    action: () => run(insertFootnote),
+  },
 ]);
 const secondary = computed(() => [
-  { id: "heading", icon: IconH1, label: t("format.heading", "Chapter heading"), action: () => run(toggleHeading) },
-  { id: "quote", icon: IconBlockquote, label: t("format.quote", "Quote"), action: () => run(toggleBlockquote) },
-  { id: "scene", icon: IconSeparatorHorizontal, label: t("format.sceneBreak", "Scene break"), action: () => run(insertSceneBreak) },
+  {
+    id: "heading",
+    icon: IconH1,
+    label: t("format.heading", "Chapter heading"),
+    action: () => run(toggleHeading),
+  },
+  {
+    id: "quote",
+    icon: IconBlockquote,
+    label: t("format.quote", "Quote"),
+    action: () => run(toggleBlockquote),
+  },
+  {
+    id: "scene",
+    icon: IconSeparatorHorizontal,
+    label: t("format.sceneBreak", "Scene break"),
+    action: () => run(insertSceneBreak),
+  },
 ]);
 const historyItems = computed(() => [
-  { id: "undo", icon: IconArrowBackUp, label: t("format.undo", "Undo"), keys: "Mod+Z", enabled: state.value ? undoDepth(state.value) > 0 : false, action: () => history(undo) },
-  { id: "redo", icon: IconArrowForwardUp, label: t("format.redo", "Redo"), keys: "Mod+Shift+Z", enabled: state.value ? redoDepth(state.value) > 0 : false, action: () => history(redo) },
-  { id: "search", icon: IconSearch, label: t("format.search", "Find in chapter"), keys: "Mod+F", enabled: true, action: search },
+  {
+    id: "undo",
+    icon: IconArrowBackUp,
+    label: t("format.undo", "Undo"),
+    keys: "Mod+Z",
+    enabled: state.value ? undoDepth(state.value) > 0 : false,
+    action: () => history(undo),
+  },
+  {
+    id: "redo",
+    icon: IconArrowForwardUp,
+    label: t("format.redo", "Redo"),
+    keys: "Mod+Shift+Z",
+    enabled: state.value ? redoDepth(state.value) > 0 : false,
+    action: () => history(redo),
+  },
+  {
+    id: "search",
+    icon: IconSearch,
+    label: t("format.search", "Find in chapter"),
+    keys: "Mod+F",
+    enabled: true,
+    action: search,
+  },
 ]);
 </script>
 
@@ -1837,7 +1902,9 @@ const historyItems = computed(() => [
             </Button>
           </ToolbarButton>
         </TooltipTrigger>
-        <TooltipContent>{{ item.label }} <Kbd>{{ item.keys }}</Kbd></TooltipContent>
+        <TooltipContent
+          >{{ item.label }} <Kbd>{{ item.keys }}</Kbd></TooltipContent
+        >
       </Tooltip>
 
       <div class="hidden items-center gap-0.5 @2xl:flex">
@@ -1845,7 +1912,13 @@ const historyItems = computed(() => [
         <Tooltip v-for="item in secondary" :key="item.id">
           <TooltipTrigger as-child>
             <ToolbarButton as-child>
-              <Button variant="ghost" size="icon-sm" :aria-label="item.label" :disabled="disabled" @click="item.action">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                :aria-label="item.label"
+                :disabled="disabled"
+                @click="item.action"
+              >
                 <component :is="item.icon" aria-hidden="true" />
               </Button>
             </ToolbarButton>
@@ -1857,14 +1930,23 @@ const historyItems = computed(() => [
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
                 <ToolbarButton as-child>
-                  <Button variant="ghost" size="icon-sm" :aria-label="t('format.image', 'Insert image')" :disabled="disabled">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    :aria-label="t('format.image', 'Insert image')"
+                    :disabled="disabled"
+                  >
                     <IconPhoto aria-hidden="true" />
                   </Button>
                 </ToolbarButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem @select="fromFile">{{ t("format.imageFromFile", "From file…") }}</DropdownMenuItem>
-                <DropdownMenuItem @select="pickerOpen = true">{{ t("format.imageFromBook", "From the book…") }}</DropdownMenuItem>
+                <DropdownMenuItem @select="fromFile">{{
+                  t("format.imageFromFile", "From file…")
+                }}</DropdownMenuItem>
+                <DropdownMenuItem @select="pickerOpen = true">{{
+                  t("format.imageFromBook", "From the book…")
+                }}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </PopoverAnchor>
@@ -1876,19 +1958,33 @@ const historyItems = computed(() => [
         <Tooltip v-for="item in historyItems" :key="item.id">
           <TooltipTrigger as-child>
             <ToolbarButton as-child>
-              <Button variant="ghost" size="icon-sm" :aria-label="item.label" :disabled="disabled || !item.enabled" @click="item.action">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                :aria-label="item.label"
+                :disabled="disabled || !item.enabled"
+                @click="item.action"
+              >
                 <component :is="item.icon" aria-hidden="true" />
               </Button>
             </ToolbarButton>
           </TooltipTrigger>
-          <TooltipContent>{{ item.label }} <Kbd>{{ item.keys }}</Kbd></TooltipContent>
+          <TooltipContent
+            >{{ item.label }} <Kbd>{{ item.keys }}</Kbd></TooltipContent
+          >
         </Tooltip>
       </div>
 
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <ToolbarButton as-child>
-            <Button variant="ghost" size="icon-sm" class="@2xl:hidden" :aria-label="t('format.more', 'More formatting')" :disabled="disabled">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              class="@2xl:hidden"
+              :aria-label="t('format.more', 'More formatting')"
+              :disabled="disabled"
+            >
               <IconDots aria-hidden="true" />
             </Button>
           </ToolbarButton>
@@ -1898,13 +1994,26 @@ const historyItems = computed(() => [
             <component :is="item.icon" aria-hidden="true" />{{ item.label }}
           </DropdownMenuItem>
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger><IconPhoto aria-hidden="true" />{{ t("format.image", "Insert image") }}</DropdownMenuSubTrigger>
+            <DropdownMenuSubTrigger
+              ><IconPhoto aria-hidden="true" />{{
+                t("format.image", "Insert image")
+              }}</DropdownMenuSubTrigger
+            >
             <DropdownMenuSubContent>
-              <DropdownMenuItem @select="fromFile">{{ t("format.imageFromFile", "From file…") }}</DropdownMenuItem>
-              <DropdownMenuItem @select="pickerOpen = true">{{ t("format.imageFromBook", "From the book…") }}</DropdownMenuItem>
+              <DropdownMenuItem @select="fromFile">{{
+                t("format.imageFromFile", "From file…")
+              }}</DropdownMenuItem>
+              <DropdownMenuItem @select="pickerOpen = true">{{
+                t("format.imageFromBook", "From the book…")
+              }}</DropdownMenuItem>
             </DropdownMenuSubContent>
           </DropdownMenuSub>
-          <DropdownMenuItem v-for="item in historyItems" :key="item.id" :disabled="!item.enabled" @select="item.action">
+          <DropdownMenuItem
+            v-for="item in historyItems"
+            :key="item.id"
+            :disabled="!item.enabled"
+            @select="item.action"
+          >
             <component :is="item.icon" aria-hidden="true" />{{ item.label }}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -1936,7 +2045,10 @@ const showToolbar = computed(() => layout.center.kind === "chapter");
 </script>
 
 <template>
-  <div class="@container flex min-h-9 shrink-0 items-center gap-2 border-b pr-2" data-content-header>
+  <div
+    class="@container flex min-h-9 shrink-0 items-center gap-2 border-b pr-2"
+    data-content-header
+  >
     <Breadcrumbs class="min-w-0 flex-1" />
     <FormatToolbar
       v-if="showToolbar && chapterId"
@@ -1951,12 +2063,9 @@ const showToolbar = computed(() => layout.center.kind === "chapter");
 `EditorView.vue`:
 
 ```vue
-        <template #header>
-          <ContentHeader
-            :chapter-id="selectedChapterId"
-            @insert-image-from-file="insertImageFromFile"
-          />
-        </template>
+<template #header>
+  <ContentHeader :chapter-id="selectedChapterId" @insert-image-from-file="insertImageFromFile" />
+</template>
 ```
 
 ```ts
@@ -1973,23 +2082,23 @@ async function insertImageFromFile(position: number) {
 
 - [ ] **Step 7: Add the locale keys** (`format.*`)
 
-| key | ru | en | zh-CN |
-| --- | --- | --- | --- |
-| `toolbar` | Форматирование | Formatting | 格式 |
-| `bold` | Полужирный | Bold | 粗体 |
-| `italic` | Курсив | Italic | 斜体 |
-| `footnote` | Сноска | Footnote | 脚注 |
-| `heading` | Заголовок главы | Chapter heading | 章节标题 |
-| `quote` | Цитата | Quote | 引用 |
-| `sceneBreak` | Разрыв сцены | Scene break | 场景分隔 |
-| `image` | Вставить изображение | Insert image | 插入图片 |
-| `imageFromFile` | Из файла… | From file… | 从文件… |
-| `imageFromBook` | Из книги… | From the book… | 从书中… |
-| `noImages` | В книге пока нет изображений | The book has no images yet | 书中还没有图片 |
-| `undo` | Отменить | Undo | 撤销 |
-| `redo` | Повторить | Redo | 重做 |
-| `search` | Найти в главе | Find in chapter | 在本章中查找 |
-| `more` | Ещё форматирование | More formatting | 更多格式 |
+| key             | ru                           | en                         | zh-CN          |
+| --------------- | ---------------------------- | -------------------------- | -------------- |
+| `toolbar`       | Форматирование               | Formatting                 | 格式           |
+| `bold`          | Полужирный                   | Bold                       | 粗体           |
+| `italic`        | Курсив                       | Italic                     | 斜体           |
+| `footnote`      | Сноска                       | Footnote                   | 脚注           |
+| `heading`       | Заголовок главы              | Chapter heading            | 章节标题       |
+| `quote`         | Цитата                       | Quote                      | 引用           |
+| `sceneBreak`    | Разрыв сцены                 | Scene break                | 场景分隔       |
+| `image`         | Вставить изображение         | Insert image               | 插入图片       |
+| `imageFromFile` | Из файла…                    | From file…                 | 从文件…        |
+| `imageFromBook` | Из книги…                    | From the book…             | 从书中…        |
+| `noImages`      | В книге пока нет изображений | The book has no images yet | 书中还没有图片 |
+| `undo`          | Отменить                     | Undo                       | 撤销           |
+| `redo`          | Повторить                    | Redo                       | 重做           |
+| `search`        | Найти в главе                | Find in chapter            | 在本章中查找   |
+| `more`          | Ещё форматирование           | More formatting            | 更多格式       |
 
 - [ ] **Step 8: Run everything**
 
@@ -2012,12 +2121,14 @@ git commit -m "feat(editor): formatting toolbar in the content header"
 ### Task 11: Images entry under Book opens a gallery view
 
 **Files:**
+
 - Modify: `src/stores/layout.ts` (`CenterView` adds `{ kind: "images" }`), `src/components/sidebar/ExplorerView.vue`, `src/components/layout/Breadcrumbs.vue`, `src/views/EditorView.vue` (`singlePane` includes `images`)
 - Delete: `src/components/sidebar/ImageItem.vue`
 - Create: `src/components/images/ImageGallery.vue` (a stub; Task 12 fills it)
 - Test: `src/components/sidebar/__tests__/ExplorerView.test.ts`, `src/components/layout/__tests__/Breadcrumbs.test.ts`
 
 **Interfaces:**
+
 - Produces: `CenterView` `{ kind: "images" }`. Breadcrumb segments become `Array<{ label: string; target?: CenterView }>`; a segment with a `target` is a button.
 
 - [ ] **Step 1: Write the failing tests**
@@ -2025,26 +2136,26 @@ git commit -m "feat(editor): formatting toolbar in the content header"
 ExplorerView (adapt to the file's render helper):
 
 ```ts
-  it("lists Images under Book with a count and no image rows", async () => {
-    // book with two resources
-    const images = screen.getByRole("treeitem", { name: /images/i });
-    expect(images).toHaveTextContent("2");
-    expect(screen.queryByRole("treeitem", { name: /cover\.png/ })).toBeNull();
-    await userEvent.click(images);
-    expect(useLayoutStore().center).toEqual({ kind: "images" });
-  });
+it("lists Images under Book with a count and no image rows", async () => {
+  // book with two resources
+  const images = screen.getByRole("treeitem", { name: /images/i });
+  expect(images).toHaveTextContent("2");
+  expect(screen.queryByRole("treeitem", { name: /cover\.png/ })).toBeNull();
+  await userEvent.click(images);
+  expect(useLayoutStore().center).toEqual({ kind: "images" });
+});
 ```
 
 Breadcrumbs:
 
 ```ts
-  it("shows Book › Images and leads back to the gallery from one image", async () => {
-    const layout = useLayoutStore();
-    layout.center = { kind: "image", path: "images/a.png" };
-    render(Breadcrumbs, { global: { plugins: [pinia] } });
-    await userEvent.click(screen.getByRole("button", { name: /images/i }));
-    expect(layout.center).toEqual({ kind: "images" });
-  });
+it("shows Book › Images and leads back to the gallery from one image", async () => {
+  const layout = useLayoutStore();
+  layout.center = { kind: "image", path: "images/a.png" };
+  render(Breadcrumbs, { global: { plugins: [pinia] } });
+  await userEvent.click(screen.getByRole("button", { name: /images/i }));
+  expect(layout.center).toEqual({ kind: "images" });
+});
 ```
 
 - [ ] **Step 2: Run and see them fail**
@@ -2057,16 +2168,13 @@ Expected: FAIL.
 `layout.ts`: add `| { kind: "images" }` to `CenterView`.
 
 `ExplorerView.vue`:
+
 - `type Section = "book" | "chapters";` and remove the `images` section from `nodes`, `expanded`, `sectionTitle` and `sectionCount`.
 - Add a leaf to Book: `{ id: "images", kind: "images" }` and the node type `| { id: "images"; kind: "images" }`.
 - Render it with the other Book leaves:
 
 ```vue
-        <TreeItem
-          v-else-if="item.value.kind === 'images'"
-          v-bind="item.bind"
-          @select="selectImages"
-        >
+<TreeItem v-else-if="item.value.kind === 'images'" v-bind="item.bind" @select="selectImages">
           <span class="min-w-0 flex-1 truncate">{{ t("explorer.images", "Images") }}</span>
           <Badge variant="secondary">{{ book.resources.size }}</Badge>
         </TreeItem>
@@ -2130,12 +2238,14 @@ git commit -m "feat(explorer): move Images under Book and open them as a page"
 ### Task 12: Gallery grid
 
 **Files:**
+
 - Modify: `src/components/images/ImageGallery.vue`
 - Create: `src/components/images/ImageTile.vue`
 - Modify: `src/components/editor/ImageView.vue` (blob URLs instead of base64), `src/views/EditorView.vue` (pass `import` handler), `src/locales/*` (`gallery.*`)
 - Test: `src/components/images/__tests__/ImageGallery.test.ts`
 
 **Interfaces:**
+
 - Consumes: `useResourceUrls` (Task 10), `collectImageUsage`, `collectUsedImagePaths` (`services/checks/image-usage.ts`), `imageDimensions`, `setCover`, `useImageImport().importFile`.
 - Produces: `ImageGallery` props `{ onImport: () => Promise<void>; onDropFiles: (files: ImageFile[]) => Promise<void> }`, emits nothing; `ImageTile` props `{ path: string; url?: string; cover: boolean; unused: boolean; selected: boolean; order?: number; focused: boolean }`, emits `open`, `context-action(value: "cover" | "search" | "rename" | "delete")`.
 
@@ -2152,12 +2262,19 @@ import { useLayoutStore } from "@/stores/layout";
 import { useProjectStore } from "@/stores/project";
 import { createBook } from "@/services/book/create";
 
-const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1]);
+const png = new Uint8Array([
+  137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1,
+]);
 let pinia: Pinia;
 beforeEach(() => {
   pinia = createPinia();
   setActivePinia(pinia);
-  const book = createBook({ locale: "en", now: new Date("2026-01-01"), newUuid: () => "550e8400-e29b-41d4-a716-446655440000", newChapterId: () => "chapter1" });
+  const book = createBook({
+    locale: "en",
+    now: new Date("2026-01-01"),
+    newUuid: () => "550e8400-e29b-41d4-a716-446655440000",
+    newChapterId: () => "chapter1",
+  });
   useProjectStore().setBook({
     ...book,
     chapters: [{ id: "chapter1", source: "![](images/used.png)" }],
@@ -2181,8 +2298,12 @@ describe("ImageGallery", () => {
     mountGallery();
     const tiles = screen.getAllByRole("gridcell");
     expect(tiles).toHaveLength(3);
-    expect(within(screen.getByRole("gridcell", { name: /cover\.png/ })).getByText(/cover/i)).toBeTruthy();
-    expect(within(screen.getByRole("gridcell", { name: /spare\.png/ })).getByText(/not used/i)).toBeTruthy();
+    expect(
+      within(screen.getByRole("gridcell", { name: /cover\.png/ })).getByText(/cover/i),
+    ).toBeTruthy();
+    expect(
+      within(screen.getByRole("gridcell", { name: /spare\.png/ })).getByText(/not used/i),
+    ).toBeTruthy();
   });
 
   it("filters unused images", async () => {
@@ -2283,10 +2404,18 @@ const name = () => props.path.replace(/^images\//, "");
       </div>
     </ContextMenuTrigger>
     <ContextMenuContent>
-      <ContextMenuItem @select="emit('context-action', 'cover')">{{ t("images.setCover", "Set as cover") }}</ContextMenuItem>
-      <ContextMenuItem @select="emit('context-action', 'search')">{{ t("images.findUsage", "Find usages") }}</ContextMenuItem>
-      <ContextMenuItem @select="emit('context-action', 'rename')">{{ t("gallery.rename", "Rename…") }}</ContextMenuItem>
-      <ContextMenuItem variant="destructive" @select="emit('context-action', 'delete')">{{ t("common.delete", "Delete") }}</ContextMenuItem>
+      <ContextMenuItem @select="emit('context-action', 'cover')">{{
+        t("images.setCover", "Set as cover")
+      }}</ContextMenuItem>
+      <ContextMenuItem @select="emit('context-action', 'search')">{{
+        t("images.findUsage", "Find usages")
+      }}</ContextMenuItem>
+      <ContextMenuItem @select="emit('context-action', 'rename')">{{
+        t("gallery.rename", "Rename…")
+      }}</ContextMenuItem>
+      <ContextMenuItem variant="destructive" @select="emit('context-action', 'delete')">{{
+        t("common.delete", "Delete")
+      }}</ContextMenuItem>
     </ContextMenuContent>
   </ContextMenu>
 </template>
@@ -2330,7 +2459,11 @@ const used = computed(() =>
 const all = computed(() => [...(project.book?.resources.keys() ?? [])].sort());
 const items = computed(() =>
   all.value.filter((path) =>
-    filter.value === "all" ? true : filter.value === "used" ? used.value.has(path) : !used.value.has(path),
+    filter.value === "all"
+      ? true
+      : filter.value === "used"
+        ? used.value.has(path)
+        : !used.value.has(path),
   ),
 );
 const unusedCount = computed(() => all.value.filter((path) => !used.value.has(path)).length);
@@ -2348,7 +2481,9 @@ async function focusAt(index: number) {
   grid.value?.querySelectorAll<HTMLElement>('[role="gridcell"]')[focusedIndex.value]?.focus();
 }
 function onKeydown(event: KeyboardEvent) {
-  const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: columns(), ArrowUp: -columns() }[event.key];
+  const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: columns(), ArrowUp: -columns() }[
+    event.key
+  ];
   if (step !== undefined) {
     event.preventDefault();
     void focusAt(focusedIndex.value + step);
@@ -2368,12 +2503,18 @@ function contextAction(path: string, value: "cover" | "search" | "rename" | "del
   // "rename" and "delete": Tasks 14 and 15.
 }
 async function drop(event: DragEvent) {
-  const files = [...(event.dataTransfer?.files ?? [])].filter((file) => file.type.startsWith("image/"));
+  const files = [...(event.dataTransfer?.files ?? [])].filter((file) =>
+    file.type.startsWith("image/"),
+  );
   if (files.length === 0) return;
   event.preventDefault();
   await props.onDropFiles(
     await Promise.all(
-      files.map(async (file) => ({ name: file.name, type: file.type, bytes: new Uint8Array(await file.arrayBuffer()) })),
+      files.map(async (file) => ({
+        name: file.name,
+        type: file.type,
+        bytes: new Uint8Array(await file.arrayBuffer()),
+      })),
     ),
   );
 }
@@ -2438,11 +2579,11 @@ The `role="grid"` here has no `row` elements. If the a11y lint or testing-librar
 `EditorView.vue`:
 
 ```vue
-            <ImageGallery
-              v-else-if="layout.center.kind === 'images'"
-              :on-import="importImage"
-              :on-drop-files="importDroppedImages"
-            />
+<ImageGallery
+  v-else-if="layout.center.kind === 'images'"
+  :on-import="importImage"
+  :on-drop-files="importDroppedImages"
+/>
 ```
 
 ```ts
@@ -2459,16 +2600,16 @@ async function importDroppedImages(files: ImageFile[]) {
 
 Locale keys (`gallery.*`):
 
-| key | ru | en | zh-CN |
-| --- | --- | --- | --- |
-| `cover` | Обложка | Cover | 封面 |
-| `filter` | Показать | Show | 显示 |
-| `all` | Все | All | 全部 |
-| `used` | Используемые | Used | 已使用 |
-| `unused` | Неиспользуемые | Unused | 未使用 |
-| `add` | Добавить… | Add… | 添加… |
-| `rename` | Переименовать… | Rename… | 重命名… |
-| `empty` | Изображений нет. Добавьте их кнопкой выше или перетащите файлы сюда. | No images. Add them with the button above or drop files here. | 没有图片。请使用上方按钮添加，或将文件拖到这里。 |
+| key      | ru                                                                   | en                                                            | zh-CN                                            |
+| -------- | -------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------ |
+| `cover`  | Обложка                                                              | Cover                                                         | 封面                                             |
+| `filter` | Показать                                                             | Show                                                          | 显示                                             |
+| `all`    | Все                                                                  | All                                                           | 全部                                             |
+| `used`   | Используемые                                                         | Used                                                          | 已使用                                           |
+| `unused` | Неиспользуемые                                                       | Unused                                                        | 未使用                                           |
+| `add`    | Добавить…                                                            | Add…                                                          | 添加…                                            |
+| `rename` | Переименовать…                                                       | Rename…                                                       | 重命名…                                          |
+| `empty`  | Изображений нет. Добавьте их кнопкой выше или перетащите файлы сюда. | No images. Add them with the button above or drop files here. | 没有图片。请使用上方按钮添加，或将文件拖到这里。 |
 
 - [ ] **Step 5: Run everything**
 
@@ -2487,11 +2628,13 @@ git commit -m "feat(images): gallery page with filters, drop import and keyboard
 ### Task 13: Selection: long press, drag range, Mod/Shift-click
 
 **Files:**
+
 - Create: `src/components/images/gallery-selection.ts`, `src/composables/use-long-press-select.ts`
 - Modify: `src/components/images/ImageGallery.vue`
 - Test: `src/components/images/__tests__/gallery-selection.test.ts`, `src/composables/__tests__/use-long-press-select.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `interface Selection { order: string[]; anchor: string | null }`
   - `emptySelection(): Selection`
@@ -2505,7 +2648,12 @@ git commit -m "feat(images): gallery page with filters, drop import and keyboard
 ```ts
 // src/components/images/__tests__/gallery-selection.test.ts
 import { describe, expect, it } from "vitest";
-import { emptySelection, selectAll, selectRange, toggle } from "@/components/images/gallery-selection";
+import {
+  emptySelection,
+  selectAll,
+  selectRange,
+  toggle,
+} from "@/components/images/gallery-selection";
 
 const items = ["a", "b", "c", "d", "e"];
 
@@ -2547,7 +2695,9 @@ function pointer(type: string, x = 0, y = 0) {
 
 describe("useLongPressSelect", () => {
   it("starts after the delay and extends to tiles under the pointer", () => {
-    const onStart = vi.fn(), onExtend = vi.fn(), onEnd = vi.fn();
+    const onStart = vi.fn(),
+      onExtend = vi.fn(),
+      onEnd = vi.fn();
     const tile = document.createElement("div");
     tile.dataset.galleryPath = "b";
     document.body.append(tile);
@@ -2567,7 +2717,12 @@ describe("useLongPressSelect", () => {
 
   it("cancels when the pointer moves before the delay (a scroll, not a press)", () => {
     const onStart = vi.fn();
-    const press = useLongPressSelect({ onStart, onExtend: vi.fn(), onEnd: vi.fn(), scroller: () => undefined });
+    const press = useLongPressSelect({
+      onStart,
+      onExtend: vi.fn(),
+      onEnd: vi.fn(),
+      scroller: () => undefined,
+    });
     press.onPointerDown(pointer("pointerdown", 0, 0), "a");
     window.dispatchEvent(pointer("pointermove", 0, 20));
     vi.advanceTimersByTime(600);
@@ -2711,7 +2866,13 @@ export function useLongPressSelect(options: LongPressOptions) {
 - [ ] **Step 5: Wire selection into `ImageGallery.vue`**
 
 ```ts
-import { emptySelection, selectAll, selectRange, toggle, type Selection } from "./gallery-selection";
+import {
+  emptySelection,
+  selectAll,
+  selectRange,
+  toggle,
+  type Selection,
+} from "./gallery-selection";
 import { useLongPressSelect } from "@/composables/use-long-press-select";
 
 const selection = ref<Selection>(emptySelection());
@@ -2748,26 +2909,26 @@ On the tile: `@pointerdown="press.onPointerDown($event, path)"`, `@click="onTile
 
 Show a selection bar above the grid when `selecting`: "Selected: N" (`gallery.selected`), "Clear" (`gallery.clear`). Tasks 14 and 15 add Delete and Rename buttons to it.
 
-| key | ru | en | zh-CN |
-| --- | --- | --- | --- |
+| key                | ru               | en                | zh-CN           |
+| ------------------ | ---------------- | ----------------- | --------------- |
 | `gallery.selected` | Выбрано: {count} | Selected: {count} | 已选择：{count} |
-| `gallery.clear` | Снять выделение | Clear selection | 取消选择 |
+| `gallery.clear`    | Снять выделение  | Clear selection   | 取消选择        |
 
 - [ ] **Step 6: Add a gallery component test** (append to `ImageGallery.test.ts`)
 
 ```ts
-  it("toggles with Mod+click and numbers the tiles in selection order", async () => {
-    mountGallery();
-    const user = userEvent.setup();
-    await user.keyboard("{Meta>}");
-    await user.click(screen.getByRole("gridcell", { name: /spare\.png/ }));
-    await user.click(screen.getByRole("gridcell", { name: /cover\.png/ }));
-    await user.keyboard("{/Meta}");
-    expect(within(screen.getByRole("gridcell", { name: /spare\.png/ })).getByText("1")).toBeTruthy();
-    expect(within(screen.getByRole("gridcell", { name: /cover\.png/ })).getByText("2")).toBeTruthy();
-    await user.keyboard("{Escape}");
-    expect(screen.queryByText(/selected:/i)).toBeNull();
-  });
+it("toggles with Mod+click and numbers the tiles in selection order", async () => {
+  mountGallery();
+  const user = userEvent.setup();
+  await user.keyboard("{Meta>}");
+  await user.click(screen.getByRole("gridcell", { name: /spare\.png/ }));
+  await user.click(screen.getByRole("gridcell", { name: /cover\.png/ }));
+  await user.keyboard("{/Meta}");
+  expect(within(screen.getByRole("gridcell", { name: /spare\.png/ })).getByText("1")).toBeTruthy();
+  expect(within(screen.getByRole("gridcell", { name: /cover\.png/ })).getByText("2")).toBeTruthy();
+  await user.keyboard("{Escape}");
+  expect(screen.queryByText(/selected:/i)).toBeNull();
+});
 ```
 
 - [ ] **Step 7: Run and commit**
@@ -2785,26 +2946,27 @@ git commit -m "feat(images): long-press and drag selection in the gallery"
 ### Task 14: Batch delete with one undo
 
 **Files:**
+
 - Modify: `src/services/book/resources.ts` (add `removeResources`), `src/composables/use-book-search.ts` (`deleteResources`, `deleteResource` delegates), `src/components/images/ImageGallery.vue`, `src/locales/*`
 - Test: `src/services/book/__tests__/resources.test.ts`, `src/composables/__tests__/use-book-search.test.ts` (or the file that covers `deleteResource` today: `grep -rln "deleteResource" src --include=*.test.ts`)
 
 **Interfaces:**
+
 - Produces: `removeResources(book: Book, paths: string[]): BookMutation`; `useBookSearch().deleteResources(paths: string[]): void`.
 
 - [ ] **Step 1: Write the failing tests**
 
 ```ts
-  it("removes several resources and clears a removed cover", () => {
-    const result = removeResources(bookWith(["images/a.png", "images/b.png", "images/c.png"], "images/b.png"), [
-      "images/a.png",
-      "images/b.png",
-      "images/missing.png",
-    ]);
-    expect([...result.book.resources.keys()]).toEqual(["images/c.png"]);
-    expect(result.book.metadata.cover).toBeNull();
-    expect(result.metadataCoverChanged).toBe(true);
-    expect(result.removedResources).toEqual(new Set(["images/a.png", "images/b.png"]));
-  });
+it("removes several resources and clears a removed cover", () => {
+  const result = removeResources(
+    bookWith(["images/a.png", "images/b.png", "images/c.png"], "images/b.png"),
+    ["images/a.png", "images/b.png", "images/missing.png"],
+  );
+  expect([...result.book.resources.keys()]).toEqual(["images/c.png"]);
+  expect(result.book.metadata.cover).toBeNull();
+  expect(result.metadataCoverChanged).toBe(true);
+  expect(result.removedResources).toEqual(new Set(["images/a.png", "images/b.png"]));
+});
 ```
 
 (`bookWith(paths, cover)` — a small helper in the test file that builds a `Book` with those PNG resources.)
@@ -2812,16 +2974,16 @@ git commit -m "feat(images): long-press and drag selection in the gallery"
 Composable:
 
 ```ts
-  it("deletes several images under one toast that restores them all", () => {
-    const search = useBookSearch();
-    search.deleteResources(["images/a.png", "images/b.png"]);
-    const notifications = useNotificationsStore();
-    expect(notifications.items).toHaveLength(1);
-    expect(notifications.items[0]!.message).toBe("2 images deleted");
-    notifications.items[0]!.undo!();
-    expect(project.book!.resources.has("images/a.png")).toBe(true);
-    expect(project.book!.resources.has("images/b.png")).toBe(true);
-  });
+it("deletes several images under one toast that restores them all", () => {
+  const search = useBookSearch();
+  search.deleteResources(["images/a.png", "images/b.png"]);
+  const notifications = useNotificationsStore();
+  expect(notifications.items).toHaveLength(1);
+  expect(notifications.items[0]!.message).toBe("2 images deleted");
+  notifications.items[0]!.undo!();
+  expect(project.book!.resources.has("images/a.png")).toBe(true);
+  expect(project.book!.resources.has("images/b.png")).toBe(true);
+});
 ```
 
 (Use the notifications store's real field names; check `src/stores/notifications.ts`.)
@@ -2877,7 +3039,9 @@ In `ImageGallery.vue`, add a confirmation flow like the Explorer's chapter delet
 const search = useBookSearch();
 const settings = useSettingsStore();
 const pendingDelete = ref<string[] | null>(null);
-const usage = computed(() => (project.book ? collectImageUsage(project.book) : new Map<string, string[]>()));
+const usage = computed(() =>
+  project.book ? collectImageUsage(project.book) : new Map<string, string[]>(),
+);
 
 function requestDelete(paths: string[]) {
   if (paths.length === 0) return;
@@ -2901,7 +3065,9 @@ const deleteDetails = computed(() =>
     .map((path) => {
       const chapters = usage.value.get(path) ?? [];
       const name = path.replace(/^images\//, "");
-      return chapters.length ? `${name} — ${t("images.usedIn", "Used in")}: ${chapters.length}` : name;
+      return chapters.length
+        ? `${name} — ${t("images.usedIn", "Used in")}: ${chapters.length}`
+        : name;
     })
     .join("\n"),
 );
@@ -2909,12 +3075,12 @@ const deleteDetails = computed(() =>
 
 Hook it up to: the context-menu "delete" (deletes the selection if the tile is selected, otherwise just that tile), the selection bar's Delete button, the `Delete`/`Backspace` key in `onKeydown`, and the "Delete unused images" button (`requestDelete(all.value.filter((p) => !used.value.has(p)))`). Render `<ConfirmDialog>` with title `t("delete.imagesTitle", "Delete images")`, message `t("delete.imagesMessage", "These images will be removed from the project.")` and `:details="deleteDetails"`.
 
-| key | ru | en | zh-CN |
-| --- | --- | --- | --- |
-| `delete.imagesToast` | Удалено изображений: {count} | {count} images deleted | 已删除 {count} 张图片 |
-| `delete.imagesTitle` | Удалить изображения | Delete images | 删除图片 |
-| `delete.imagesMessage` | Эти изображения будут удалены из проекта. | These images will be removed from the project. | 这些图片将从项目中删除。 |
-| `common.delete` (if missing) | Удалить | Delete | 删除 |
+| key                          | ru                                        | en                                             | zh-CN                    |
+| ---------------------------- | ----------------------------------------- | ---------------------------------------------- | ------------------------ |
+| `delete.imagesToast`         | Удалено изображений: {count}              | {count} images deleted                         | 已删除 {count} 张图片    |
+| `delete.imagesTitle`         | Удалить изображения                       | Delete images                                  | 删除图片                 |
+| `delete.imagesMessage`       | Эти изображения будут удалены из проекта. | These images will be removed from the project. | 这些图片将从项目中删除。 |
+| `common.delete` (if missing) | Удалить                                   | Delete                                         | 删除                     |
 
 - [ ] **Step 5: Run and commit**
 
@@ -2931,11 +3097,13 @@ git commit -m "feat(images): delete selected images with a single undo"
 ### Task 15: Batch rename
 
 **Files:**
+
 - Create: `src/services/book/rename-resources.ts`, `src/components/images/RenameImagesDialog.vue`, `src/composables/use-image-actions.ts`
 - Modify: `src/utils/paths.ts` (allow `_`, add `sanitizeNameInput`), `src/components/editor/editor-commands.ts` (`replaceChapterEditorText` option `addToHistory`), `src/components/images/ImageGallery.vue`, `src/locales/*`
 - Test: `src/services/book/__tests__/rename-resources.test.ts`, `src/utils/__tests__/paths.test.ts`, `src/components/images/__tests__/RenameImagesDialog.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `sanitizeNameInput(value: string): string` — lowercase, keeps `[a-z0-9_-]`.
   - `type RenamePlan = { renames: Array<{ from: string; to: string }> } | { error: "empty" | "conflict"; path?: string }`
@@ -2953,9 +3121,26 @@ import { planBatchRename, renameResources } from "@/services/book/rename-resourc
 import type { Book } from "@/types/book";
 
 const res = { mediaType: "image/png" as const, bytes: new Uint8Array([1]) };
-function book(paths: string[], chapters: string[], cover: string | null = null, css: string | null = null): Book {
+function book(
+  paths: string[],
+  chapters: string[],
+  cover: string | null = null,
+  css: string | null = null,
+): Book {
   return {
-    metadata: { id: "urn:uuid:x", title: "T", version: null, created: "", modified: "", language: "en", authors: [], translators: [], series: null, description: null, cover },
+    metadata: {
+      id: "urn:uuid:x",
+      title: "T",
+      version: null,
+      created: "",
+      modified: "",
+      language: "en",
+      authors: [],
+      translators: [],
+      series: null,
+      description: null,
+      cover,
+    },
     chapters: chapters.map((source, i) => ({ id: `chapter${i}`, source })),
     resources: new Map(paths.map((p) => [p, res])),
     customCss: css,
@@ -2965,23 +3150,47 @@ function book(paths: string[], chapters: string[], cover: string | null = null, 
 describe("planBatchRename", () => {
   it("numbers in selection order with zero padding by count", () => {
     const paths = Array.from({ length: 10 }, (_, i) => `images/p${i}.png`);
-    const plan = planBatchRename(book(paths, []), [paths[3]!, ...paths.filter((_, i) => i !== 3)], "scene");
-    expect("renames" in plan && plan.renames[0]).toEqual({ from: "images/p3.png", to: "images/scene_01.png" });
+    const plan = planBatchRename(
+      book(paths, []),
+      [paths[3]!, ...paths.filter((_, i) => i !== 3)],
+      "scene",
+    );
+    expect("renames" in plan && plan.renames[0]).toEqual({
+      from: "images/p3.png",
+      to: "images/scene_01.png",
+    });
     expect("renames" in plan && plan.renames[9]!.to).toBe("images/scene_10.png");
   });
 
   it("keeps each file's extension and pads 1–9 to one digit", () => {
-    const plan = planBatchRename(book(["images/a.jpg", "images/b.png"], []), ["images/b.png", "images/a.jpg"], "x");
-    expect(plan).toEqual({ renames: [{ from: "images/b.png", to: "images/x_1.png" }, { from: "images/a.jpg", to: "images/x_2.jpg" }] });
+    const plan = planBatchRename(
+      book(["images/a.jpg", "images/b.png"], []),
+      ["images/b.png", "images/a.jpg"],
+      "x",
+    );
+    expect(plan).toEqual({
+      renames: [
+        { from: "images/b.png", to: "images/x_1.png" },
+        { from: "images/a.jpg", to: "images/x_2.jpg" },
+      ],
+    });
   });
 
   it("rejects an empty name and a clash with an unselected image", () => {
-    expect(planBatchRename(book(["images/a.png"], []), ["images/a.png"], "")).toEqual({ error: "empty" });
-    expect(planBatchRename(book(["images/a.png", "images/x_1.png"], []), ["images/a.png"], "x")).toEqual({ error: "conflict", path: "images/x_1.png" });
+    expect(planBatchRename(book(["images/a.png"], []), ["images/a.png"], "")).toEqual({
+      error: "empty",
+    });
+    expect(
+      planBatchRename(book(["images/a.png", "images/x_1.png"], []), ["images/a.png"], "x"),
+    ).toEqual({ error: "conflict", path: "images/x_1.png" });
   });
 
   it("allows swapping names inside the selection", () => {
-    const plan = planBatchRename(book(["images/x_1.png", "images/x_2.png"], []), ["images/x_2.png", "images/x_1.png"], "x");
+    const plan = planBatchRename(
+      book(["images/x_1.png", "images/x_2.png"], []),
+      ["images/x_2.png", "images/x_1.png"],
+      "x",
+    );
     expect("renames" in plan).toBe(true);
   });
 });
@@ -2990,13 +3199,23 @@ describe("renameResources", () => {
   it("rewrites chapter references, the cover and css urls, but not look-alike names", () => {
     const source = "![a](images/a.png) ![b](images/aa.png)\n\n![](images/a.png)";
     const result = renameResources(
-      book(["images/a.png", "images/aa.png"], [source], "images/a.png", 'p { background: url("images/a.png") }'),
+      book(
+        ["images/a.png", "images/aa.png"],
+        [source],
+        "images/a.png",
+        'p { background: url("images/a.png") }',
+      ),
       [{ from: "images/a.png", to: "images/z_1.png" }],
     );
-    expect(result.mutation.book.chapters[0]!.source).toBe("![a](images/z_1.png) ![b](images/aa.png)\n\n![](images/z_1.png)");
+    expect(result.mutation.book.chapters[0]!.source).toBe(
+      "![a](images/z_1.png) ![b](images/aa.png)\n\n![](images/z_1.png)",
+    );
     expect(result.mutation.book.metadata.cover).toBe("images/z_1.png");
     expect(result.mutation.book.customCss).toBe('p { background: url("images/z_1.png") }');
-    expect([...result.mutation.book.resources.keys()].sort()).toEqual(["images/aa.png", "images/z_1.png"]);
+    expect([...result.mutation.book.resources.keys()].sort()).toEqual([
+      "images/aa.png",
+      "images/z_1.png",
+    ]);
     expect(result.mutation.removedResources).toEqual(new Set(["images/a.png"]));
     expect(result.mutation.changedResources).toEqual(new Set(["images/z_1.png"]));
     expect(result.chapterEdits.get("chapter0")).toEqual([
@@ -3006,10 +3225,13 @@ describe("renameResources", () => {
   });
 
   it("swaps two names in one step", () => {
-    const result = renameResources(book(["images/a.png", "images/b.png"], ["![](images/a.png)![](images/b.png)"]), [
-      { from: "images/a.png", to: "images/b.png" },
-      { from: "images/b.png", to: "images/a.png" },
-    ]);
+    const result = renameResources(
+      book(["images/a.png", "images/b.png"], ["![](images/a.png)![](images/b.png)"]),
+      [
+        { from: "images/a.png", to: "images/b.png" },
+        { from: "images/b.png", to: "images/a.png" },
+      ],
+    );
     expect(result.mutation.book.chapters[0]!.source).toBe("![](images/b.png)![](images/a.png)");
     expect(result.mutation.book.resources.size).toBe(2);
   });
@@ -3018,30 +3240,30 @@ describe("renameResources", () => {
 
 ```ts
 // src/utils/__tests__/paths.test.ts (append)
-  it("keeps underscores in resource names", () => {
-    expect(normalizeResourceName("Scene_01.PNG")).toBe("scene_01.png");
-  });
-  it("filters name input to lowercase latin, digits, _ and -", () => {
-    expect(sanitizeNameInput("Сцена Scene_1-A!")).toBe("scene_1-a");
-  });
+it("keeps underscores in resource names", () => {
+  expect(normalizeResourceName("Scene_01.PNG")).toBe("scene_01.png");
+});
+it("filters name input to lowercase latin, digits, _ and -", () => {
+  expect(sanitizeNameInput("Сцена Scene_1-A!")).toBe("scene_1-a");
+});
 ```
 
 ```ts
 // src/components/images/__tests__/RenameImagesDialog.test.ts
-  it("previews old → new names and blocks a conflicting name", async () => {
-    // render with paths ["images/a.png", "images/b.jpg"], book also has "images/x_1.png" unselected
-    await userEvent.type(screen.getByRole("textbox", { name: /new name/i }), "Ш-x");
-    expect(screen.getByRole("textbox", { name: /new name/i })).toHaveValue("-x");
-    await userEvent.clear(screen.getByRole("textbox", { name: /new name/i }));
-    await userEvent.type(screen.getByRole("textbox", { name: /new name/i }), "y");
-    expect(screen.getByText("a.png")).toBeTruthy();
-    expect(screen.getByText("y_1.png")).toBeTruthy();
-    expect(screen.getByText("y_2.jpg")).toBeTruthy();
-    await userEvent.clear(screen.getByRole("textbox", { name: /new name/i }));
-    await userEvent.type(screen.getByRole("textbox", { name: /new name/i }), "x");
-    expect(screen.getByRole("button", { name: /rename/i })).toBeDisabled();
-    expect(screen.getByText(/already exists/i)).toBeTruthy();
-  });
+it("previews old → new names and blocks a conflicting name", async () => {
+  // render with paths ["images/a.png", "images/b.jpg"], book also has "images/x_1.png" unselected
+  await userEvent.type(screen.getByRole("textbox", { name: /new name/i }), "Ш-x");
+  expect(screen.getByRole("textbox", { name: /new name/i })).toHaveValue("-x");
+  await userEvent.clear(screen.getByRole("textbox", { name: /new name/i }));
+  await userEvent.type(screen.getByRole("textbox", { name: /new name/i }), "y");
+  expect(screen.getByText("a.png")).toBeTruthy();
+  expect(screen.getByText("y_1.png")).toBeTruthy();
+  expect(screen.getByText("y_2.jpg")).toBeTruthy();
+  await userEvent.clear(screen.getByRole("textbox", { name: /new name/i }));
+  await userEvent.type(screen.getByRole("textbox", { name: /new name/i }), "x");
+  expect(screen.getByRole("button", { name: /rename/i })).toBeDisabled();
+  expect(screen.getByText(/already exists/i)).toBeTruthy();
+});
 ```
 
 - [ ] **Step 2: Run and see them fail**
@@ -3074,7 +3296,8 @@ export interface ResourceRename {
   from: string;
   to: string;
 }
-export type RenamePlan = { renames: ResourceRename[] } | { error: "empty" | "conflict"; path?: string };
+export type RenamePlan =
+  { renames: ResourceRename[] } | { error: "empty" | "conflict"; path?: string };
 export type TextEdit = { from: number; to: number; insert: string };
 
 const IMAGE_REF = /!\[[^\]]*\]\(([^)\s]+)\)/g;
@@ -3136,7 +3359,9 @@ export function renameResources(
       changedChapters: new Set(chapterEdits.keys()),
       removedChapters: new Set(),
       changedResources: newPaths,
-      removedResources: new Set(renames.map(({ from }) => from).filter((path) => !newPaths.has(path))),
+      removedResources: new Set(
+        renames.map(({ from }) => from).filter((path) => !newPaths.has(path)),
+      ),
     },
     chapterEdits,
   };
@@ -3154,7 +3379,9 @@ import { Transaction } from "@codemirror/state";
 
 function applyChapterEditorChanges(
   chapterId: string,
-  changes: Array<{ from: number; to: number; insert: string }> | { from: number; to: number; insert: string },
+  changes:
+    | Array<{ from: number; to: number; insert: string }>
+    | { from: number; to: number; insert: string },
   addToHistory = true,
 ): EditorState | null {
   const state = currentChapterEditorState(chapterId);
@@ -3184,7 +3411,11 @@ Add an `editor-commands.test.ts` case: after `replaceChapterEditorText(id, edits
 - [ ] **Step 6: Implement `use-image-actions.ts`**
 
 ```ts
-import { createChapterEditor, chapterEditorStates, replaceChapterEditorText } from "@/components/editor/editor-commands";
+import {
+  createChapterEditor,
+  chapterEditorStates,
+  replaceChapterEditorText,
+} from "@/components/editor/editor-commands";
 import { renameResources, type ResourceRename } from "@/services/book/rename-resources";
 import { useNotificationsStore } from "@/stores/notifications";
 import { useProjectStore } from "@/stores/project";
@@ -3201,7 +3432,11 @@ export function useImageActions() {
     for (const [chapterId, edits] of chapterEdits) {
       const chapter = project.book.chapters.find((item) => item.id === chapterId)!;
       if (!chapterEditorStates.has(chapterId)) createChapterEditor(chapterId, chapter.source);
-      replaceChapterEditorText(chapterId, [...edits].sort((a, b) => b.from - a.from), { addToHistory: false });
+      replaceChapterEditorText(
+        chapterId,
+        [...edits].sort((a, b) => b.from - a.from),
+        { addToHistory: false },
+      );
     }
     project.applyMutation(mutation);
     return true;
@@ -3214,7 +3449,10 @@ export function useImageActions() {
       project.bookGeneration === generation &&
       renames.every(({ to }) => project.book?.resources.has(to));
     notifications.add({
-      message: t("gallery.renamedToast", "{count} images renamed").replace("{count}", String(renames.length)),
+      message: t("gallery.renamedToast", "{count} images renamed").replace(
+        "{count}",
+        String(renames.length),
+      ),
       kind: "success",
       undoState: canUndo,
       undo: () => {
@@ -3235,7 +3473,14 @@ Add a unit test with a fake book: rename, check the notification, call `undo`, c
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { planBatchRename, type ResourceRename } from "@/services/book/rename-resources";
@@ -3248,19 +3493,31 @@ const emit = defineEmits<{ cancel: []; confirm: [renames: ResourceRename[]] }>()
 const project = useProjectStore();
 const { t } = useSafeI18n();
 const name = ref("");
-watch(() => props.open, (open) => open && (name.value = ""));
+watch(
+  () => props.open,
+  (open) => open && (name.value = ""),
+);
 
-const plan = computed(() => (project.book ? planBatchRename(project.book, props.paths, name.value) : { error: "empty" as const }));
+const plan = computed(() =>
+  project.book
+    ? planBatchRename(project.book, props.paths, name.value)
+    : { error: "empty" as const },
+);
 const preview = computed(() => {
   const width = String(props.paths.length).length;
   return props.paths.map((from, index) => ({
     from: from.replace(/^images\//, ""),
-    to: name.value ? `${name.value}_${String(index + 1).padStart(width, "0")}${from.slice(from.lastIndexOf("."))}` : "—",
+    to: name.value
+      ? `${name.value}_${String(index + 1).padStart(width, "0")}${from.slice(from.lastIndexOf("."))}`
+      : "—",
   }));
 });
 const error = computed(() =>
   "error" in plan.value && plan.value.error === "conflict"
-    ? t("gallery.renameConflict", "{name} already exists").replace("{name}", (plan.value.path ?? "").replace(/^images\//, ""))
+    ? t("gallery.renameConflict", "{name} already exists").replace(
+        "{name}",
+        (plan.value.path ?? "").replace(/^images\//, ""),
+      )
     : "",
 );
 function onInput(event: Event) {
@@ -3279,11 +3536,22 @@ function confirm() {
     <DialogContent>
       <DialogHeader>
         <DialogTitle>{{ t("gallery.renameTitle", "Rename images") }}</DialogTitle>
-        <DialogDescription>{{ t("gallery.renameHint", "Images are numbered in the order you selected them. Latin letters, digits, _ and - only.") }}</DialogDescription>
+        <DialogDescription>{{
+          t(
+            "gallery.renameHint",
+            "Images are numbered in the order you selected them. Latin letters, digits, _ and - only.",
+          )
+        }}</DialogDescription>
       </DialogHeader>
       <form class="flex flex-col gap-3" @submit.prevent="confirm">
         <Label for="rename-name">{{ t("gallery.newName", "New name") }}</Label>
-        <Input id="rename-name" :model-value="name" autocomplete="off" spellcheck="false" @input="onInput" />
+        <Input
+          id="rename-name"
+          :model-value="name"
+          autocomplete="off"
+          spellcheck="false"
+          @input="onInput"
+        />
         <p v-if="error" class="text-sm text-destructive" role="alert">{{ error }}</p>
         <ol class="max-h-60 overflow-auto text-sm">
           <li v-for="row in preview" :key="row.from" class="flex gap-2">
@@ -3293,8 +3561,12 @@ function confirm() {
           </li>
         </ol>
         <DialogFooter>
-          <Button type="button" variant="outline" @click="emit('cancel')">{{ t("common.cancel", "Cancel") }}</Button>
-          <Button type="submit" :disabled="!('renames' in plan)">{{ t("gallery.renameConfirm", "Rename") }}</Button>
+          <Button type="button" variant="outline" @click="emit('cancel')">{{
+            t("common.cancel", "Cancel")
+          }}</Button>
+          <Button type="submit" :disabled="!('renames' in plan)">{{
+            t("gallery.renameConfirm", "Rename")
+          }}</Button>
         </DialogFooter>
       </form>
     </DialogContent>
@@ -3319,25 +3591,25 @@ function confirmRename(renames: ResourceRename[]) {
 ```
 
 ```vue
-    <RenameImagesDialog
-      :open="renaming !== null"
-      :paths="renaming ?? []"
-      @cancel="renaming = null"
-      @confirm="confirmRename"
-    />
+<RenameImagesDialog
+  :open="renaming !== null"
+  :paths="renaming ?? []"
+  @cancel="renaming = null"
+  @confirm="confirmRename"
+/>
 ```
 
 Locale keys:
 
-| key | ru | en | zh-CN |
-| --- | --- | --- | --- |
-| `gallery.renameTitle` | Переименовать изображения | Rename images | 重命名图片 |
-| `gallery.renameHint` | Изображения нумеруются в порядке выделения. Только латиница, цифры, _ и -. | Images are numbered in the order you selected them. Latin letters, digits, _ and - only. | 图片按选择顺序编号。仅限拉丁字母、数字、_ 和 -。 |
-| `gallery.newName` | Новое имя | New name | 新名称 |
-| `gallery.renameConflict` | {name} уже существует | {name} already exists | {name} 已存在 |
-| `gallery.renameConfirm` | Переименовать | Rename | 重命名 |
-| `gallery.renamedToast` | Переименовано изображений: {count} | {count} images renamed | 已重命名 {count} 张图片 |
-| `common.cancel` (if missing) | Отмена | Cancel | 取消 |
+| key                          | ru                                                                         | en                                                                                       | zh-CN                                            |
+| ---------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `gallery.renameTitle`        | Переименовать изображения                                                  | Rename images                                                                            | 重命名图片                                       |
+| `gallery.renameHint`         | Изображения нумеруются в порядке выделения. Только латиница, цифры, _ и -. | Images are numbered in the order you selected them. Latin letters, digits, _ and - only. | 图片按选择顺序编号。仅限拉丁字母、数字、_ 和 -。 |
+| `gallery.newName`            | Новое имя                                                                  | New name                                                                                 | 新名称                                           |
+| `gallery.renameConflict`     | {name} уже существует                                                      | {name} already exists                                                                    | {name} 已存在                                    |
+| `gallery.renameConfirm`      | Переименовать                                                              | Rename                                                                                   | 重命名                                           |
+| `gallery.renamedToast`       | Переименовано изображений: {count}                                         | {count} images renamed                                                                   | 已重命名 {count} 张图片                          |
+| `common.cancel` (if missing) | Отмена                                                                     | Cancel                                                                                   | 取消                                             |
 
 - [ ] **Step 9: Run and commit**
 
@@ -3354,6 +3626,7 @@ git commit -m "feat(images): batch rename in selection order, with references up
 ### Task 16: Record the changed decisions
 
 **Files:**
+
 - Modify: `docs/superpowers/specs/2026-09-15-easy-digital-book-design.md`, `AGENTS.md`, `docs/release-checklist.md`, `docs/superpowers/notes/2026-10-03-issues.md`
 
 - [ ] **Step 1: Update the base spec**
