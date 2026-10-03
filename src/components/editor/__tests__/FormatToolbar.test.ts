@@ -71,4 +71,23 @@ describe("FormatToolbar", () => {
     await waitFor(() => expect(bold).toHaveAttribute("aria-pressed", "false"));
     late.destroy();
   });
+
+  it("anchors the image picker outside the group hidden on narrow headers", async () => {
+    const { container } = render(FormatToolbar, { props: { chapterId: "c1", disabled: false } });
+    const anchor = container.querySelector("[data-format-toolbar-anchor]");
+    expect(anchor).not.toBeNull();
+    const imageButton = screen.getByRole("button", { name: /insert image/i });
+    expect(anchor!.contains(imageButton)).toBe(true);
+    expect(imageButton.closest(".hidden")).not.toBeNull();
+    expect(anchor!.closest(".hidden")).toBeNull();
+    expect(anchor!.className).not.toContain("hidden");
+  });
+
+  it("opens the book picker from the More menu", async () => {
+    render(FormatToolbar, { props: { chapterId: "c1", disabled: false } });
+    await userEvent.click(screen.getByRole("button", { name: /more formatting/i }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: /insert image/i }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: /from the book/i }));
+    expect(await screen.findByText(/no images yet/i)).toBeInTheDocument();
+  });
 });

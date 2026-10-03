@@ -158,139 +158,143 @@ const historyItems = computed(() => [
 
 <template>
   <TooltipProvider>
-    <Toolbar :aria-label="t('format.toolbar', 'Formatting')" class="shrink-0 gap-0.5">
-      <Tooltip v-for="item in primary" :key="item.id">
-        <TooltipTrigger as-child>
-          <ToolbarButton as-child>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              :aria-label="item.label"
-              :aria-pressed="item.pressed === undefined ? undefined : item.pressed"
-              :disabled="disabled"
-              :class="{ 'bg-accent': item.pressed }"
-              @click="item.action"
-            >
-              <component :is="item.icon" aria-hidden="true" />
-            </Button>
-          </ToolbarButton>
-        </TooltipTrigger>
-        <TooltipContent
-          >{{ item.label }} <Kbd>{{ item.keys }}</Kbd></TooltipContent
-        >
-      </Tooltip>
-
-      <div class="hidden items-center gap-0.5 @2xl:flex">
-        <ToolbarSeparator class="mx-1 h-5" />
-        <Tooltip v-for="item in secondary" :key="item.id">
-          <TooltipTrigger as-child>
-            <ToolbarButton as-child>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                :aria-label="item.label"
-                :disabled="disabled"
-                @click="item.action"
+    <!-- One anchor around the whole toolbar: the image button is hidden below
+         @2xl, and the picker opened from "More" must still have a visible anchor. -->
+    <Popover v-model:open="pickerOpen">
+      <PopoverAnchor as-child>
+        <div class="shrink-0" data-format-toolbar-anchor>
+          <Toolbar :aria-label="t('format.toolbar', 'Formatting')" class="gap-0.5">
+            <Tooltip v-for="item in primary" :key="item.id">
+              <TooltipTrigger as-child>
+                <ToolbarButton as-child>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    :aria-label="item.label"
+                    :aria-pressed="item.pressed === undefined ? undefined : item.pressed"
+                    :disabled="disabled"
+                    :class="{ 'bg-accent': item.pressed }"
+                    @click="item.action"
+                  >
+                    <component :is="item.icon" aria-hidden="true" />
+                  </Button>
+                </ToolbarButton>
+              </TooltipTrigger>
+              <TooltipContent
+                >{{ item.label }} <Kbd>{{ item.keys }}</Kbd></TooltipContent
               >
-                <component :is="item.icon" aria-hidden="true" />
-              </Button>
-            </ToolbarButton>
-          </TooltipTrigger>
-          <TooltipContent>{{ item.label }}</TooltipContent>
-        </Tooltip>
-        <Popover v-model:open="pickerOpen">
-          <PopoverAnchor as-child>
+            </Tooltip>
+
+            <div class="hidden items-center gap-0.5 @2xl:flex">
+              <ToolbarSeparator class="mx-1 h-5" />
+              <Tooltip v-for="item in secondary" :key="item.id">
+                <TooltipTrigger as-child>
+                  <ToolbarButton as-child>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      :aria-label="item.label"
+                      :disabled="disabled"
+                      @click="item.action"
+                    >
+                      <component :is="item.icon" aria-hidden="true" />
+                    </Button>
+                  </ToolbarButton>
+                </TooltipTrigger>
+                <TooltipContent>{{ item.label }}</TooltipContent>
+              </Tooltip>
+              <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                  <ToolbarButton as-child>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      :aria-label="t('format.image', 'Insert image')"
+                      :disabled="disabled"
+                    >
+                      <IconPhoto aria-hidden="true" />
+                    </Button>
+                  </ToolbarButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem @select="fromFile">{{
+                    t("format.imageFromFile", "From file…")
+                  }}</DropdownMenuItem>
+                  <DropdownMenuItem @select="pickerOpen = true">{{
+                    t("format.imageFromBook", "From the book…")
+                  }}</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <ToolbarSeparator class="mx-1 h-5" />
+              <Tooltip v-for="item in historyItems" :key="item.id">
+                <TooltipTrigger as-child>
+                  <ToolbarButton as-child>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      :aria-label="item.label"
+                      :disabled="disabled || !item.enabled"
+                      @click="item.action"
+                    >
+                      <component :is="item.icon" aria-hidden="true" />
+                    </Button>
+                  </ToolbarButton>
+                </TooltipTrigger>
+                <TooltipContent
+                  >{{ item.label }} <Kbd>{{ item.keys }}</Kbd></TooltipContent
+                >
+              </Tooltip>
+            </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
                 <ToolbarButton as-child>
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    :aria-label="t('format.image', 'Insert image')"
+                    class="@2xl:hidden"
+                    :aria-label="t('format.more', 'More formatting')"
                     :disabled="disabled"
                   >
-                    <IconPhoto aria-hidden="true" />
+                    <IconDots aria-hidden="true" />
                   </Button>
                 </ToolbarButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem @select="fromFile">{{
-                  t("format.imageFromFile", "From file…")
-                }}</DropdownMenuItem>
-                <DropdownMenuItem @select="pickerOpen = true">{{
-                  t("format.imageFromBook", "From the book…")
-                }}</DropdownMenuItem>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem v-for="item in secondary" :key="item.id" @select="item.action">
+                  <component :is="item.icon" aria-hidden="true" />{{ item.label }}
+                </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger
+                    ><IconPhoto aria-hidden="true" />{{
+                      t("format.image", "Insert image")
+                    }}</DropdownMenuSubTrigger
+                  >
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem @select="fromFile">{{
+                      t("format.imageFromFile", "From file…")
+                    }}</DropdownMenuItem>
+                    <DropdownMenuItem @select="pickerOpen = true">{{
+                      t("format.imageFromBook", "From the book…")
+                    }}</DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuItem
+                  v-for="item in historyItems"
+                  :key="item.id"
+                  :disabled="!item.enabled"
+                  @select="item.action"
+                >
+                  <component :is="item.icon" aria-hidden="true" />{{ item.label }}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </PopoverAnchor>
-          <PopoverContent class="w-auto p-2">
-            <ImagePickerPopover @pick="fromBook" />
-          </PopoverContent>
-        </Popover>
-        <ToolbarSeparator class="mx-1 h-5" />
-        <Tooltip v-for="item in historyItems" :key="item.id">
-          <TooltipTrigger as-child>
-            <ToolbarButton as-child>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                :aria-label="item.label"
-                :disabled="disabled || !item.enabled"
-                @click="item.action"
-              >
-                <component :is="item.icon" aria-hidden="true" />
-              </Button>
-            </ToolbarButton>
-          </TooltipTrigger>
-          <TooltipContent
-            >{{ item.label }} <Kbd>{{ item.keys }}</Kbd></TooltipContent
-          >
-        </Tooltip>
-      </div>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <ToolbarButton as-child>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              class="@2xl:hidden"
-              :aria-label="t('format.more', 'More formatting')"
-              :disabled="disabled"
-            >
-              <IconDots aria-hidden="true" />
-            </Button>
-          </ToolbarButton>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem v-for="item in secondary" :key="item.id" @select="item.action">
-            <component :is="item.icon" aria-hidden="true" />{{ item.label }}
-          </DropdownMenuItem>
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger
-              ><IconPhoto aria-hidden="true" />{{
-                t("format.image", "Insert image")
-              }}</DropdownMenuSubTrigger
-            >
-            <DropdownMenuSubContent>
-              <DropdownMenuItem @select="fromFile">{{
-                t("format.imageFromFile", "From file…")
-              }}</DropdownMenuItem>
-              <DropdownMenuItem @select="pickerOpen = true">{{
-                t("format.imageFromBook", "From the book…")
-              }}</DropdownMenuItem>
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
-          <DropdownMenuItem
-            v-for="item in historyItems"
-            :key="item.id"
-            :disabled="!item.enabled"
-            @select="item.action"
-          >
-            <component :is="item.icon" aria-hidden="true" />{{ item.label }}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </Toolbar>
+          </Toolbar>
+        </div>
+      </PopoverAnchor>
+      <PopoverContent class="w-auto p-2">
+        <ImagePickerPopover @pick="fromBook" />
+      </PopoverContent>
+    </Popover>
   </TooltipProvider>
 </template>
