@@ -9,6 +9,7 @@ import {
   type Transaction,
 } from "@codemirror/state";
 import type { EditorView, KeyBinding } from "@codemirror/view";
+import { ref } from "vue";
 
 /**
  * `@codemirror/commands`' `defaultKeymap` includes the Emacs-style `Ctrl-o`
@@ -197,4 +198,75 @@ export function insertFootnote(state: EditorState): Transaction {
     ],
     selection: EditorSelection.cursor(finalLength),
   });
+}
+
+/** Bumped by SourceEditor on selection or text changes, so toolbars can recompute. */
+export const chapterEditorTick = ref(0);
+
+/** NovLang allows `# ` only on a chapter's first line. */
+export function toggleHeading(state: EditorState): Transaction {
+  const first = state.doc.line(1);
+  return first.text.startsWith("# ")
+    ? state.update({ changes: { from: 0, to: 2, insert: "" } })
+    : state.update({ changes: { from: 0, insert: "# " } });
+}
+
+export function toggleBlockquote(state: EditorState): Transaction {
+  const { from, to } = state.selection.main;
+  const lines = [];
+  for (let n = state.doc.lineAt(from).number; n <= state.doc.lineAt(to).number; n++)
+    lines.push(state.doc.line(n));
+  const filled = lines.filter((line) => line.text.trim() !== "");
+  const quoted = filled.length > 0 && filled.every((line) => line.text.startsWith(">"));
+  const changes = filled.map((line) =>
+    quoted
+      ? { from: line.from, to: line.from + (line.text.startsWith("> ") ? 2 : 1), insert: "" }
+      : { from: line.from, insert: "> " },
+  );
+  return state.update({ changes });
+}
+
+function paragraphAt(state: EditorState, block: string, cursorOffset: number): Transaction {
+  const { from, to } = state.selection.main;
+  const before = state.sliceDoc(0, from);
+  const after = state.sliceDoc(to);
+  const prefix =
+    before === "" || before.endsWith("\n\n") ? "" : before.endsWith("\n") ? "\n" : "\n\n";
+  const suffix = after.startsWith("\n\n") ? "" : after.startsWith("\n") ? "\n" : "\n\n";
+  const insert = `${prefix}${block}${suffix}`;
+  return state.update({
+    changes: { from, to, insert },
+    selection: EditorSelection.cursor(from + prefix.length + cursorOffset),
+  });
+}
+
+export function insertSceneBreak(state: EditorState): Transaction {
+  const tr = paragraphAt(state, "***", 3);
+  const end = tr.state.selection.main.head;
+  const after = tr.state.sliceDoc(end, end + 2);
+  // Continue typing in the paragraph after the break.
+  return state.update({
+    changes: tr.changes,
+    selection: EditorSelection.cursor(after === "\n\n" ? end + 2 : end),
+  });
+}
+
+/** The cursor lands inside `[]` so the author can type the alt text. */
+export function insertImageReference(state: EditorState, path: string): Transaction {
+  return paragraphAt(state, `![](${path})`, 2);
+}
+
+export function activeMarkup(state: EditorState): { bold: boolean; italic: boolean } {
+  const head = state.selection.main.head;
+  const line = state.doc.lineAt(head);
+  const offset = head - line.from;
+  const result = { bold: false, italic: false };
+  for (const match of line.text.matchAll(/\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|\*(.+?)\*/g)) {
+    const start = match.index!;
+    if (offset <= start || offset >= start + match[0].length) continue;
+    if (match[1] !== undefined) return { bold: true, italic: true };
+    if (match[2] !== undefined) result.bold = true;
+    if (match[3] !== undefined) result.italic = true;
+  }
+  return result;
 }
