@@ -60,16 +60,20 @@ test.describe("shell fills the window height", () => {
     expect(sidebar).toBeCloseTo(split, 0);
   });
 
-  test("a single pane view stretches to the full body height", async ({ page }) => {
+  test("the content header spans source and preview, and panes fill the rest", async ({ page }) => {
+    const header = (await page.locator("[data-content-header]").boundingBox())!;
+    const source = (await page.locator('[data-pane="source"]').boundingBox())!;
+    const preview = (await page.locator('[data-pane="preview"]').boundingBox())!;
+    expect(header.x).toBeCloseTo(source.x, 0);
+    expect(header.x + header.width).toBeCloseTo(preview.x + preview.width, 0);
+    expect(source.y).toBeCloseTo(header.y + header.height, 0);
+
     await page.locator('[data-activity="settings"]').click();
     await page.locator(SETTINGS).waitFor();
-
     const body = await heightOf(page, BODY);
-    const pane = await page
-      .locator(SINGLE_PANE)
-      .first()
-      .evaluate((el) => el.getBoundingClientRect().height);
-    expect(pane).toBeCloseTo(body, 0);
+    const pane = await heightOf(page, SINGLE_PANE);
+    const headerHeight = await heightOf(page, "[data-content-header]");
+    expect(pane + headerHeight).toBeCloseTo(body, 0);
   });
 
   test("the shell never grows past the window", async ({ page }) => {

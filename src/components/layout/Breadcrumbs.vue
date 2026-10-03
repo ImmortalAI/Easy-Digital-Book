@@ -35,15 +35,15 @@ const segments = computed<string[]>(() => {
 </script>
 
 <template>
-  <Breadcrumb
-    :aria-label="t('breadcrumbs.aria', 'Breadcrumbs')"
-    class="min-h-8 shrink-0 border-b px-3 py-2"
-  >
-    <BreadcrumbList class="text-xs">
+  <Breadcrumb :aria-label="t('breadcrumbs.aria', 'Breadcrumbs')" class="min-w-0 px-3 py-2">
+    <BreadcrumbList class="flex-nowrap text-xs">
       <template v-for="(segment, index) in segments" :key="index">
         <BreadcrumbSeparator v-if="index > 0" />
-        <BreadcrumbItem :aria-current="index === segments.length - 1 ? 'page' : undefined">
-          {{ segment }}
+        <BreadcrumbItem
+          class="min-w-0"
+          :aria-current="index === segments.length - 1 ? 'page' : undefined"
+        >
+          <span class="truncate">{{ segment }}</span>
         </BreadcrumbItem>
       </template>
     </BreadcrumbList>

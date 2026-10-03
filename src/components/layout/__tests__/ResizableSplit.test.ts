@@ -175,4 +175,14 @@ describe("ResizableSplit", () => {
       "Изменить соотношение редактора и превью",
     ]);
   });
+
+  it("renders the header once above the panes in split and single modes", async () => {
+    const wrapper = mount(ResizableSplit, { slots: { header: "<div data-test-header />" } });
+    expect(wrapper.findAll("[data-test-header]")).toHaveLength(1);
+    const header = wrapper.get("[data-test-header]").element;
+    const source = wrapper.get('[data-pane="source"]').element;
+    expect(header.compareDocumentPosition(source) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await wrapper.setProps({ singlePane: true });
+    expect(wrapper.findAll("[data-test-header]")).toHaveLength(1);
+  });
 });

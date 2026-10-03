@@ -7,7 +7,7 @@ import { useProjectStore } from "@/stores/project";
 import type { DiagnosticPosition } from "@/types/diagnostics";
 import AppToolbar from "@/components/layout/AppToolbar.vue";
 import FileMenu from "@/components/layout/FileMenu.vue";
-import Breadcrumbs from "@/components/layout/Breadcrumbs.vue";
+import ContentHeader from "@/components/layout/ContentHeader.vue";
 import ResizableSplit from "@/components/layout/ResizableSplit.vue";
 import StatusBar, { type SaveState } from "@/components/layout/StatusBar.vue";
 import PreviewPane from "@/components/editor/PreviewPane.vue";
@@ -284,9 +284,11 @@ onMounted(findSourceScroller);
             <SearchView v-else @select="selectSearchResult" />
           </div>
         </template>
+        <template #header>
+          <ContentHeader />
+        </template>
         <template #single>
-          <Breadcrumbs />
-          <!-- Breadcrumbs stay pinned; the view below them scrolls. Without this,
+          <!-- The header stays pinned; the view below them scrolls. Without this,
                metadata and settings taller than the window are clipped by the
                pane's overflow. -->
           <div class="flex min-h-0 flex-1 flex-col overflow-auto" data-single-pane-content>
@@ -308,7 +310,6 @@ onMounted(findSourceScroller);
         </template>
         <template #source>
           <div class="relative flex h-full flex-col">
-            <Breadcrumbs />
             <SourceEditor
               ref="sourceEditor"
               v-if="layout.center.kind === 'chapter' && selectedChapterId"
