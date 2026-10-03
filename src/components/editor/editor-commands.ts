@@ -39,10 +39,13 @@ export const chapterEditorViews = new Map<string, EditorView>();
 
 export function registerChapterEditorView(chapterId: string, view: EditorView): void {
   chapterEditorViews.set(chapterId, view);
+  chapterEditorTick.value++;
 }
 
 export function unregisterChapterEditorView(chapterId: string, view: EditorView): void {
-  if (chapterEditorViews.get(chapterId) === view) chapterEditorViews.delete(chapterId);
+  if (chapterEditorViews.get(chapterId) !== view) return;
+  chapterEditorViews.delete(chapterId);
+  chapterEditorTick.value++;
 }
 
 /**

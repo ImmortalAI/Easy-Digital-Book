@@ -230,5 +230,22 @@
     "label": "通知",
     "region": "通知（{hotkey}）",
     "autosaveFailed": "自动保存失败"
+  },
+  "format": {
+    "toolbar": "格式",
+    "bold": "粗体",
+    "italic": "斜体",
+    "footnote": "脚注",
+    "heading": "章节标题",
+    "quote": "引用",
+    "sceneBreak": "场景分隔",
+    "image": "插入图片",
+    "imageFromFile": "从文件…",
+    "imageFromBook": "从书中…",
+    "noImages": "书中还没有图片",
+    "undo": "撤销",
+    "redo": "重做",
+    "search": "在本章中查找",
+    "more": "更多格式"
   }
 }

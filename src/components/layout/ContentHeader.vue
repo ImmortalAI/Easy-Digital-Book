@@ -1,5 +1,13 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import Breadcrumbs from "@/components/layout/Breadcrumbs.vue";
+import FormatToolbar from "@/components/editor/FormatToolbar.vue";
+import { useLayoutStore } from "@/stores/layout";
+
+defineProps<{ chapterId: string }>();
+const emit = defineEmits<{ "insert-image-from-file": [position: number] }>();
+const layout = useLayoutStore();
+const showToolbar = computed(() => layout.center.kind === "chapter");
 </script>
 
 <template>
@@ -10,6 +18,11 @@ import Breadcrumbs from "@/components/layout/Breadcrumbs.vue";
     data-content-header
   >
     <Breadcrumbs class="min-w-0 flex-1" />
-    <slot />
+    <FormatToolbar
+      v-if="showToolbar && chapterId"
+      :chapter-id="chapterId"
+      :disabled="layout.mode === 'preview'"
+      @insert-image-from-file="emit('insert-image-from-file', $event)"
+    />
   </div>
 </template>

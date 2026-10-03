@@ -230,5 +230,22 @@
     "label": "Notification",
     "region": "Notifications ({hotkey})",
     "autosaveFailed": "Autosave failed"
+  },
+  "format": {
+    "toolbar": "Formatting",
+    "bold": "Bold",
+    "italic": "Italic",
+    "footnote": "Footnote",
+    "heading": "Chapter heading",
+    "quote": "Quote",
+    "sceneBreak": "Scene break",
+    "image": "Insert image",
+    "imageFromFile": "From file…",
+    "imageFromBook": "From the book…",
+    "noImages": "The book has no images yet",
+    "undo": "Undo",
+    "redo": "Redo",
+    "search": "Find in chapter",
+    "more": "More formatting"
   }
 }

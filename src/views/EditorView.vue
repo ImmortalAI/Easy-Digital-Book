@@ -95,6 +95,16 @@ async function importImage() {
   await imageImport.pickAndImport();
 }
 
+async function insertImageFromFile(position: number) {
+  const chapter = selectedChapter.value;
+  if (!chapter) return;
+  const source = chapter.source;
+  const result = await imageImport.pickAndImport(chapter.id, position);
+  if (!result) return;
+  const next = project.book?.chapters.find((item) => item.id === chapter.id)?.source;
+  if (next) sourceEditor.value?.syncSource(next, imageCursorPosition(source, position));
+}
+
 async function importImageAt(file: ImageFile, position: number, identity: ImageImportIdentity) {
   const chapter = selectedChapter.value;
   if (!chapter) return;
@@ -285,7 +295,10 @@ onMounted(findSourceScroller);
           </div>
         </template>
         <template #header>
-          <ContentHeader />
+          <ContentHeader
+            :chapter-id="selectedChapterId"
+            @insert-image-from-file="insertImageFromFile"
+          />
         </template>
         <template #single>
           <!-- The header stays pinned; the view below them scrolls. Without this,
