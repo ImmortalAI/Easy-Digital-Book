@@ -58,4 +58,35 @@ describe("renderChapter", () => {
       renderChapter({ id: "bold0001", source: "# *Bold* **heading**" }, 0, book, new Map()).title,
     ).toBe("Bold heading");
   });
+
+  it("moves footnotes out of the chapter and links them to notes.xhtml", () => {
+    const result = renderChapter(
+      { id: "abc12345", source: "# T\n\nA[^1] and again[^1].\n\n[^1]: Note *text*" },
+      0,
+      book,
+      new Map(),
+      true,
+      7,
+    );
+    expect(result.xhtml).not.toContain("<aside");
+    expect(result.xhtml).toContain(
+      '<sup><a epub:type="noteref" class="noteref" id="fnref-7" href="notes.xhtml#fn-7">7</a></sup>',
+    );
+    expect(result.xhtml.match(/id="fnref-7"/g)).toHaveLength(1);
+    expect(result.xhtml).toContain('href="notes.xhtml#fn-7">7</a></sup>.');
+    expect(result.notes).toEqual([
+      { number: 7, referenced: true, xhtml: "<p>Note <em>text</em></p>" },
+    ]);
+  });
+
+  it("keeps images referenced only from a footnote", () => {
+    const result = renderChapter(
+      { id: "abc12345", source: "A[^1]\n\n[^1]: ![](images/a.png)" },
+      0,
+      book,
+      new Map([["images/a.png", "images/a.jpg"]]),
+    );
+    expect(result.referencedPaths).toEqual(["images/a.png"]);
+    expect(result.notes[0]!.xhtml).toContain('src="images/a.jpg"');
+  });
 });

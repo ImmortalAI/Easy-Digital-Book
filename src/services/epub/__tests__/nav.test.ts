@@ -11,7 +11,7 @@ describe("EPUB navigation", () => {
 
   it("uses stable chapter ids in the TOC and landmarks", () => {
     const nav = navXhtml(
-      [{ id: "abc12345", title: "Chapter", xhtml: "", referencedPaths: [] }],
+      [{ id: "abc12345", title: "Chapter", xhtml: "", referencedPaths: [], notes: [] }],
       false,
       "Novel",
     );

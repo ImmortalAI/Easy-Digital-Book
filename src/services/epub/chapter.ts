@@ -2,12 +2,20 @@ import { XMLValidator } from "fast-xml-parser";
 import { parse, renderToHTML, type BlockNode, type InlineNode } from "novlang-js";
 import type { Book, Chapter } from "@/types/book";
 import { AppError } from "@/types/errors";
+import { extractFootnotes, replaceNoteMarkers } from "./footnotes";
+
+export interface RenderedNote {
+  number: number;
+  referenced: boolean;
+  xhtml: string;
+}
 
 export interface RenderedChapter {
   id: string;
   title: string;
   xhtml: string;
   referencedPaths: string[];
+  notes: RenderedNote[];
 }
 
 type ResourceMap = Map<string, string> | Readonly<Record<string, string>>;
@@ -75,6 +83,7 @@ export function renderChapter(
   book: Book,
   resourceMap: ResourceMap,
   includeCustomCss = true,
+  firstNoteNumber = 1,
 ): RenderedChapter {
   const parsed = parse(chapter.source);
   const referencedPaths: string[] = [];
@@ -86,7 +95,17 @@ export function renderChapter(
   };
   const title =
     textOfHeading(document.children[0]) || fallbackTitle(book.metadata.language, index + 1);
-  const body = renderToHTML(document, { xhtmlMode: true });
+  const extracted = extractFootnotes(document, firstNoteNumber);
+  const body = replaceNoteMarkers(
+    renderToHTML(extracted.document, { xhtmlMode: true }),
+    (number, first) =>
+      `<sup><a epub:type="noteref" class="noteref"${first ? ` id="fnref-${number}"` : ""} href="notes.xhtml#fn-${number}">${number}</a></sup>`,
+  );
+  const notes = extracted.notes.map((note) => ({
+    number: note.number,
+    referenced: note.referenced,
+    xhtml: renderToHTML({ type: "document", children: note.children }, { xhtmlMode: true }),
+  }));
   const language = book.metadata.language || "en";
   const xhtml = `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="${escapeXml(language)}" lang="${escapeXml(language)}">\n<head><meta charset="UTF-8"/><title>${escapeXml(title)}</title><link rel="stylesheet" type="text/css" href="theme.css"/>${includeCustomCss ? '<link rel="stylesheet" type="text/css" href="custom.css"/>' : ""}</head>\n<body><section epub:type="chapter" role="doc-chapter">${body}</section></body>\n</html>`;
   const validation = XMLValidator.validate(xhtml);
@@ -104,7 +123,7 @@ export function renderChapter(
       { params: { chapter: index + 1, title } },
     );
   }
-  return { id: chapter.id, title, xhtml, referencedPaths };
+  return { id: chapter.id, title, xhtml, referencedPaths, notes };
 }
 
 function fallbackTitle(language: string, number: number): string {
