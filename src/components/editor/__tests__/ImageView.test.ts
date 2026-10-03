@@ -53,4 +53,17 @@ describe("ImageView", () => {
     expect(screen.queryByRole("list", { name: /used in/i })).toBeNull();
     expect(screen.queryByRole("button")).toBeNull();
   });
+
+  it("caps a tall image to the window height", () => {
+    openBook("# Chapter 1");
+    const bytes = new Uint8Array(33);
+    bytes.set([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82]);
+    new DataView(bytes.buffer).setUint32(16, 1000);
+    new DataView(bytes.buffer).setUint32(20, 3000);
+    useProjectStore().book!.resources.set("images/cover.png", { bytes, mediaType: "image/png" });
+    const { container } = renderImage();
+
+    const box = container.querySelector("[data-image-frame]")!;
+    expect(box.getAttribute("style")).toContain("max-width: calc(70vh * 0.3333");
+  });
 });

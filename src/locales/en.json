@@ -106,6 +106,8 @@
     "addContributor": "Add {label}",
     "description": "Description",
     "coverHint": "Recommended 1600×2560",
+    "coverSize": "Size",
+    "coverSmall": "The cover is small and may look blurry on Kindle",
     "drop": "Drop an image here",
     "choose": "Choose…",
     "remove": "Remove",

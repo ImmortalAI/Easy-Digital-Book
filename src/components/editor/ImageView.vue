@@ -52,9 +52,11 @@ function bytesToBase64(bytes: Uint8Array) {
   <section v-if="resource" class="max-w-2xl p-8">
     <Card>
       <CardContent>
-        <AspectRatio :ratio="ratio" class="overflow-hidden rounded-lg bg-muted">
-          <img :src="src" :alt="path" class="size-full object-contain" />
-        </AspectRatio>
+        <div class="mx-auto w-full" data-image-frame :style="{ maxWidth: `calc(70vh * ${ratio})` }">
+          <AspectRatio :ratio="ratio" class="overflow-hidden rounded-lg bg-muted">
+            <img :src="src" :alt="path" class="size-full object-contain" />
+          </AspectRatio>
+        </div>
       </CardContent>
       <CardHeader>
         <CardTitle>
