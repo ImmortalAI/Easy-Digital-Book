@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { setCover } from "@/services/book/metadata";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import ImagePickerPopover from "@/components/editor/ImagePickerPopover.vue";
 import { imageDimensions } from "@/services/book/image-dimensions";
 import { useSafeI18n } from "@/composables/use-safe-i18n";
 import {
@@ -37,6 +40,12 @@ const small = computed(
     (size.value.width < RECOMMENDED.width / 2 || size.value.height < RECOMMENDED.height / 2),
 );
 const emit = defineEmits<{ choose: []; remove: [] }>();
+const pickerOpen = ref(false);
+const hasImages = computed(() => (project.book?.resources.size ?? 0) > 0);
+function pickFromBook(path: string) {
+  if (project.book) project.applyMutation(setCover(project.book, path));
+  pickerOpen.value = false;
+}
 async function choose() {
   emit("choose");
   await props.onPick?.();
@@ -81,10 +90,31 @@ async function drop(event: DragEvent) {
       <p v-if="small" class="text-xs text-destructive">
         {{ t("metadata.coverSmall", "The cover is small and may look blurry on Kindle") }}
       </p>
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <Button type="button" variant="outline" size="sm" @click="choose">
-          {{ t("metadata.choose", "Choose…") }}
+          {{ t("metadata.coverFromFile", "From file…") }}
         </Button>
+        <Popover v-model:open="pickerOpen">
+          <PopoverTrigger as-child>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              :disabled="!hasImages"
+              :title="hasImages ? undefined : t('format.noImages', 'The book has no images yet')"
+              data-cover-from-book
+            >
+              {{ t("metadata.coverFromBook", "From book images…") }}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent class="w-auto p-2">
+            <ImagePickerPopover
+              :selected="cover ?? undefined"
+              variant="cover"
+              @pick="pickFromBook"
+            />
+          </PopoverContent>
+        </Popover>
         <Button v-if="cover" type="button" variant="ghost" size="sm" @click="emit('remove')">
           {{ t("metadata.remove", "Remove") }}
         </Button>

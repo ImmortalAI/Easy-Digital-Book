@@ -109,12 +109,13 @@
     "coverSize": "尺寸",
     "coverSmall": "封面尺寸较小，在 Kindle 上可能显得模糊",
     "drop": "将图片拖到此处",
-    "choose": "选择…",
     "remove": "移除",
     "created": "创建时间",
     "modified": "修改时间",
     "bytes": "字节",
-    "contributorName": "{label} {number}"
+    "contributorName": "{label} {number}",
+    "coverFromFile": "从文件…",
+    "coverFromBook": "从书中图片…"
   },
   "explorer": {
     "title": "资源管理器",

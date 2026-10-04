@@ -109,12 +109,13 @@
     "coverSize": "Size",
     "coverSmall": "The cover is small and may look blurry on Kindle",
     "drop": "Drop an image here",
-    "choose": "Choose…",
     "remove": "Remove",
     "created": "Created",
     "modified": "Modified",
     "bytes": "bytes",
-    "contributorName": "{label} {number}"
+    "contributorName": "{label} {number}",
+    "coverFromFile": "From file…",
+    "coverFromBook": "From book images…"
   },
   "explorer": {
     "title": "Explorer",

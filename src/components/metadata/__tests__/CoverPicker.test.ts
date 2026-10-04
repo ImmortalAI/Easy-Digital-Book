@@ -39,6 +39,31 @@ describe("CoverPicker", () => {
     );
   });
 
+  it("makes one of the book's images the cover without importing anything", async () => {
+    useProjectStore().book!.resources.set("images/a.png", {
+      mediaType: "image/png",
+      bytes: png(10, 16),
+    });
+    const pick = vi.fn<() => Promise<void>>(async () => undefined);
+    const wrapper = mount(CoverPicker, {
+      props: { cover: null, onPick: pick },
+      attachTo: document.body,
+    });
+
+    await wrapper.get("[data-cover-from-book]").trigger("click");
+    await new Promise((resolve) => setTimeout(resolve));
+    document.querySelector<HTMLButtonElement>('button[aria-label="images/a.png"]')!.click();
+
+    expect(useProjectStore().book!.metadata.cover).toBe("images/a.png");
+    expect(pick).not.toHaveBeenCalled();
+    wrapper.unmount();
+  });
+
+  it("can't pick from the book when it has no images", () => {
+    const wrapper = mount(CoverPicker, { props: { cover: null } });
+    expect(wrapper.get("[data-cover-from-book]").attributes()).toHaveProperty("disabled");
+  });
+
   it("discards a dropped cover when its byte read outlives the project", async () => {
     let resolve!: (bytes: ArrayBuffer) => void;
     const file = new File([new Uint8Array([1, 2])], "cover.png", { type: "image/png" });
