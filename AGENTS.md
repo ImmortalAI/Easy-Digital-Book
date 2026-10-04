@@ -583,10 +583,11 @@ warnings`, `cargo test` (атомарная запись ведёт себя п�
 
 ## Roadmap
 
-После v1, не запланировано, планов реализации нет (спецификации от
-2026-10-03 по итогам сессии отзывов):
+После v1, без назначенных сроков (спецификации по итогам сессий отзывов):
 
 - `docs/superpowers/specs/2026-10-03-azw3-export-design.md` — экспорт AZW3.
+  План реализации — `docs/superpowers/plans/2026-10-04-azw3-export.md`;
+  реализация ещё не начата.
 - `docs/superpowers/specs/2026-10-03-kindle-css-checker-design.md` —
   проверка `custom.css` на совместимость с Kindle.
 - `docs/superpowers/specs/2026-10-04-spell-checker-design.md` — проверка
