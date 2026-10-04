@@ -2,8 +2,8 @@
 name = "easy-digital-book"
 version = "1.0.0"
 license = "GPL-3.0-or-later"
-description = "A Tauri App"
-authors = ["you"]
+description = "A desktop editor that turns novels into Kindle-ready EPUB books"
+authors = ["ImmortalAI"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
