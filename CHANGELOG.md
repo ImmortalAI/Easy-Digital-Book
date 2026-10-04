@@ -7,6 +7,7 @@ All notable changes to Easy Digital Book are documented here.
 ### Added
 
 - The project is licensed under GPL-3.0-or-later.
+- A sample book, `docs/sample/the-keeper-of-north-light.edb`, to try the app on.
 
 ### Changed
 
