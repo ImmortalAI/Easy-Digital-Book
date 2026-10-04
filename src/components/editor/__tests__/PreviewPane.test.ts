@@ -42,6 +42,15 @@ describe("PreviewPane security and rendering", () => {
     wrapper.unmount();
   });
 
+  it("keeps the text off the pane edges", async () => {
+    const wrapper = mount(PreviewPane, { props: { chapterId: "chapter1" } });
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get("iframe").attributes("srcdoc")).toContain(
+      "body { max-width: 36em; margin: 0 auto; padding: 1.5em 1.5em 4em; }",
+    );
+    wrapper.unmount();
+  });
+
   it("uses the shared parse result and rewrites image URLs", async () => {
     const createUrl = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:cover");
     const book = useProjectStore().book!;
