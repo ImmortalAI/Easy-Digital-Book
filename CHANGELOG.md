@@ -2,7 +2,7 @@
 
 All notable changes to easy-digital-book are documented here.
 
-## [0.1.0] — Unreleased
+## [1.0.0] — 2026-10-04
 
 ### Added
 
@@ -10,6 +10,9 @@ All notable changes to easy-digital-book are documented here.
 - `.edb` project containers with metadata, chapters, images, and recovery.
 - Kindle Paperwhite export presets, title pages, custom CSS, and EPUB validation fixtures.
 - Russian, English, and Simplified Chinese interfaces.
+- Endnotes collected in `notes.xhtml`, numbered across the book, with back links; the preview follows the same layout.
+- Content header with breadcrumbs and a formatting toolbar (bold, italic, footnote, heading, quote, scene break, image).
+- Image gallery with filters, multi-selection, batch delete with undo, and batch rename that updates every reference.
 
 ### Delivery
 
