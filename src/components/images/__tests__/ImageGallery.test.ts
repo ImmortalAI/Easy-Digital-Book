@@ -87,12 +87,13 @@ describe("ImageGallery", () => {
   });
 
   it("toggles with Mod+click and numbers the tiles in selection order", async () => {
-    mountGallery();
+    const { container } = mountGallery();
     const user = userEvent.setup();
     await user.keyboard("{Meta>}");
     await user.click(screen.getByRole("gridcell", { name: /spare\.png/ }));
     await user.click(screen.getByRole("gridcell", { name: /cover\.png/ }));
     await user.keyboard("{/Meta}");
+    expect(container.querySelector("[data-selection-bar]")).not.toBeNull();
     expect(
       within(screen.getByRole("gridcell", { name: /spare\.png/ })).getByText("1"),
     ).toBeTruthy();
@@ -100,6 +101,28 @@ describe("ImageGallery", () => {
       within(screen.getByRole("gridcell", { name: /cover\.png/ })).getByText("2"),
     ).toBeTruthy();
     await user.keyboard("{Escape}");
-    expect(screen.queryByText(/selected:/i)).toBeNull();
+    expect(container.querySelector("[data-selection-bar]")).toBeNull();
+  });
+
+  it("drops selected images that leave the filtered list and hides the bar", async () => {
+    const { container } = mountGallery();
+    const user = userEvent.setup();
+    await user.keyboard("{Meta>}");
+    await user.click(screen.getByRole("gridcell", { name: /spare\.png/ }));
+    await user.keyboard("{/Meta}");
+    expect(container.querySelector("[data-selection-bar]")).not.toBeNull();
+    await user.click(screen.getByRole("button", { name: /^used$/i }));
+    expect(container.querySelector("[data-selection-bar]")).toBeNull();
+    await user.click(screen.getByRole("button", { name: /^all$/i }));
+    expect(container.querySelector("[data-selection-bar]")).toBeNull();
+    expect(container.querySelector("[data-selection-order]")).toBeNull();
+  });
+
+  it("reserves the selection bar's space so selecting never reflows the grid", async () => {
+    const { container } = mountGallery();
+    const slot = container.querySelector("[data-selection-bar-slot]");
+    expect(slot).not.toBeNull();
+    expect(slot?.nextElementSibling?.getAttribute("role")).toBe("grid");
+    expect(slot?.className).toMatch(/\bh-8\b/);
   });
 });

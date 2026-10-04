@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { IconPlus, IconTrash } from "@tabler/icons-vue";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -51,6 +51,17 @@ const unusedCount = computed(() => all.value.filter((path) => !used.value.has(pa
 
 const selection = ref<Selection>(emptySelection());
 const selecting = computed(() => selection.value.order.length > 0);
+// Selection only ever holds visible, existing paths (batch actions rely on it).
+watch(items, (visible) => {
+  const keep = new Set(visible);
+  const order = selection.value.order.filter((path) => keep.has(path));
+  if (order.length === selection.value.order.length) return;
+  const anchor = selection.value.anchor;
+  selection.value = {
+    order,
+    anchor: anchor && keep.has(anchor) && order.length ? anchor : null,
+  };
+});
 let gestureBase: string[] = [];
 let gestureAnchor = "";
 const scroller = ref<HTMLElement>();
@@ -174,13 +185,15 @@ async function drop(event: DragEvent) {
         <IconTrash aria-hidden="true" />{{ t("delete.unusedTitle", "Delete unused images") }}
       </Button>
     </div>
-    <div v-if="selecting" class="flex items-center gap-2 text-sm" data-selection-bar>
-      <span class="mr-auto">{{
-        t("gallery.selected", "Selected: {count}", { count: selection.order.length })
-      }}</span>
-      <Button variant="outline" size="sm" @click="selection = emptySelection()">{{
-        t("gallery.clear", "Clear selection")
-      }}</Button>
+    <div class="flex h-8 shrink-0 items-center gap-2 text-sm" data-selection-bar-slot>
+      <template v-if="selecting">
+        <span class="mr-auto" data-selection-bar>{{
+          t("gallery.selected", "Selected: {count}", { count: selection.order.length })
+        }}</span>
+        <Button variant="outline" size="sm" @click="selection = emptySelection()">{{
+          t("gallery.clear", "Clear selection")
+        }}</Button>
+      </template>
     </div>
     <div
       ref="grid"
