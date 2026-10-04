@@ -672,7 +672,7 @@ epub:type="landmarks">` — `titlepage` (if present) and `bodymatter` (first
   scene break without indent.
 - `h1` centered, with margins in `em`.
 - `p.novlang-scene-break` centered, no indent, vertical margins.
-- `blockquote` with margins in `em`.
+- `blockquote` — left rule `border-left: 0.2em solid` without a colour (the border takes the text colour, so night modes invert it too), `padding-left: 1em`, no right margin.
 - `img { max-width: 100%; height: auto }`, paragraph with single image centered.
 - Footnotes are **endnotes** (2026-10-03), so there is no `aside` rule. The
   reason: Calibre's MOBI conversion and Kindle never showed the hidden
