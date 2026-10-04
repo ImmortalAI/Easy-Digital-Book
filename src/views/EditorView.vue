@@ -36,6 +36,7 @@ import {
   type ImageImportIdentity,
 } from "@/composables/use-image-import";
 import { setCover } from "@/services/book/metadata";
+import { syncChapterEditorText } from "@/components/editor/editor-commands";
 
 const project = useProjectStore();
 const diagnostics = useDiagnosticsStore();
@@ -99,9 +100,21 @@ async function insertImageFromFile(position: number) {
   if (!chapter) return;
   const source = chapter.source;
   const result = await imageImport.pickAndImport(chapter.id, position);
-  if (!result) return;
-  const next = project.book?.chapters.find((item) => item.id === chapter.id)?.source;
-  if (next) sourceEditor.value?.syncSource(next, imageCursorPosition(source, position));
+  if (result) await showInsertedImage(chapter.id, source, position);
+}
+
+/**
+ * The import may finish while another chapter is on screen. The text goes to
+ * the import's own chapter editor; the mounted one only gets the cursor when it
+ * shows that chapter, or it would write the text over the chapter it shows.
+ */
+async function showInsertedImage(chapterId: string, source: string, position: number) {
+  const next = project.book?.chapters.find((item) => item.id === chapterId)?.source;
+  if (next === undefined) return;
+  syncChapterEditorText(chapterId, next);
+  await nextTick();
+  if (selectedChapterId.value === chapterId)
+    sourceEditor.value?.syncSource(next, imageCursorPosition(source, position));
 }
 
 async function importImageAt(file: ImageFile, position: number, identity: ImageImportIdentity) {
@@ -109,9 +122,7 @@ async function importImageAt(file: ImageFile, position: number, identity: ImageI
   if (!chapter) return;
   const source = chapter.source;
   const result = await imageImport.importFile(file, chapter.id, position, identity);
-  if (!result) return;
-  const next = project.book?.chapters.find((item) => item.id === chapter.id)?.source;
-  if (next) sourceEditor.value?.syncSource(next, imageCursorPosition(source, position));
+  if (result) await showInsertedImage(chapter.id, source, position);
 }
 
 async function importCover(file: ImageFile, identity: ImageImportIdentity) {
