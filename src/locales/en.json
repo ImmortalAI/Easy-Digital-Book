@@ -146,11 +146,8 @@
   },
   "images": {
     "usedIn": "Used in",
-    "insert": "Insert in text",
     "setCover": "Make cover",
     "findUsage": "Find usages",
-    "usedAsCover": "Used as the cover",
-    "usedInStyles": "Used in styles",
     "unused": "not used"
   },
   "chapters": {
@@ -175,10 +172,7 @@
   "delete": {
     "chapterTitle": "Delete chapter",
     "chapterMessage": "This chapter will be removed from the book.",
-    "imageTitle": "Delete image",
-    "imageMessage": "This image will be removed from the project.",
     "unusedTitle": "Delete unused images",
-    "unusedMessage": "These unused images will be removed from the project.",
     "words": "Words",
     "chapterToast": "Chapter deleted",
     "imageToast": "Image deleted",

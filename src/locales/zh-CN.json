@@ -146,11 +146,8 @@
   },
   "images": {
     "usedIn": "使用于",
-    "insert": "插入文本",
     "setCover": "设为封面",
     "findUsage": "查找使用位置",
-    "usedAsCover": "用作封面",
-    "usedInStyles": "用于样式",
     "unused": "未使用"
   },
   "chapters": {
@@ -175,10 +172,7 @@
   "delete": {
     "chapterTitle": "删除章节",
     "chapterMessage": "此章节将从书中删除。",
-    "imageTitle": "删除图片",
-    "imageMessage": "此图片将从项目中删除。",
     "unusedTitle": "删除未使用的图片",
-    "unusedMessage": "这些未使用的图片将从项目中删除。",
     "words": "字数",
     "chapterToast": "章节已删除",
     "imageToast": "图片已删除",
