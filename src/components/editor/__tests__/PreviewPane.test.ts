@@ -2,6 +2,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { mount } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createBook } from "@/services/book/create";
+import { setCustomCss } from "@/services/book/metadata";
 import { chapterParseResults, resetChapterParseResults } from "@/composables/use-novlang-parse";
 import { useProjectStore } from "@/stores/project";
 import { useSettingsStore } from "@/stores/settings";
@@ -85,6 +86,59 @@ describe("PreviewPane security and rendering", () => {
     expect(wrapper.findAll("iframe")).toHaveLength(1);
     expect(wrapper.get('button[aria-label="Dim images"]').attributes()).toHaveProperty("disabled");
     wrapper.unmount();
+  });
+
+  it("follows the look and custom.css when the frame loads after mounting", async () => {
+    // A browser loads srcdoc asynchronously: the frame first holds an empty
+    // about:blank document without the preview's <style>.
+    const blank = {
+      body: { innerHTML: "" },
+      head: { querySelector: () => null },
+      documentElement: { scrollHeight: 0, clientHeight: 0, scrollTop: 0 },
+      addEventListener() {},
+      removeEventListener() {},
+    };
+    const loaded = new WeakMap<object, unknown>();
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLIFrameElement.prototype,
+      "contentDocument",
+    );
+    Object.defineProperty(HTMLIFrameElement.prototype, "contentDocument", {
+      configurable: true,
+      get() {
+        return loaded.get(this) ?? blank;
+      },
+    });
+    try {
+      useSettingsStore().theme = "dark";
+      const wrapper = mount(PreviewPane, { props: { chapterId: "chapter1" } });
+      await wrapper.vm.$nextTick();
+      const iframe = wrapper.get("iframe").element;
+      const style = { textContent: "" };
+      loaded.set(iframe, {
+        body: { innerHTML: "" },
+        head: { querySelector: () => style },
+        documentElement: { scrollHeight: 1000, clientHeight: 500, scrollTop: 0 },
+        addEventListener() {},
+        removeEventListener() {},
+      });
+      iframe.dispatchEvent(new Event("load"));
+      await wrapper.vm.$nextTick();
+      expect(style.textContent).toContain("--paper-bg");
+
+      await wrapper.get('button[aria-label="Paper style"]').trigger("click");
+      await wrapper.vm.$nextTick();
+      expect(style.textContent).not.toContain("--paper-bg");
+
+      const project = useProjectStore();
+      project.applyMutation(setCustomCss(project.book!, "h1 { letter-spacing: 1px; }"));
+      await wrapper.vm.$nextTick();
+      expect(style.textContent).toContain("letter-spacing: 1px");
+      wrapper.unmount();
+    } finally {
+      if (original) Object.defineProperty(HTMLIFrameElement.prototype, "contentDocument", original);
+      else delete (HTMLIFrameElement.prototype as { contentDocument?: unknown }).contentDocument;
+    }
   });
 
   it("puts the user's custom.css after the paper layer", () => {
