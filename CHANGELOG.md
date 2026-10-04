@@ -2,7 +2,7 @@
 
 All notable changes to Easy Digital Book are documented here.
 
-## [Unreleased]
+## [1.0.1] — 2026-10-04
 
 ### Added
 
