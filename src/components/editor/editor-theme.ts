@@ -30,6 +30,23 @@ export const editorColorTheme = EditorView.theme({
   ".cm-panel .cm-button:hover": { backgroundColor: "var(--accent)" },
   ".cm-panel .cm-textfield:focus": { outline: "2px solid var(--ring)", outlineOffset: "-1px" },
   ".cm-panel button[name=close]": { color: "var(--muted-foreground)" },
+  ".cm-chapter-search": { display: "flex", flexDirection: "column", gap: "4px" },
+  ".cm-chapter-search-row": {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+    flexWrap: "wrap",
+  },
+  ".cm-panel .cm-button[aria-pressed=true]": {
+    backgroundColor: "var(--accent)",
+    borderColor: "var(--ring)",
+  },
+  ".cm-search-counter": {
+    minWidth: "7em",
+    color: "var(--muted-foreground)",
+    fontSize: "0.85em",
+  },
+  ".cm-search-counter-empty": { color: "var(--destructive)" },
   ".cm-tooltip": {
     color: "var(--popover-foreground)",
     backgroundColor: "var(--popover)",

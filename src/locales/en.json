@@ -167,7 +167,13 @@
     "replaceChapter": "Replace chapter",
     "replaced": "Replaced {count} matches",
     "hide": "Hide",
-    "invalidRegex": "Invalid regular expression"
+    "invalidRegex": "Invalid regular expression",
+    "previous": "Previous match",
+    "next": "Next match",
+    "close": "Close",
+    "counter": "{current} of {total}",
+    "counterTotal": "{total} matches",
+    "noResults": "No results"
   },
   "delete": {
     "chapterTitle": "Delete chapter",

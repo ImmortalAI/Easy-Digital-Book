@@ -167,7 +167,13 @@
     "replaceChapter": "Заменить в главе",
     "replaced": "Заменено вхождений: {count}",
     "hide": "Скрыть",
-    "invalidRegex": "Неверное регулярное выражение"
+    "invalidRegex": "Неверное регулярное выражение",
+    "previous": "Предыдущее",
+    "next": "Следующее",
+    "close": "Закрыть",
+    "counter": "{current} из {total}",
+    "counterTotal": "Совпадений: {total}",
+    "noResults": "Нет результатов"
   },
   "delete": {
     "chapterTitle": "Удалить главу",
