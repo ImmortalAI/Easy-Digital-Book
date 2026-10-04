@@ -4,6 +4,10 @@ All notable changes to Easy Digital Book are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- The project is licensed under GPL-3.0-or-later.
+
 ### Changed
 
 - New app icon on every platform; the macOS icon follows the system icon grid.
