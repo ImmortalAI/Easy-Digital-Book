@@ -2,6 +2,12 @@
 
 All notable changes to Easy Digital Book are documented here.
 
+## [1.1.1] — 2026-10-04
+
+### Fixed
+
+- The preview's paper-style and dim-images toggles had no effect after opening a project or coming back from Metadata until the chapter text changed. Edits to custom.css had the same delay. The preview now follows them at once.
+
 ## [1.1.0] — 2026-10-04
 
 ### Added

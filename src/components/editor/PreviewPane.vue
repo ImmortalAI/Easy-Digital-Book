@@ -87,19 +87,23 @@ function initialDocument() {
 
 const initialPreviewDocument = initialDocument();
 
+// The frame's document once its srcdoc has loaded. A browser loads srcdoc
+// asynchronously, so until then the frame holds an empty about:blank.
+const loadedDocument = shallowRef<Document | null>(null);
+
+// Runs inside watchEffect. Every reactive input (the look, custom.css, the
+// chapter) is read before any DOM check: an early return would leave the
+// effect subscribed to nothing, and the toggles and custom.css edits would
+// stop updating the preview until the chapter text changed.
 function renderPreview() {
-  const document = frame.value?.contentDocument;
   const book = project.book;
+  const css = book ? `${styles()}\n${book.customCss ?? ""}` : "";
+  const html = previewHtml();
+  const document = loadedDocument.value;
   if (!document?.body || !book) return;
   cache.sync(book.resources);
   const style = document.head?.querySelector<HTMLStyleElement>("style[data-preview]");
-  if (style)
-    style.textContent = rewriteResourcePaths(
-      `${styles()}\n${book.customCss ?? ""}`,
-      book.resources,
-      cache.resolve,
-    );
-  const html = previewHtml();
+  if (style) style.textContent = rewriteResourcePaths(css, book.resources, cache.resolve);
   document.body.innerHTML = rewriteResourcePaths(html, book.resources, cache.resolve);
 }
 
@@ -124,7 +128,8 @@ function bindDocument() {
 
 function onFrameLoad() {
   bindDocument();
-  renderPreview();
+  // Setting the ref re-runs the render effect, now with the loaded document.
+  loadedDocument.value = frame.value?.contentDocument ?? null;
 }
 
 function syncScroll() {
@@ -154,6 +159,7 @@ onBeforeUnmount(() => {
   frame.value?.removeEventListener("load", onFrameLoad);
   boundDocument?.removeEventListener("click", followInPageLink);
   boundDocument = null;
+  loadedDocument.value = null;
   boundSourceScroller?.removeEventListener("scroll", syncScroll);
   cache.releaseAll();
 });
