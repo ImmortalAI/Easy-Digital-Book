@@ -104,6 +104,21 @@ describe("ImageGallery", () => {
     expect(container.querySelector("[data-selection-bar]")).toBeNull();
   });
 
+  it("offers Set as cover only for a single selected image", async () => {
+    const { container } = mountGallery();
+    const user = userEvent.setup();
+    await user.keyboard("{Meta>}");
+    await user.click(screen.getByRole("gridcell", { name: /spare\.png/ }));
+    await user.keyboard("{/Meta}");
+    await user.click(container.querySelector<HTMLElement>("[data-selection-cover]")!);
+    expect(useProjectStore().book!.metadata.cover).toBe("images/spare.png");
+
+    await user.keyboard("{Meta>}");
+    await user.click(screen.getByRole("gridcell", { name: /used\.png/ }));
+    await user.keyboard("{/Meta}");
+    expect(container.querySelector("[data-selection-cover]")).toBeNull();
+  });
+
   it("drops selected images that leave the filtered list and hides the bar", async () => {
     const { container } = mountGallery();
     const user = userEvent.setup();

@@ -51,7 +51,7 @@ describe("ImageView", () => {
 
     expect(screen.getByText("not used")).toBeVisible();
     expect(screen.queryByRole("list", { name: /used in/i })).toBeNull();
-    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.queryByRole("button", { name: /chapter/i })).toBeNull();
   });
 
   it("caps a tall image to the window height", () => {
@@ -65,5 +65,25 @@ describe("ImageView", () => {
 
     const box = container.querySelector("[data-image-frame]")!;
     expect(box.getAttribute("style")).toContain("max-width: calc(70vh * 0.3333");
+  });
+
+  it("makes the image the cover", async () => {
+    openBook("# Chapter 1");
+    renderImage();
+    await userEvent.click(screen.getByRole("button", { name: "Make cover" }));
+    expect(useProjectStore().book!.metadata.cover).toBe("images/cover.png");
+    expect(screen.getByRole("button", { name: "Make cover" })).toBeDisabled();
+  });
+
+  it("renames the image and keeps showing it", async () => {
+    openBook("# Chapter 1\n\n![](images/cover.png)");
+    useLayoutStore().center = { kind: "image", path: "images/cover.png" };
+    renderImage();
+    await userEvent.click(screen.getByRole("button", { name: "Rename…" }));
+    const field = await screen.findByRole("textbox", { name: /new name/i });
+    await userEvent.clear(field);
+    await userEvent.type(field, "front{Enter}");
+    expect(useProjectStore().book!.resources.has("images/front.png")).toBe(true);
+    expect(useLayoutStore().center).toEqual({ kind: "image", path: "images/front.png" });
   });
 });

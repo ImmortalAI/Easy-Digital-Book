@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
-import { IconPencil, IconPlus, IconTrash } from "@tabler/icons-vue";
+import { IconPencil, IconPlus, IconStar, IconTrash } from "@tabler/icons-vue";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import ImageTile from "./ImageTile.vue";
@@ -250,6 +250,15 @@ async function drop(event: DragEvent) {
         <span class="mr-auto" data-selection-bar>{{
           t("gallery.selected", "Selected: {count}", { count: selection.order.length })
         }}</span>
+        <Button
+          v-if="selection.order.length === 1"
+          variant="outline"
+          size="sm"
+          data-selection-cover
+          @click="contextAction(selection.order[0]!, 'cover')"
+        >
+          <IconStar aria-hidden="true" />{{ t("images.setCover", "Set as cover") }}
+        </Button>
         <Button
           variant="outline"
           size="sm"
