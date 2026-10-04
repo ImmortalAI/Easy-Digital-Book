@@ -38,4 +38,25 @@ describe("useImageActions", () => {
     expect([...project.book!.resources.keys()]).toEqual(["images/a.png"]);
     expect(project.book!.chapters[0]!.source).toBe("![](images/a.png)");
   });
+
+  it("does not undo over an image that took the old name", () => {
+    const project = useProjectStore();
+    const notifications = useNotificationsStore();
+    useImageActions().renameImages([{ from: "images/a.png", to: "images/x_1.png" }]);
+    const fresh = { mediaType: "image/png" as const, bytes: new Uint8Array([9]) };
+    project.applyMutation({
+      book: {
+        ...project.book!,
+        resources: new Map([...project.book!.resources, ["images/a.png", fresh]]),
+      },
+      changedChapters: new Set(),
+      removedChapters: new Set(),
+      changedResources: new Set(["images/a.png"]),
+      removedResources: new Set(),
+    });
+    expect(notifications.items[0]!.undoEnabled).toBe(false);
+    notifications.items[0]!.undo!();
+    expect(project.book!.resources.size).toBe(2);
+    expect([...project.book!.resources.get("images/a.png")!.bytes]).toEqual([9]);
+  });
 });

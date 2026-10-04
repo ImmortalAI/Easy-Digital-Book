@@ -32,9 +32,15 @@ export function useImageActions() {
   function renameImages(renames: ResourceRename[]) {
     const generation = project.bookGeneration;
     if (!apply(renames)) return;
+    const targets = new Set(renames.map(({ to }) => to));
+    // The old names must still be free (a new import may have taken one).
     const canUndo = () =>
       project.bookGeneration === generation &&
-      renames.every(({ to }) => project.book?.resources.has(to));
+      renames.every(
+        ({ from, to }) =>
+          project.book?.resources.has(to) &&
+          (!project.book.resources.has(from) || targets.has(from)),
+      );
     notifications.add({
       message: t("gallery.renamedToast", "{count} images renamed", {
         count: renames.length,

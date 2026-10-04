@@ -54,6 +54,8 @@ export function renameResources(
   const resources = new Map(
     [...book.resources].map(([path, resource]) => [map.get(path) ?? path, resource] as const),
   );
+  if (resources.size !== book.resources.size)
+    throw new Error("Rename would make two images share a path");
   const cover = book.metadata.cover ? (map.get(book.metadata.cover) ?? book.metadata.cover) : null;
   const customCss =
     book.customCss?.replace(CSS_URL, (whole, quote: string, path: string) => {

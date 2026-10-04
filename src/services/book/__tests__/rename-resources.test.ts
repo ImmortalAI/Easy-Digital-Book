@@ -117,4 +117,12 @@ describe("renameResources", () => {
     expect(result.mutation.book.chapters[0]!.source).toBe("![](images/b.png)![](images/a.png)");
     expect(result.mutation.book.resources.size).toBe(2);
   });
+
+  it("refuses a rename that would merge two images", () => {
+    expect(() =>
+      renameResources(book(["images/a.png", "images/b.png"], []), [
+        { from: "images/a.png", to: "images/b.png" },
+      ]),
+    ).toThrow(/share a path/);
+  });
 });
