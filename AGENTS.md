@@ -578,10 +578,11 @@ warnings`, `cargo test` (атомарная запись ведёт себя п�
 - `docs/superpowers/specs/2026-10-03-azw3-export-design.md` — экспорт AZW3.
 - `docs/superpowers/specs/2026-10-03-kindle-css-checker-design.md` —
   проверка `custom.css` на совместимость с Kindle.
-- Проверка лексики текста глав на английском и русском (цель добавлена
-  2026-10-04; спецификации пока нет). Сейчас есть только встроенная
-  орфография WebView (`spellcheck="true"`, на Linux — best effort, см.
-  секцию 4a); подход (словари, движок, офлайн/онлайн) не выбран.
+- `docs/superpowers/specs/2026-10-04-spell-checker-design.md` — проверка
+  орфографии ru/en (первый этап «проверки лексики»): Rust-crate
+  `spellbook` + словари Hunspell в бандле, словарь книги `dictionary.txt`
+  в `.edb` (formatVersion 2), плашка рядом с ⚠ в строке статуса.
+  Встроенная орфография WebView на Windows 11 не работает вовсе.
 
 Исходные заметки — `docs/superpowers/notes/2026-10-03-issues.md`; план
 исправлений — `docs/superpowers/plans/2026-10-03-user-feedback-fixes.md`.
