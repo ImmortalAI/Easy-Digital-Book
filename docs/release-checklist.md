@@ -37,6 +37,7 @@ Run the following on macOS 12+, Windows 10/WebView2, and Ubuntu 22.04/WebKitGTK.
 | Footnotes: a book with notes in two chapters; in Calibre's viewer a note link opens the note; after "Send to device" (MOBI and AZW3) on a Paperwhite the note opens as a popup and the number in the note leads back to the text | [ ]   | [ ]     | [ ]    |
 | Preview: clicking a note number scrolls to the note and back                                                                                                                                                                     | [ ]   | [ ]     | [ ]    |
 | Gallery: long press selects, dragging extends the range, rename numbers follow the selection order, one Undo restores a batch delete                                                                                             | [ ]   | [ ]     | [ ]    |
+| Dark theme: preview paper look, both corner toggles, Mod+Alt+P, status-bar notice; Mod+F counter; Tab in custom.css; cover from book images; single-image rename; Show in folder                                                 | [ ]   | [ ]     | [ ]    |
 
 ## Environment evidence
 

@@ -297,6 +297,7 @@ section from recovery storage (section 10.3).
 | Mod+B / Mod+I             | Bold `**` / italic `*`                         |
 | Mod+Alt+F                 | Footnote                                       |
 | Mod+F                     | Find and replace in chapter                    |
+| Mod+Alt+P                 | Preview paper style on/off (dark theme)        |
 | Mod+Alt+Enter             | Replace all (in Search view)                   |
 | Alt+↑ / Alt+↓             | Move selected chapter (in Explorer)            |
 | Delete                    | Delete selected chapter or image (in Explorer) |
@@ -326,8 +327,10 @@ section from recovery storage (section 10.3).
   is created when the chapter is first opened and lives in memory only.
 - Commands: Mod+B / Mod+I wrap selection in `**` / `*` (or unwrap); Mod+Alt+F
   inserts `[^N]` at cursor position (N — next free number in the chapter) and
-  `[^N]: ` at the end of the chapter, cursor moves there; Mod+F — standard
-  CodeMirror search panel.
+  `[^N]: ` at the end of the chapter, cursor moves there; Mod+F — own search
+  panel (`chapter-search-panel.ts`): live counter «3 of 17», Aa / whole word /
+  regex toggles, replace; matching shares `querySource()` with the book
+  search, so both find the same matches. Alt+Enter selects all matches.
 
 ### 7.3. PreviewPane
 
@@ -344,6 +347,11 @@ section from recovery storage (section 10.3).
 - `images/…` are replaced with `blob:` URLs; URLs are cached and freed when
   resources are deleted and the project is closed. `url(images/…)` in
   `custom.css` are rewritten the same way.
+- Under the dark theme the preview uses a preview-only "old paper" layer
+  derived from the app's theme tokens (`preview-theme.ts`), placed before
+  `custom.css`. Toggles in the preview corner: paper style (Mod+Alt+P) and
+  dim images; while the paper style is on and the preview is visible, the
+  status bar says the preview is styled. `theme.css` stays colourless.
 - Scroll is synchronized proportionally (exact synchronization hindered by
   lack of positions in AST).
 
@@ -453,17 +461,20 @@ Each change goes to the store immediately; validation errors — below the field
   - Delete / Backspace and the Delete button of the selection bar act on the
     selection (or on the focused tile). A batch delete is one undo
     notification.
-  - Batch rename (`RenameImagesDialog`, `services/book/rename-resources`):
-    names become `<name>_<NN>.<ext>`, `NN` is padded to the width of the
-    selection count and follows the **selection order**. References are
+  - Rename (`RenameImagesDialog`, `services/book/rename-resources`): one
+    image → `<name>.<ext>` (the dialog starts from its current name); several
+    → `<name>_<NN>.<ext>`, `NN` is padded to the width of the selection
+    count and follows the **selection order**. References are
     rewritten in chapters (`![](images/…)`), in the cover and in `custom.css`
     `url(...)`. One undo; it is refused (disabled) if an original name was
     taken again in the meantime. Image names may now contain `_`.
 - **ImageView:** image, dimensions in pixels, size, list of chapters where
-  it is used (click opens chapter). Context menu actions (insert in text,
+  it is used (click opens chapter), "Make cover" and "Rename…" buttons. Context menu actions (insert in text,
   make cover, find uses, delete) are available from the gallery tiles.
-- Cover is chosen in `CoverPicker` or via "Make cover".
-- Rename is in scope since 2026-10-03 (batch only, see Gallery above).
+- Cover is chosen in `CoverPicker` (from a file or from the book's images)
+  or via "Make cover" (tile menu, selection bar with one image, ImageView).
+- Rename is in scope since 2026-10-03: single or batch, from the gallery
+  bar, the tile menu and the image page.
 
 ### 9.5. Deletion and "Undo" notifications
 
@@ -519,7 +530,11 @@ saving }`, `dirty = revision !== savedRevision`. One window — one project.
   Overwrite?". Then `writeEdb` → `write_file_atomic` → `savedRevision` =
   revision at start of serialization → delete recovery session. Repeated Mod+S
   during write is ignored. On error — message, `dirty` remains.
-- **Save as (Mod+Shift+S):** dialog with name `{title}.edb`.
+- **Save as (Mod+Shift+S):** dialog with name `{title}.edb`. On the first
+  save of a book whose title is still a placeholder («Без названия» /
+  "Untitled" / «未命名») the title is taken from the chosen file name.
+- The file menu in the top-left corner shows the book title (not the path);
+  "Show in folder" reveals the saved file (disabled before the first save).
 - **Window close:** `onCloseRequested` → guard → delete recovery session.
 - **Open from OS** (`.edb` association): if app is already running,
   `tauri-plugin-single-instance` forwards the path to the window; on macOS
