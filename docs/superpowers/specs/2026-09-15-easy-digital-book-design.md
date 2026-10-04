@@ -439,7 +439,7 @@ Each change goes to the store immediately; validation errors — below the field
   not supported"). Name is cleaned (Latin, digits, `-`), on name collision
   suffix `-2`, `-3`… is added; on SHA-256 match (`crypto.subtle`) existing
   file is used.
-- **Sources** (`useImageImport`): "+" in "Images" section (file picker),
+- **Sources** (`useImageImport`): the gallery's "Add…" button (file picker),
   drag&drop files into editor, paste from clipboard (name
   `pasted-YYYYMMDD-HHmmss.png`). At cursor position, a separate paragraph
   `![](images/x.png)` is inserted, cursor is placed inside `[]`.
