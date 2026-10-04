@@ -266,6 +266,8 @@
   "preview": {
     "paperStyle": "纸张样式",
     "paperStyleHint": "纸张样式（Mod+Alt+P）。关闭后显示原始外观",
-    "dimImages": "调暗图片"
+    "dimImages": "调暗图片",
+    "styledNotice": "预览已套用样式——与成书外观不同",
+    "showOriginal": "显示原始外观"
   }
 }

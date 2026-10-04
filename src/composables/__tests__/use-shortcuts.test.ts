@@ -8,6 +8,21 @@ function eventFor(target: HTMLElement, key: string, extra: KeyboardEventInit = {
 }
 
 describe("global shortcut filtering", () => {
+  it("toggles the paper preview with Mod+Alt+P whatever character Alt types", () => {
+    const editor = document.createElement("div");
+    editor.className = "cm-editor";
+    document.body.append(editor);
+    const togglePaperStyle = vi.fn<() => void>();
+
+    // macOS turns Alt+P into "π", so the binding goes by the physical key.
+    const event = eventFor(editor, "π", { code: "KeyP", altKey: true, cancelable: true });
+    expect(handleGlobalShortcut(event, { togglePaperStyle })).toBe(true);
+    expect(togglePaperStyle).toHaveBeenCalledOnce();
+    expect(
+      handleGlobalShortcut(eventFor(editor, "p", { code: "KeyP" }), { togglePaperStyle }),
+    ).toBe(false);
+  });
+
   it("allows global save from CodeMirror but leaves markup keys to CodeMirror", () => {
     const editor = document.createElement("div");
     editor.className = "cm-editor";

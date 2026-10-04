@@ -217,6 +217,7 @@ Grab the latest build for your system from
 | Show or hide the sidebar      | Mod+\\                              |
 | Explorer / Search the book    | Mod+Shift+E / Mod+Shift+F           |
 | Find & replace in the chapter | Mod+F                               |
+| Preview: paper style on / off | Mod+Alt+P                           |
 | Replace all in the book       | Mod+Alt+Enter                       |
 | Move the selected chapter     | Alt+↑ / Alt+↓                       |
 

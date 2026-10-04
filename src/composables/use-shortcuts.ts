@@ -14,6 +14,7 @@ export interface GlobalShortcutHandlers {
   splitMode?: () => void;
   previewMode?: () => void;
   replaceAll?: () => void;
+  togglePaperStyle?: () => void;
 }
 
 const editableTagNames = new Set(["INPUT", "TEXTAREA", "SELECT"]);
@@ -43,33 +44,35 @@ export function handleGlobalShortcut(
   if (!mod) return false;
   const key = event.key.toLowerCase();
   const shortcut =
-    event.altKey && key === "enter"
-      ? handlers.replaceAll
-      : event.shiftKey && key === "s"
-        ? handlers.saveAs
-        : event.shiftKey && key === "e"
-          ? handlers.explorer
-          : event.shiftKey && key === "f"
-            ? handlers.searchBook
-            : key === "n"
-              ? handlers.newBook
-              : key === "o"
-                ? handlers.open
-                : key === "w"
-                  ? handlers.closeProject
-                  : key === "s"
-                    ? handlers.save
-                    : key === "e"
-                      ? handlers.exportEpub
-                      : key === "\\"
-                        ? handlers.toggleSidebar
-                        : key === "1"
-                          ? handlers.textMode
-                          : key === "2"
-                            ? handlers.splitMode
-                            : key === "3"
-                              ? handlers.previewMode
-                              : undefined;
+    event.altKey && event.code === "KeyP"
+      ? handlers.togglePaperStyle
+      : event.altKey && key === "enter"
+        ? handlers.replaceAll
+        : event.shiftKey && key === "s"
+          ? handlers.saveAs
+          : event.shiftKey && key === "e"
+            ? handlers.explorer
+            : event.shiftKey && key === "f"
+              ? handlers.searchBook
+              : key === "n"
+                ? handlers.newBook
+                : key === "o"
+                  ? handlers.open
+                  : key === "w"
+                    ? handlers.closeProject
+                    : key === "s"
+                      ? handlers.save
+                      : key === "e"
+                        ? handlers.exportEpub
+                        : key === "\\"
+                          ? handlers.toggleSidebar
+                          : key === "1"
+                            ? handlers.textMode
+                            : key === "2"
+                              ? handlers.splitMode
+                              : key === "3"
+                                ? handlers.previewMode
+                                : undefined;
   if (!shortcut) {
     return false;
   }

@@ -266,6 +266,8 @@
   "preview": {
     "paperStyle": "Paper style",
     "paperStyleHint": "Paper style (Mod+Alt+P). Off shows the original look",
-    "dimImages": "Dim images"
+    "dimImages": "Dim images",
+    "styledNotice": "Styled preview — not how the book will look",
+    "showOriginal": "Show the original look"
   }
 }
