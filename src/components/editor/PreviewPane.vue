@@ -15,6 +15,7 @@ const frame = ref<HTMLIFrameElement>();
 const cache = createResourceUrlCache();
 const currentResult = computed(() => chapterParseResults.get(props.chapterId));
 let boundSourceScroller: HTMLElement | null = null;
+let boundDocument: Document | null = null;
 
 function previewHtml() {
   if (!currentResult.value) return "";
@@ -64,6 +65,30 @@ function renderPreview() {
   document.body.innerHTML = rewriteResourcePaths(html, book.resources, cache.resolve);
 }
 
+// In a srcdoc frame `#fn-1` resolves against the parent's URL, so following a
+// note link would navigate the frame away from the preview document. In-page
+// links scroll to their target instead.
+function followInPageLink(event: MouseEvent) {
+  const link = (event.target as Element | null)?.closest?.("a[href^='#']");
+  if (!link) return;
+  event.preventDefault();
+  const id = decodeURIComponent(link.getAttribute("href")!.slice(1));
+  boundDocument?.getElementById(id)?.scrollIntoView();
+}
+
+function bindDocument() {
+  const document = frame.value?.contentDocument ?? null;
+  if (document === boundDocument) return;
+  boundDocument?.removeEventListener("click", followInPageLink);
+  boundDocument = document;
+  boundDocument?.addEventListener("click", followInPageLink);
+}
+
+function onFrameLoad() {
+  bindDocument();
+  renderPreview();
+}
+
 function syncScroll() {
   const preview = frame.value?.contentDocument?.documentElement;
   if (!boundSourceScroller || !preview) return;
@@ -83,12 +108,14 @@ watchEffect(renderPreview);
 watchEffect(() => bindSourceScroller(props.sourceScroller));
 
 onMounted(() => {
-  frame.value?.addEventListener("load", renderPreview);
-  renderPreview();
+  frame.value?.addEventListener("load", onFrameLoad);
+  onFrameLoad();
 });
 
 onBeforeUnmount(() => {
-  frame.value?.removeEventListener("load", renderPreview);
+  frame.value?.removeEventListener("load", onFrameLoad);
+  boundDocument?.removeEventListener("click", followInPageLink);
+  boundDocument = null;
   boundSourceScroller?.removeEventListener("scroll", syncScroll);
   cache.releaseAll();
 });
