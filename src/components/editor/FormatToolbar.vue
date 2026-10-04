@@ -78,6 +78,19 @@ function fromFile() {
   const editor = view();
   if (editor) emit("insert-image-from-file", editor.state.selection.main.head);
 }
+// The menu hands focus back to its trigger when it closes; that focus lands
+// outside the picker and would dismiss it at once. So the item only records the
+// request, and the picker opens once the menu has finished closing.
+let pickerRequested = false;
+function requestPicker() {
+  pickerRequested = true;
+}
+function onMenuCloseAutoFocus(event: Event) {
+  if (!pickerRequested) return;
+  pickerRequested = false;
+  event.preventDefault();
+  pickerOpen.value = true;
+}
 function fromBook(path: string) {
   pickerOpen.value = false;
   run((s) => insertImageReference(s, path));
@@ -216,11 +229,11 @@ const historyItems = computed(() => [
                     </Button>
                   </ToolbarButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                <DropdownMenuContent @close-auto-focus="onMenuCloseAutoFocus">
                   <DropdownMenuItem @select="fromFile">{{
                     t("format.imageFromFile", "From file…")
                   }}</DropdownMenuItem>
-                  <DropdownMenuItem @select="pickerOpen = true">{{
+                  <DropdownMenuItem @select="requestPicker">{{
                     t("format.imageFromBook", "From the book…")
                   }}</DropdownMenuItem>
                 </DropdownMenuContent>
@@ -260,7 +273,7 @@ const historyItems = computed(() => [
                   </Button>
                 </ToolbarButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" @close-auto-focus="onMenuCloseAutoFocus">
                 <DropdownMenuItem v-for="item in secondary" :key="item.id" @select="item.action">
                   <component :is="item.icon" aria-hidden="true" />{{ item.label }}
                 </DropdownMenuItem>
@@ -274,7 +287,7 @@ const historyItems = computed(() => [
                     <DropdownMenuItem @select="fromFile">{{
                       t("format.imageFromFile", "From file…")
                     }}</DropdownMenuItem>
-                    <DropdownMenuItem @select="pickerOpen = true">{{
+                    <DropdownMenuItem @select="requestPicker">{{
                       t("format.imageFromBook", "From the book…")
                     }}</DropdownMenuItem>
                   </DropdownMenuSubContent>
