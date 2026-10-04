@@ -83,7 +83,9 @@
   "fileMenu": {
     "open": "Open…",
     "saveAs": "Save as…",
-    "close": "Close project"
+    "close": "Close project",
+    "reveal": "Show in folder",
+    "revealFailed": "Could not open the folder"
   },
   "metadata": {
     "title": "Metadata",

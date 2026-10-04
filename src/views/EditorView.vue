@@ -291,12 +291,14 @@ onMounted(findSourceScroller);
          header included, instead of scrolling the pane that holds the text. -->
     <header class="flex min-h-13 items-center justify-between gap-4 border-b px-4">
       <FileMenu
-        :title="project.filePath ?? t('editor.unnamedBook', 'Untitled book')"
+        :title="project.book?.metadata.title.trim() || t('editor.unnamedBook', 'Untitled book')"
         :dirty="project.dirty"
+        :can-reveal="Boolean(project.filePath)"
         @new="files?.newBook()"
         @open="files?.open()"
         @save="files?.save()"
         @save-as="files?.saveAs()"
+        @reveal="files?.reveal()"
         @close="files?.close()"
       />
       <AppToolbar @export="exportOpen = true" />

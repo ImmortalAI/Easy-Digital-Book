@@ -1,6 +1,14 @@
 import type { Book } from "@/types/book";
 import { canonicalUuid } from "@/utils/uuid";
 
+export const DEFAULT_TITLES = { ru: "Без названия", en: "Untitled", "zh-CN": "未命名" } as const;
+
+/** A title nobody typed: empty or a new book's placeholder in any UI language. */
+export function isDefaultTitle(title: string): boolean {
+  const trimmed = title.trim();
+  return trimmed === "" || Object.values(DEFAULT_TITLES).some((value) => value === trimmed);
+}
+
 export interface CreateBookOptions {
   locale: string;
   now: Date | string;
@@ -12,7 +20,12 @@ export interface CreateBookOptions {
 export function createBook({ locale, now, newUuid, newChapterId, newId }: CreateBookOptions): Book {
   const timestamp = typeof now === "string" ? now : now.toISOString();
   const language = locale || "en";
-  const title = language === "ru" ? "Без названия" : language === "zh-CN" ? "未命名" : "Untitled";
+  const title =
+    language === "ru"
+      ? DEFAULT_TITLES.ru
+      : language === "zh-CN"
+        ? DEFAULT_TITLES["zh-CN"]
+        : DEFAULT_TITLES.en;
   const heading = language === "ru" ? "Глава 1" : language === "zh-CN" ? "第 1 章" : "Chapter 1";
   const uuidGenerator = newUuid ?? newId;
   const chapterGenerator = newChapterId ?? newId;

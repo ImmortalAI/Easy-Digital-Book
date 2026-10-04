@@ -83,7 +83,9 @@
   "fileMenu": {
     "open": "打开…",
     "saveAs": "另存为…",
-    "close": "关闭项目"
+    "close": "关闭项目",
+    "reveal": "在文件夹中显示",
+    "revealFailed": "无法打开文件夹"
   },
   "metadata": {
     "title": "元数据",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createBook } from "@/services/book/create";
+import { createBook, isDefaultTitle } from "@/services/book/create";
 import { addChapter } from "@/services/book/chapters";
 import { extractTitle } from "@/services/book/extract-title";
 import { importImage, removeResources } from "@/services/book/resources";
@@ -7,6 +7,14 @@ import { importImage, removeResources } from "@/services/book/resources";
 const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 describe("book domain", () => {
+  it("recognises the placeholder titles of a new book", () => {
+    expect(isDefaultTitle("Без названия")).toBe(true);
+    expect(isDefaultTitle(" Untitled ")).toBe(true);
+    expect(isDefaultTitle("未命名")).toBe(true);
+    expect(isDefaultTitle("")).toBe(true);
+    expect(isDefaultTitle("Untitled Saga")).toBe(false);
+  });
+
   it("creates a localized new book with an injected clock and id", () => {
     const book = createBook({
       locale: "ru",

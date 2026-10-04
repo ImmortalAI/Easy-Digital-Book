@@ -8,7 +8,9 @@ test("new book, save/open, search/replace, undo delete, and export", async ({ pa
   const editor = page.locator(".cm-content");
   await editor.fill("# Chapter 1\nhero");
   await page.keyboard.press("Control+s");
-  await expect(page.getByText("/memory/book.edb")).toBeVisible();
+  // The first save names the untitled book after its file; the path itself is not shown.
+  await expect(page.getByRole("button", { name: /^book/ })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Status bar" })).toContainText("Saved");
 
   await page.keyboard.press("Control+o");
   await expect(editor).toContainText("hero");
