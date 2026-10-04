@@ -2,7 +2,7 @@
 
 [Русский](../ru/markup.md) · **English** · [简体中文](../zh-CN/markup.md)
 
-Chapters in easy-digital-book are written in **NovLang**, a small
+Chapters in Easy Digital Book are written in **NovLang**, a small
 Markdown-like markup language for fiction. One file is one chapter. The
 markup is parsed by the [`novlang-js`](https://www.npmjs.com/package/novlang-js)
 library; this page describes what it supports and how the app uses the

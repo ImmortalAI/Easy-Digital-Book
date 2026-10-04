@@ -1,6 +1,18 @@
 # Changelog
 
-All notable changes to easy-digital-book are documented here.
+All notable changes to Easy Digital Book are documented here.
+
+## [1.0.1] — 2026-10-04
+
+### Added
+
+- The project is licensed under GPL-3.0-or-later.
+- A sample book, `docs/sample/the-keeper-of-north-light.edb`, to try the app on.
+
+### Changed
+
+- New app icon on every platform; the macOS icon follows the system icon grid.
+- The app is now called "Easy Digital Book" in the window title, bundles, and release names.
 
 ## [1.0.0] — 2026-10-04
 

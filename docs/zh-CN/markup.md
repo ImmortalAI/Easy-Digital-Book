@@ -2,7 +2,7 @@
 
 [Русский](../ru/markup.md) · [English](../en/markup.md) · **简体中文**
 
-easy-digital-book 中的章节使用 **NovLang** 编写。这是一种面向小说文本、
+Easy Digital Book 中的章节使用 **NovLang** 编写。这是一种面向小说文本、
 类似 Markdown 的小型标记语言。一个文件就是一章。标记由
 [`novlang-js`](https://www.npmjs.com/package/novlang-js) 库解析；本页说明它
 支持哪些写法，以及应用如何使用解析结果。
