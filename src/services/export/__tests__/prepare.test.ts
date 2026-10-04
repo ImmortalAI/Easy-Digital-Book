@@ -223,6 +223,40 @@ describe("prepareExport", () => {
     expect(processor).toHaveBeenCalledTimes(2);
   });
 
+  it.each([
+    [64 * 1024 * 1024, 1],
+    [64 * 1024 * 1024 + 1, 2],
+  ])(
+    "exports %i-byte images and processes them %i time(s) across repeated exports",
+    async (size, calls) => {
+      const input = book();
+      input.resources.set("images/large.jpg", resource(92));
+      input.chapters = [{ id: "one", source: "![large](images/large.jpg)" }];
+      const bytes = new Uint8Array(size);
+      bytes[0] = 17;
+      bytes[size - 1] = 29;
+      const processor = vi.fn<ImageProcessor["process"]>(async ({ plan }) => ({
+        bytes,
+        mediaType: "image/jpeg",
+        width: plan.width,
+        height: plan.height,
+      }));
+      const deps = dependencies({
+        imageProcessor: { process: processor, dispose: () => {} },
+        hash: async () => `task-2-cache-bound-${size}`,
+      });
+      const first = await prepareExport(input, options, deps);
+      const second = await prepareExport(input, options, deps);
+      for (const prepared of [first, second]) {
+        expect(prepared.images[0]!.output.bytes).toBe(bytes);
+        expect(prepared.images[0]!.output.bytes.length).toBe(size);
+        expect(prepared.images[0]!.output.bytes[0]).toBe(17);
+        expect(prepared.images[0]!.output.bytes[size - 1]).toBe(29);
+      }
+      expect(processor).toHaveBeenCalledTimes(calls);
+    },
+  );
+
   it("rejects already cancelled preparation and cancellation during image processing", async () => {
     const aborted = new AbortController();
     aborted.abort();

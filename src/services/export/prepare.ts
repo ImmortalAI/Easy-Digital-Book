@@ -13,7 +13,8 @@ import type { BuildDependencies, ExportOptions, PreparedExport } from "./types";
 
 // Bounded: this map outlives every export, and each entry is a full encoded
 // image. 64 MB keeps repeat exports fast without growing without limit.
-const cache = createByteLru<ProcessedImage>(64 * 1024 * 1024);
+const cacheMaxBytes = 64 * 1024 * 1024;
+const cache = createByteLru<ProcessedImage>(cacheMaxBytes);
 const check = (signal?: AbortSignal) => {
   if (signal?.aborted) throw new AppError("export.cancelled", "Export cancelled");
 };
@@ -165,7 +166,7 @@ export async function prepareExport(
     let output = cache.get(key);
     if (!output) {
       output = await deps.imageProcessor.process({ bytes: resource.bytes, plan }, deps.signal);
-      cache.set(key, output);
+      if (output.bytes.length <= cacheMaxBytes) cache.set(key, output);
     }
     processed.push({ source, output });
     deps.onProgress?.({ stage: "images", done: i + 1, total: imagePaths.length });
