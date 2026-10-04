@@ -291,6 +291,71 @@ placeholders only, so link replacement cannot invalidate any recorded offsets.
 (fid1,off33) → `kindle:pos:fid:0001:off:0000000011`.
 Full reconstruction/link round-trip example is Task 4.
 
+### Writer text layout and position examples (Task 4)
+
+The writer's public `layoutText(documents, styles)` result already contains final
+patched links. It first parses ordered XML with `fast-xml-parser`, assigns unique
+base32 `aid` values, rewrites stylesheet references to their ordered CSS flows,
+and reserves 34 ASCII bytes for each internal anchor href. It serializes before
+measuring, then patches only those exact attribute-value byte slots. Entity
+spelling may become canonical: numeric entities decode to their characters,
+`&amp;` remains correctly escaped, and empty elements use explicit closing tags.
+Mixed-content whitespace, namespace prefixes, attributes and original ids survive.
+The doctype is unnecessary for this standalone serialized XHTML and the parser
+omits it. Neither source documents nor the shared preparation objects are mutated.
+
+`positions[path]` addresses the first fragment at offset zero; its reconstructed
+offset is the first content insertion address. `positions[path#id]` records the
+opening-tag address. An id in a retained shell resolves to the next fragment at
+local zero, retaining its own reconstructed opening-tag address for navigation.
+An anchor with no following fragment is rejected. Paths are normalized relative
+to the referring document; percent-encoded path/fragment parts decode for lookup.
+External URLs remain unchanged. Missing internal targets fail with
+`export.azw3Link`, never a fabricated position. `rewriteLinks(documents, positions)`
+is an immutable document-level convenience; layout itself patches final bytes.
+Resource URI rewriting must precede layout because it changes serialized lengths.
+
+Fragments are emitted in file/reading order with zero-based global ordinals.
+The writer retains oversized section shells, grouping complete child nodes toward
+8192 bytes. An oversized complete block or text node stays intact: this is a
+preparation target, not a device limit, and does not license cutting XML tokens.
+Consecutive removed child runs can all use `P-//*[@aid='parent']`; the insertion
+addresses establish their order. `S-//*[@aid='child']` is used only after a child
+retained in the skeleton, never after an earlier removed fragment's node.
+The pinned reference measurement supplied to the implementation used one body
+selector for five successive fragments (lengths 7908, 7887, 7896, 7896, 6143);
+all 100 paragraph ids survived its round trip. The independent writer's own
+1000-paragraph multilingual measurement produced 84 fragments, 2664–7992 bytes,
+and 665930 total HTML bytes; a 9000-character CJK paragraph remained one 27026-byte
+fragment (27095 total HTML bytes). These measure preparation behavior, not device
+compatibility; long-flow and physical-device release gates remain open.
+
+Independently counted writer fixture:
+`<html><body><p id="n">Я</p></body></html>` serializes as skeleton
+`<html aid="0"><body aid="1"></body></html>` (42 bytes), followed physically by
+`<p id="n" aid="2">Я</p>` (24 bytes). SKEL file0: start0, length42, count1;
+FRAG file0/ordinal0: start0, length24, insertion28, selector `P-//*[@aid='1']`.
+The reconstructed file is 66 bytes. Its target has `(fid=0,off=0,reconstructed=28)`;
+the physical target is byte42. Full physical hex (line boundary separates parts):
+
+```text
+3c68746d6c206169643d2230223e3c626f6479206169643d2231223e3c2f626f64793e3c2f68746d6c3e
+3c702069643d226e22206169643d2232223ed0af3c2f703e
+```
+
+Add `<a href="#n">Go</a>` before the paragraph. The same shell remains 42 bytes;
+the fragment becomes 83 bytes, inserted at28:
+
+```xml
+<a href="kindle:pos:fid:0000:off:000000001R" aid="2">Go</a><p id="n" aid="3">Я</p>
+```
+
+`1R` in radix32 is59. The paragraph target is therefore fragment-local59,
+reconstructed87 (`28+59`), and physical101 (`42+59`). The complete file has125
+bytes. Replacing the reserved href with this address changes no lengths; the
+independent reader inserts the final fragment into the shell and decodes every
+noteref/backlink address against those final bytes in the tests.
+
 ## INDX / TAGX / IDXT / CNCX and NCX
 
 SKEL/FRAG/NCX labels name index roles: their record signatures are all `INDX`.
