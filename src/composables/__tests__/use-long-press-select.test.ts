@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { effectScope } from "vue";
 import { useLongPressSelect } from "@/composables/use-long-press-select";
 
 beforeEach(() => vi.useFakeTimers());
@@ -43,5 +44,30 @@ describe("useLongPressSelect", () => {
     vi.advanceTimersByTime(600);
     expect(onStart).not.toHaveBeenCalled();
     expect(press.suppressClick()).toBe(false);
+  });
+
+  it("drops the timer, autoscroll and window listeners when its scope is disposed", () => {
+    const onStart = vi.fn<(path: string) => void>(),
+      onExtend = vi.fn<(path: string) => void>(),
+      onEnd = vi.fn<() => void>();
+    const cancelFrame = vi.spyOn(window, "cancelAnimationFrame");
+    const removed = vi.spyOn(window, "removeEventListener");
+    const scope = effectScope();
+    const press = scope.run(() =>
+      useLongPressSelect({ onStart, onExtend, onEnd, scroller: () => undefined }),
+    )!;
+    press.onPointerDown(pointer("pointerdown"), "a");
+    cancelFrame.mockClear();
+    removed.mockClear();
+    scope.stop();
+
+    expect(cancelFrame).toHaveBeenCalled();
+    expect(removed.mock.calls.map(([type]) => type)).toEqual(
+      expect.arrayContaining(["pointermove", "pointerup", "pointercancel"]),
+    );
+    vi.advanceTimersByTime(600);
+    expect(onStart).not.toHaveBeenCalled();
+    window.dispatchEvent(pointer("pointerup"));
+    expect(onEnd).not.toHaveBeenCalled();
   });
 });

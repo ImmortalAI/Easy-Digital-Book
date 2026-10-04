@@ -357,4 +357,30 @@ describe("EditorView Task 13 integration", () => {
     expect(reopened.state.doc.toString()).toContain("![](images/pic.png)");
     wrapper.unmount();
   });
+
+  it("keeps the gallery mounted while it imports dropped files", async () => {
+    const layout = useLayoutStore();
+    const project = useProjectStore();
+    layout.center = { kind: "images" };
+    const wrapper = mount(EditorView);
+    const gallery = wrapper.get("[data-image-gallery]").element;
+    const centers: string[] = [];
+    const stop = watch(
+      () => layout.center,
+      (center) => centers.push(center.kind),
+      { flush: "sync" },
+    );
+
+    await wrapper.findComponent({ name: "ImageGallery" }).props("onDropFiles")([
+      { name: "a.png", bytes: PNG },
+      { name: "b.png", bytes: Uint8Array.from([...PNG, 0]) },
+    ]);
+    await nextTick();
+    stop();
+
+    expect(project.book!.resources.size).toBe(2);
+    expect(centers).toEqual([]);
+    expect(wrapper.get("[data-image-gallery]").element).toBe(gallery);
+    wrapper.unmount();
+  });
 });

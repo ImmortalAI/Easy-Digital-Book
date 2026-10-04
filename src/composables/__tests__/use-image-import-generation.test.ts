@@ -119,4 +119,22 @@ describe("image import project generation", () => {
     expect(hash).not.toHaveBeenCalled();
     expect(project.book?.resources.size).toBe(0);
   });
+
+  it("shows an imported image unless the caller keeps the current view", async () => {
+    const project = useProjectStore();
+    project.setBook(makeBook("urn:uuid:550e8400-e29b-41d4-a716-446655440001"));
+    const layout = useLayoutStore();
+    layout.center = { kind: "images" };
+    const importer = useImageImport({ sha256: async (bytes) => String(bytes.length) });
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+    await importer.importFile({ name: "a.png", bytes: png }, undefined, undefined, null, {
+      navigate: false,
+    });
+    expect(project.book?.resources.has("images/a.png")).toBe(true);
+    expect(layout.center).toEqual({ kind: "images" });
+
+    await importer.importFile({ name: "b.png", bytes: new Uint8Array([...png, 0]) });
+    expect(layout.center).toEqual({ kind: "image", path: "images/b.png" });
+  });
 });

@@ -1,3 +1,5 @@
+import { getCurrentScope, onScopeDispose } from "vue";
+
 export interface LongPressOptions {
   delay?: number;
   slop?: number;
@@ -73,6 +75,13 @@ export function useLongPressSelect(options: LongPressOptions) {
       frame = requestAnimationFrame(autoscroll);
     }, delay);
   }
+  // An unmount mid-gesture must not leave the timer, the autoscroll frame or
+  // the window listeners behind.
+  if (getCurrentScope())
+    onScopeDispose(() => {
+      active = false;
+      cleanup();
+    });
   /** True once after a long press, so the click that ends it does not open the image. */
   function suppressClick() {
     const value = suppress;

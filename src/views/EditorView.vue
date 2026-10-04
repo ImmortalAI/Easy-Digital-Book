@@ -131,15 +131,15 @@ async function importCover(file: ImageFile, identity: ImageImportIdentity) {
     project.applyMutation(setCover(project.book, result.path));
 }
 
+// The gallery stays on screen while it imports, keeping its filter and selection.
 async function importImage() {
-  await imageImport.pickAndImport();
-  layout.center = { kind: "images" };
+  await imageImport.pickAndImport(undefined, undefined, { navigate: false });
 }
 
 async function importDroppedImages(dropped: ImageFile[]) {
   const identity = captureImageImportIdentity(project);
-  for (const file of dropped) await imageImport.importFile(file, undefined, undefined, identity);
-  layout.center = { kind: "images" };
+  for (const file of dropped)
+    await imageImport.importFile(file, undefined, undefined, identity, { navigate: false });
 }
 
 async function pickCover() {
