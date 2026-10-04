@@ -25,6 +25,23 @@ const book = () =>
   });
 
 describe("application stores", () => {
+  it("remembers the preview look across loads", async () => {
+    const services = createInMemoryPlatformServices();
+    setActivePinia(createPinia());
+    const settings = useSettingsStore();
+    settings.configure(services.settings);
+    await settings.load();
+    expect(settings.preview).toEqual({ paperStyle: true, dimImages: true });
+
+    await settings.setPreview({ paperStyle: false });
+
+    setActivePinia(createPinia());
+    const reloaded = useSettingsStore();
+    reloaded.configure(services.settings);
+    await reloaded.load();
+    expect(reloaded.preview).toEqual({ paperStyle: false, dimImages: true });
+  });
+
   it("tracks revision and recovery deltas for mutations", () => {
     setActivePinia(createPinia());
     const project = useProjectStore();

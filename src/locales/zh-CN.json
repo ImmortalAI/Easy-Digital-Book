@@ -262,5 +262,10 @@
     "redo": "重做",
     "search": "在本章中查找",
     "more": "更多格式"
+  },
+  "preview": {
+    "paperStyle": "纸张样式",
+    "paperStyleHint": "纸张样式（Mod+Alt+P）。关闭后显示原始外观",
+    "dimImages": "调暗图片"
   }
 }

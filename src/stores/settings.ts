@@ -10,6 +10,12 @@ export interface ExportSettings {
   versionInTitle: boolean;
   lastDir: string | null;
 }
+export interface PreviewSettings {
+  /** Dark "old paper" look of the preview under the dark theme. */
+  paperStyle: boolean;
+  /** Dim images in the paper look so white illustrations don't glare. */
+  dimImages: boolean;
+}
 export interface UpdateSettings {
   lastCheckedAt: number | null;
 }
@@ -20,12 +26,14 @@ const defaultExport: ExportSettings = {
   versionInTitle: true,
   lastDir: null,
 };
+const defaultPreview: PreviewSettings = { paperStyle: true, dimImages: true };
 export const useSettingsStore = defineStore("settings", () => {
   const confirmDelete = ref(true),
     recentFiles = ref<string[]>([]),
     exportSettings = ref<ExportSettings>({ ...defaultExport }),
     locale = ref<SupportedLocale | null>(null),
     theme = ref<Theme>("system"),
+    preview = ref<PreviewSettings>({ ...defaultPreview }),
     updates = ref<UpdateSettings>({ lastCheckedAt: null });
   let repository: SettingsRepository | undefined;
   function configure(value: SettingsRepository) {
@@ -40,6 +48,10 @@ export const useSettingsStore = defineStore("settings", () => {
     };
     locale.value = (await repository?.get<SupportedLocale | null>("locale", null)) ?? null;
     theme.value = (await repository?.get<Theme>("theme", "system")) ?? "system";
+    preview.value = {
+      ...defaultPreview,
+      ...(await repository?.get<Partial<PreviewSettings>>("preview", {})),
+    };
     const updateSettings = await repository?.get<Partial<UpdateSettings>>("updates", {});
     updates.value = {
       lastCheckedAt:
@@ -54,8 +66,13 @@ export const useSettingsStore = defineStore("settings", () => {
     await repository?.set("export", exportSettings.value);
     await repository?.set("locale", locale.value);
     await repository?.set("theme", theme.value);
+    await repository?.set("preview", preview.value);
     await repository?.set("updates", updates.value);
     await repository?.set("updates.lastCheckedAt", updates.value.lastCheckedAt);
+  }
+  async function setPreview(patch: Partial<PreviewSettings>) {
+    preview.value = { ...preview.value, ...patch };
+    await repository?.set("preview", preview.value);
   }
   async function addRecent(path: string) {
     recentFiles.value = [path, ...recentFiles.value.filter((item) => item !== path)].slice(0, 10);
@@ -71,10 +88,12 @@ export const useSettingsStore = defineStore("settings", () => {
     exportSettings,
     locale,
     theme,
+    preview,
     updates,
     configure,
     load,
     persist,
+    setPreview,
     addRecent,
     removeRecent,
   };

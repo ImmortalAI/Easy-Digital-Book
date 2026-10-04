@@ -262,5 +262,10 @@
     "redo": "Redo",
     "search": "Find in chapter",
     "more": "More formatting"
+  },
+  "preview": {
+    "paperStyle": "Paper style",
+    "paperStyleHint": "Paper style (Mod+Alt+P). Off shows the original look",
+    "dimImages": "Dim images"
   }
 }
