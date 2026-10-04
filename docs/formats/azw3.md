@@ -45,6 +45,28 @@ Example: two descriptors for records at 96 and 112 are
 `00000060 00 000000` and `00000070 00 000002`; the gap is `0000`.
 Task 3 supplies the complete PalmDB fixture dump. See `palmdbDescriptors` vector.
 
+Task 3 writer fixture: name `Fixture`, created `1904-01-01T00:00:42Z`,
+two records (16 zero bytes, then ASCII `abc`). Total length 115 bytes; record
+offsets 96 and 112. This tests the container only: the synthetic zero record
+is not a complete MOBI record 0. The test expectation is hand-calculated and
+the following dump was checked against our writer and independent PalmDB reader:
+
+```text
+0000 46 69 78 74 75 72 65 00 00 00 00 00 00 00 00 00
+0010 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0020 00 00 00 00 00 00 00 2a 00 00 00 2a 00 00 00 00
+0030 00 00 00 00 00 00 00 00 00 00 00 00 42 4f 4f 4b
+0040 4d 4f 42 49 00 00 00 03 00 00 00 00 00 02 00 00
+0050 00 60 00 00 00 00 00 00 00 70 00 00 00 02 00 00
+0060 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0070 61 62 63
+```
+
+Our deterministic name policy replaces each non-printable/non-ASCII UTF-16
+code unit with `_`, truncates to 31 ASCII bytes, and leaves zero padding.
+Timestamp fractions are rounded down to whole seconds; out-of-range dates
+are rejected. Empty records are allowed and have equal adjacent offsets.
+
 ## PalmDOC and MOBI v8 record 0
 
 PalmDOC offsets 0:u16 compression=2; 2:u16 zero; 4:u32 total uncompressed text
@@ -86,7 +108,7 @@ The MOBI portion is **264 bytes**, beginning at 16 and ending at 280.
 8192 bytes of record-0 padding are used by Calibre for third-party metadata
 editing, not part of the MOBI header; our writer may omit them. Do not copy a
 random Calibre UID or OS-dependent producer metadata. Example prefix at offset
-16: `4d4f4249 00000108 00000002 0000fde9`; complete record-0 dump is Task 3.
+16: `4d4f4249 00000108 00000002 0000fde9`; complete record-0 dump is Task 6/7.
 
 ## EXTH and stable metadata
 
@@ -136,7 +158,7 @@ Example `EXTH` containing `EBOK` only:
 `45585448 00000018 00000001 000001f5 0000000c 45424f4b`.
 An empty EXTH is `45585448 0000000c 00000000`.
 A Russian author `Я` entry: `00000064 0000000a d0af`.
-Full metadata and optional-cover examples are Tasks 3/6.
+Full metadata and optional-cover examples are Task 6.
 
 ## Compression, 4096-byte boundaries and trailers
 
@@ -164,6 +186,22 @@ For `A×4095 + 😀 + Z`, first payload ends in `f0`, overlap trailer is
 `9f988003`; second payload is `9f98805a`, overlap trailer `00`.
 Similarly `A×4095 + Я + Z` → `af01`, and `A×4095 + 中 + Z` → `b8ad02`.
 The payloads alone concatenate to valid UTF-8; individual payloads need not.
+
+Task 3's `splitTextRecords` returns `{ bytes, overlap }`: `bytes` is only the
+uncompressed payload; `overlap` already includes the mandatory count byte.
+Thus a complete non-TBS text record for `abcabc` is `6162638018 00`, and
+for `Я` is `02d0af 00`. For empty text the splitter returns no text records;
+compressing an empty payload returns no bytes. The caller adds TBS after
+overlap and sets the corresponding extra-data flags (Tasks 5/7).
+
+Our compressor chooses the longest available match (3..10 bytes), preferring
+the closest distance on ties; it falls back to a space pair, ordinary literal,
+or at most eight reserved literal bytes. It uses no history from other records.
+For eleven `a` bytes its output is `61 800f` (distance 1, length 10).
+A maximum-distance match in `abc + _×2044 + abc` ends with `bff8`
+(distance 2047, length 3); increasing the gap by one leaves final `616263`
+literal bytes. Binary escape overhead can expand a 4096-byte payload beyond
+4096 compressed bytes; this does not violate the uncompressed record limit.
 
 Flags bit0 = overlap; bit1 = one TBS entry; remaining trailer bits unset.
 Physical text record = `compressedPayload + overlapBytes + countByte +
