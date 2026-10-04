@@ -1,9 +1,10 @@
 export const restrictedImports = [
   {
-    target: "src/services/{book,edb,epub,search,checks}/**",
-    paths: ["vue", "pinia", "@tauri-apps/*"],
+    target: "src/services/{book,edb,epub,azw3,export,search,checks}/**",
+    paths: ["vue", "pinia"],
+    patterns: ["@tauri-apps/**"],
   },
-  { target: "src/utils/**", paths: ["vue", "pinia", "@tauri-apps/*"] },
+  { target: "src/utils/**", paths: ["vue", "pinia"], patterns: ["@tauri-apps/**"] },
 ] as const;
 
 const domGlobals = [
@@ -51,13 +52,17 @@ export default {
     .concat([
       {
         files: ["src/**"],
-        excludeFiles: ["src/services/platform/**"],
+        excludeFiles: [
+          "src/services/platform/**",
+          "src/services/{book,edb,epub,azw3,export,search,checks}/**",
+          "src/utils/**",
+        ],
         rules: {
-          "eslint/no-restricted-imports": ["error", { patterns: ["@tauri-apps/*"] }],
+          "eslint/no-restricted-imports": ["error", { patterns: ["@tauri-apps/**"] }],
         },
       },
       {
-        files: ["src/services/{book,edb,epub,search,checks}/**", "src/utils/**"],
+        files: ["src/services/{book,edb,epub,azw3,export,search,checks}/**", "src/utils/**"],
         env: { browser: false },
         rules: {
           "eslint/no-restricted-globals": [

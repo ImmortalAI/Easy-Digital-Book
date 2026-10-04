@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import JSZip from "jszip";
 import { describe, expect, it, vi } from "vitest";
 import { buildEpub } from "@/services/epub/build";
@@ -206,3 +207,24 @@ describe("buildEpub", () => {
     expect(await zip.file("OEBPS/content.opf")!.async("string")).not.toContain("notes");
   });
 });
+
+// Captured from the original builder before extracting preparation.
+it.each([
+  [true, true, 4084, "f8987c88ce06942dc0366c69a31302a811af46540fb09fcf57f82a595b97aca7"],
+  [false, false, 3631, "9e1f3917cf998845c30702713c9c5f6c36863af21e4850e7fa16b130fe51aac5"],
+  [true, false, 4074, "a2bba1c5c9725b1ff4d3fcb64143b0752b227376d5e5854cfd572177f3c69a5b"],
+  [false, true, 3637, "d650b9b0a92c42736b5d63b02c394000704b1b5d9463e8c1e1db657885e63def"],
+] as const)(
+  "preserves pre-extraction bytes with titlePage=%s versionInTitle=%s",
+  async (titlePage, versionInTitle, length, digest) => {
+    const before = structuredClone(book);
+    const bytes = await buildEpub(
+      book,
+      { imagePreset: "original", grayscale: false, titlePage, versionInTitle },
+      { imageProcessor: processor, now: () => new Date("2026-01-02T03:04:05Z") },
+    );
+    expect(bytes.length).toBe(length);
+    expect(createHash("sha256").update(bytes).digest("hex")).toBe(digest);
+    expect(book).toEqual(before);
+  },
+);

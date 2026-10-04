@@ -16,6 +16,8 @@ export default defineConfig({
         "src/services/book/**/*.ts",
         "src/services/edb/**/*.ts",
         "src/services/epub/**/*.ts",
+        "src/services/export/**/*.ts",
+        "src/services/azw3/**/*.ts",
         "src/services/search/**/*.ts",
         "src/services/checks/**/*.ts",
         "src/stores/**/*.ts",

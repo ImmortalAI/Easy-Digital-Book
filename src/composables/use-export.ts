@@ -1,3 +1,4 @@
+import type { ExportProgress } from "@/services/export/types";
 import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
 import { checkBook } from "@/services/checks/book-checks";
 import { buildEpub, type BuildEpubDependencies, type ExportOptions } from "@/services/epub/build";
@@ -8,11 +9,7 @@ import type { useSettingsStore } from "@/stores/settings";
 import { AppError, appErrorFromUnknown } from "@/types/errors";
 import type { ImageProcessor, PlatformServices } from "@/types/platform";
 
-export interface ExportProgress {
-  stage: "chapters" | "images" | "zip";
-  done: number;
-  total: number;
-}
+export type { ExportProgress } from "@/services/export/types";
 export interface ExportRequest {
   path?: string;
   signal?: AbortSignal;
