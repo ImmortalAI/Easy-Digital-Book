@@ -1,8 +1,8 @@
 import { createPinia, setActivePinia } from "pinia";
 import { mount } from "@vue/test-utils";
 import { within } from "@testing-library/vue";
-import { beforeEach, describe, expect, it } from "vitest";
-import { nextTick } from "vue";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { nextTick, watch } from "vue";
 import { chapterParseResults, resetChapterParseResults } from "@/composables/use-novlang-parse";
 import { useLayoutStore } from "@/stores/layout";
 import { createBook } from "@/services/book/create";
@@ -13,6 +13,14 @@ import { EditorView as CodeMirrorView } from "@codemirror/view";
 import EditorView from "@/views/EditorView.vue";
 import { useDiagnosticsStore } from "@/stores/diagnostics";
 import { projectFilesKey, createProjectFiles } from "@/composables/use-project-files";
+
+// A 1x1 PNG, recognised by its signature.
+const PNG = Uint8Array.from(
+  atob(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+  ),
+  (char) => char.charCodeAt(0),
+);
 
 function bookWithTwoChapters() {
   const book = createBook({
@@ -272,6 +280,107 @@ describe("EditorView Task 13 integration", () => {
     // portal), so it is no longer reachable through the mounted wrapper's tree.
     const dialog = within(document.body).getByRole("dialog", { name: "Export EPUB" });
     expect(within(dialog).getByRole("button", { name: /export/i })).toBeInTheDocument();
+    wrapper.unmount();
+  });
+
+  it("inserts an image from file into its own chapter after a chapter switch", async () => {
+    const layout = useLayoutStore();
+    const project = useProjectStore();
+    layout.center = { kind: "chapter", id: "chapter1" };
+    let resolvePick!: (file: { name: string; bytes: Uint8Array }) => void;
+    const pickImage = () =>
+      new Promise<{ name: string; bytes: Uint8Array }>((resolve) => (resolvePick = resolve));
+    const wrapper = mount(EditorView, {
+      global: { provide: { [projectFilesKey]: { pickImage } } },
+    });
+
+    const header = wrapper.findComponent({ name: "ContentHeader" });
+    await header.vm.$emit("insert-image-from-file", 11);
+    layout.center = { kind: "chapter", id: "chapter2" };
+    await nextTick();
+    await nextTick();
+    resolvePick({ name: "pic.png", bytes: PNG });
+
+    await vi.waitFor(() =>
+      expect(project.book!.chapters[0]!.source).toContain("![](images/pic.png)"),
+    );
+    await nextTick();
+    await nextTick();
+    expect(project.book!.chapters[1]!.source).toBe("# Second chapter");
+    expect(layout.center).toEqual({ kind: "chapter", id: "chapter1" });
+    const editor = CodeMirrorView.findFromDOM(wrapper.get(".cm-editor").element as HTMLElement)!;
+    expect(editor.state.doc.toString()).toBe(project.book!.chapters[0]!.source);
+    wrapper.unmount();
+  });
+
+  it("never writes an import into the chapter on screen when it is another one", async () => {
+    const layout = useLayoutStore();
+    const project = useProjectStore();
+    layout.center = { kind: "chapter", id: "chapter1" };
+    let resolvePick!: (file: { name: string; bytes: Uint8Array }) => void;
+    const pickImage = () =>
+      new Promise<{ name: string; bytes: Uint8Array }>((resolve) => (resolvePick = resolve));
+    const wrapper = mount(EditorView, {
+      global: { provide: { [projectFilesKey]: { pickImage } } },
+    });
+    await wrapper.findComponent({ name: "ContentHeader" }).vm.$emit("insert-image-from-file", 11);
+    layout.center = { kind: "chapter", id: "chapter2" };
+    await nextTick();
+    await nextTick();
+    // The import navigates back to its chapter; something else immediately
+    // takes the screen back to chapter 2, so chapter 2 is the mounted editor
+    // when the import finishes.
+    let redirected = false;
+    const stop = watch(
+      () => layout.center,
+      (center) => {
+        if (redirected || center.kind !== "chapter" || center.id !== "chapter1") return;
+        redirected = true;
+        layout.center = { kind: "chapter", id: "chapter2" };
+      },
+      { flush: "sync" },
+    );
+    resolvePick({ name: "pic.png", bytes: PNG });
+
+    await vi.waitFor(() => expect(redirected).toBe(true));
+    await nextTick();
+    await nextTick();
+    stop();
+    expect(project.book!.chapters[1]!.source).toBe("# Second chapter");
+    const editor = CodeMirrorView.findFromDOM(wrapper.get(".cm-editor").element as HTMLElement)!;
+    expect(editor.state.doc.toString()).toBe("# Second chapter");
+    // Chapter 1's own editor state carries the image for when it is reopened.
+    layout.center = { kind: "chapter", id: "chapter1" };
+    await nextTick();
+    await nextTick();
+    const reopened = CodeMirrorView.findFromDOM(wrapper.get(".cm-editor").element as HTMLElement)!;
+    expect(reopened.state.doc.toString()).toContain("![](images/pic.png)");
+    wrapper.unmount();
+  });
+
+  it("keeps the gallery mounted while it imports dropped files", async () => {
+    const layout = useLayoutStore();
+    const project = useProjectStore();
+    layout.center = { kind: "images" };
+    const wrapper = mount(EditorView);
+    const gallery = wrapper.get("[data-image-gallery]").element;
+    const centers: string[] = [];
+    const stop = watch(
+      () => layout.center,
+      (center) => centers.push(center.kind),
+      { flush: "sync" },
+    );
+
+    await wrapper.findComponent({ name: "ImageGallery" }).props("onDropFiles")([
+      { name: "a.png", bytes: PNG },
+      { name: "b.png", bytes: Uint8Array.from([...PNG, 0]) },
+    ]);
+    await nextTick();
+    stop();
+
+    expect(project.book!.resources.size).toBe(2);
+    expect(centers).toEqual([]);
+    expect(wrapper.get("[data-image-gallery]").element).toBe(gallery);
     wrapper.unmount();
   });
 });

@@ -41,8 +41,19 @@ Prerequisite: CSS syntax highlighting in the `custom.css` editor (plan
     note: string; // short reason shown to the user, a locale key
     source: string; // where we learned it: guideline section, device test id
   }
-  interface SelectorRule { pattern: "pseudo-class" | "pseudo-element" | "combinator" | "attribute"; name: string; support: Support; note: string; source: string }
-  interface AtRule { name: string; support: Support; note: string; source: string }
+  interface SelectorRule {
+    pattern: "pseudo-class" | "pseudo-element" | "combinator" | "attribute";
+    name: string;
+    support: Support;
+    note: string;
+    source: string;
+  }
+  interface AtRule {
+    name: string;
+    support: Support;
+    note: string;
+    source: string;
+  }
   ```
 
 - Data sources, in order of trust:
@@ -88,11 +99,11 @@ Prerequisite: CSS syntax highlighting in the `custom.css` editor (plan
 
 ## 6. Severity levels
 
-| Level | Meaning | UI |
-| --- | --- | --- |
-| `unsupported` | Kindle ignores it in KF8 | warning, wavy underline |
-| `partial` | works only in KFX, only on newer firmware, or only for some values | info, dotted underline |
-| `supported` | no finding | — |
+| Level         | Meaning                                                            | UI                      |
+| ------------- | ------------------------------------------------------------------ | ----------------------- |
+| `unsupported` | Kindle ignores it in KF8                                           | warning, wavy underline |
+| `partial`     | works only in KFX, only on newer firmware, or only for some values | info, dotted underline  |
+| `supported`   | no finding                                                         | —                       |
 
 ## 7. Tests
 

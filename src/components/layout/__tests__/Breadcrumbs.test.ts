@@ -1,5 +1,6 @@
 import { createPinia, setActivePinia } from "pinia";
 import { cleanup, render, screen, within } from "@testing-library/vue";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import Breadcrumbs from "@/components/layout/Breadcrumbs.vue";
 import { createI18nPlugin } from "@/plugins/i18n";
@@ -68,5 +69,14 @@ describe("Breadcrumbs", () => {
 
     const trail = screen.getByRole("navigation", { name: "Breadcrumbs" });
     expect(within(trail).getByRole("listitem")).toHaveTextContent("Styles");
+  });
+
+  it("shows Book › Images and leads back to the gallery from one image", async () => {
+    const layout = useLayoutStore();
+    layout.center = { kind: "image", path: "images/a.png" };
+    renderBreadcrumbs();
+
+    await userEvent.click(screen.getByRole("button", { name: /images/i }));
+    expect(layout.center).toEqual({ kind: "images" });
   });
 });

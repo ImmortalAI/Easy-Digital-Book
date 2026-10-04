@@ -7,7 +7,7 @@ import { useProjectStore } from "@/stores/project";
 import type { DiagnosticPosition } from "@/types/diagnostics";
 import AppToolbar from "@/components/layout/AppToolbar.vue";
 import FileMenu from "@/components/layout/FileMenu.vue";
-import Breadcrumbs from "@/components/layout/Breadcrumbs.vue";
+import ContentHeader from "@/components/layout/ContentHeader.vue";
 import ResizableSplit from "@/components/layout/ResizableSplit.vue";
 import StatusBar, { type SaveState } from "@/components/layout/StatusBar.vue";
 import PreviewPane from "@/components/editor/PreviewPane.vue";
@@ -17,6 +17,7 @@ import ExplorerView from "@/components/sidebar/ExplorerView.vue";
 import SearchView from "@/components/sidebar/SearchView.vue";
 import MetadataForm from "@/components/metadata/MetadataForm.vue";
 import CssEditor from "@/components/editor/CssEditor.vue";
+import ImageGallery from "@/components/images/ImageGallery.vue";
 import ImageView from "@/components/editor/ImageView.vue";
 import SettingsView from "@/components/settings/SettingsView.vue";
 import ExportDialog from "@/components/export/ExportDialog.vue";
@@ -35,6 +36,7 @@ import {
   type ImageImportIdentity,
 } from "@/composables/use-image-import";
 import { setCover } from "@/services/book/metadata";
+import { syncChapterEditorText } from "@/components/editor/editor-commands";
 
 const project = useProjectStore();
 const diagnostics = useDiagnosticsStore();
@@ -74,7 +76,9 @@ const selectedChapter = computed(() =>
   project.book?.chapters.find((chapter) => chapter.id === selectedChapterId.value),
 );
 const canUseModes = computed(() => ["chapter", "css"].includes(layout.center.kind));
-const singlePane = computed(() => ["metadata", "image", "settings"].includes(layout.center.kind));
+const singlePane = computed(() =>
+  ["metadata", "image", "images", "settings"].includes(layout.center.kind),
+);
 // The highlighted tile is the sidebar view on screen; with the sidebar hidden,
 // Settings when it is the open page, otherwise none.
 const activeActivity = computed(() =>
@@ -91,8 +95,26 @@ const saveState = computed<SaveState>(() =>
 );
 const imageImport = useImageImport({ pickFile: files?.pickImage });
 
-async function importImage() {
-  await imageImport.pickAndImport();
+async function insertImageFromFile(position: number) {
+  const chapter = selectedChapter.value;
+  if (!chapter) return;
+  const source = chapter.source;
+  const result = await imageImport.pickAndImport(chapter.id, position);
+  if (result) await showInsertedImage(chapter.id, source, position);
+}
+
+/**
+ * The import may finish while another chapter is on screen. The text goes to
+ * the import's own chapter editor; the mounted one only gets the cursor when it
+ * shows that chapter, or it would write the text over the chapter it shows.
+ */
+async function showInsertedImage(chapterId: string, source: string, position: number) {
+  const next = project.book?.chapters.find((item) => item.id === chapterId)?.source;
+  if (next === undefined) return;
+  syncChapterEditorText(chapterId, next);
+  await nextTick();
+  if (selectedChapterId.value === chapterId)
+    sourceEditor.value?.syncSource(next, imageCursorPosition(source, position));
 }
 
 async function importImageAt(file: ImageFile, position: number, identity: ImageImportIdentity) {
@@ -100,15 +122,24 @@ async function importImageAt(file: ImageFile, position: number, identity: ImageI
   if (!chapter) return;
   const source = chapter.source;
   const result = await imageImport.importFile(file, chapter.id, position, identity);
-  if (!result) return;
-  const next = project.book?.chapters.find((item) => item.id === chapter.id)?.source;
-  if (next) sourceEditor.value?.syncSource(next, imageCursorPosition(source, position));
+  if (result) await showInsertedImage(chapter.id, source, position);
 }
 
 async function importCover(file: ImageFile, identity: ImageImportIdentity) {
   const result = await imageImport.importFile(file, undefined, undefined, identity);
   if (result && isImageImportIdentityCurrent(project, identity) && project.book)
     project.applyMutation(setCover(project.book, result.path));
+}
+
+// The gallery stays on screen while it imports, keeping its filter and selection.
+async function importImage() {
+  await imageImport.pickAndImport(undefined, undefined, { navigate: false });
+}
+
+async function importDroppedImages(dropped: ImageFile[]) {
+  const identity = captureImageImportIdentity(project);
+  for (const file of dropped)
+    await imageImport.importFile(file, undefined, undefined, identity, { navigate: false });
 }
 
 async function pickCover() {
@@ -280,13 +311,18 @@ onMounted(findSourceScroller);
         <template #sidebar>
           <!-- Each view pads itself; padding here too would inset its rows twice. -->
           <div class="min-w-0 flex-1 overflow-auto text-xs">
-            <ExplorerView v-if="layout.activeView === 'explorer'" @import="importImage" />
+            <ExplorerView v-if="layout.activeView === 'explorer'" />
             <SearchView v-else @select="selectSearchResult" />
           </div>
         </template>
+        <template #header>
+          <ContentHeader
+            :chapter-id="selectedChapterId"
+            @insert-image-from-file="insertImageFromFile"
+          />
+        </template>
         <template #single>
-          <Breadcrumbs />
-          <!-- Breadcrumbs stay pinned; the view below them scrolls. Without this,
+          <!-- The header stays pinned; the view below them scrolls. Without this,
                metadata and settings taller than the window are clipped by the
                pane's overflow. -->
           <div class="flex min-h-0 flex-1 flex-col overflow-auto" data-single-pane-content>
@@ -294,6 +330,11 @@ onMounted(findSourceScroller);
               v-if="layout.center.kind === 'metadata'"
               :on-pick-cover="pickCover"
               :on-import-cover="importCover"
+            />
+            <ImageGallery
+              v-else-if="layout.center.kind === 'images'"
+              :on-import="importImage"
+              :on-drop-files="importDroppedImages"
             />
             <ImageView v-else-if="layout.center.kind === 'image'" :path="layout.center.path" />
             <SettingsView
@@ -308,7 +349,6 @@ onMounted(findSourceScroller);
         </template>
         <template #source>
           <div class="relative flex h-full flex-col">
-            <Breadcrumbs />
             <SourceEditor
               ref="sourceEditor"
               v-if="layout.center.kind === 'chapter' && selectedChapterId"

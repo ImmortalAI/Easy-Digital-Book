@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { Compartment, EditorState } from "@codemirror/state";
 import { EditorView, keymap, lineNumbers } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import { css } from "@codemirror/lang-css";
+import { cssEditingExtensions } from "@/components/editor/css-language";
 import { customCssTemplate } from "@/assets/epub/custom.css";
 import { useProjectStore } from "@/stores/project";
 import { setCustomCss } from "@/services/book/metadata";
@@ -39,7 +39,7 @@ function mount() {
       extensions: [
         lineNumbers(),
         history(),
-        css(),
+        ...cssEditingExtensions(),
         editorTheme,
         editorColorTheme,
         liveSettings.of(liveExtensions()),

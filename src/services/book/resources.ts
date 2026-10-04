@@ -69,19 +69,24 @@ export async function importImage(
     removedResources: new Set(),
   };
 }
-export function removeResource(book: Book, path: string): BookMutation {
+export function removeResources(book: Book, paths: string[]): BookMutation {
   const resources = new Map(book.resources);
-  const existed = resources.delete(path);
+  const removed = new Set(paths.filter((path) => resources.delete(path)));
+  const coverRemoved = book.metadata.cover !== null && removed.has(book.metadata.cover);
   return {
     book: {
       ...book,
       resources,
-      metadata: book.metadata.cover === path ? { ...book.metadata, cover: null } : book.metadata,
+      metadata: coverRemoved ? { ...book.metadata, cover: null } : book.metadata,
     },
-    metadataCoverChanged: book.metadata.cover === path,
+    metadataCoverChanged: coverRemoved,
     changedChapters: new Set(),
     removedChapters: new Set(),
     changedResources: new Set(),
-    removedResources: existed ? new Set([path]) : new Set(),
+    removedResources: removed,
   };
+}
+
+export function removeResource(book: Book, path: string): BookMutation {
+  return removeResources(book, [path]);
 }

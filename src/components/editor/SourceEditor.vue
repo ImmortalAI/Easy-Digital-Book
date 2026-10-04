@@ -7,6 +7,7 @@ import { keymap, EditorView } from "@codemirror/view";
 import { computed, onBeforeUnmount, onMounted, ref, toRef, watch } from "vue";
 import {
   chapterEditorStates,
+  chapterEditorTick,
   createChapterEditor,
   insertFootnote,
   preserveOpenShortcutKeymap,
@@ -97,6 +98,7 @@ function editorExtensions(chapterId: string) {
       ...historyKeymap,
     ]),
     EditorView.updateListener.of((update) => {
+      if (update.docChanged || update.selectionSet) chapterEditorTick.value++;
       if (!update.docChanged) return;
       chapterEditorStates.set(chapterId, update.state);
       parser.updateSource(update.state.doc.toString());

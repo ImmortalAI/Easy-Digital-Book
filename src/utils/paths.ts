@@ -6,8 +6,8 @@ export function normalizeResourceName(fileName: string): string {
     (dot > 0 ? base.slice(0, dot) : base)
       .normalize("NFKD")
       .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-zA-Z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
+      .replace(/[^a-zA-Z0-9_]+/g, "-")
+      .replace(/^[-_]+|[-_]+$/g, "")
       .toLowerCase() || "image";
   return `${stem}${extension ? `.${extension}` : ""}`;
 }
@@ -30,4 +30,9 @@ export function uniqueResourcePath(
     const candidate = `images/${stem}-${n}${ext}`;
     if (!used.has(candidate)) return candidate;
   }
+}
+
+/** What the rename field accepts: the same characters file names keep. */
+export function sanitizeNameInput(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9_-]/g, "");
 }

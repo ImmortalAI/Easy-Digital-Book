@@ -106,6 +106,8 @@
     "addContributor": "Add {label}",
     "description": "Description",
     "coverHint": "Recommended 1600×2560",
+    "coverSize": "Size",
+    "coverSmall": "The cover is small and may look blurry on Kindle",
     "drop": "Drop an image here",
     "choose": "Choose…",
     "remove": "Remove",
@@ -124,13 +126,28 @@
     "newChapter": "New chapter",
     "images": "Images"
   },
+  "gallery": {
+    "selected": "Selected: {count}",
+    "clear": "Clear selection",
+    "cover": "Cover",
+    "filter": "Show",
+    "all": "All",
+    "used": "Used",
+    "unused": "Unused",
+    "add": "Add…",
+    "rename": "Rename…",
+    "empty": "No images. Add them with the button above or drop files here.",
+    "renameTitle": "Rename images",
+    "renameHint": "Images are numbered in the order you selected them. Latin letters, digits, _ and - only.",
+    "newName": "New name",
+    "renameConflict": "{name} already exists",
+    "renameConfirm": "Rename",
+    "renamedToast": "{count} images renamed"
+  },
   "images": {
     "usedIn": "Used in",
-    "insert": "Insert in text",
     "setCover": "Make cover",
     "findUsage": "Find usages",
-    "usedAsCover": "Used as the cover",
-    "usedInStyles": "Used in styles",
     "unused": "not used"
   },
   "chapters": {
@@ -155,13 +172,13 @@
   "delete": {
     "chapterTitle": "Delete chapter",
     "chapterMessage": "This chapter will be removed from the book.",
-    "imageTitle": "Delete image",
-    "imageMessage": "This image will be removed from the project.",
     "unusedTitle": "Delete unused images",
-    "unusedMessage": "These unused images will be removed from the project.",
     "words": "Words",
     "chapterToast": "Chapter deleted",
-    "imageToast": "Image deleted"
+    "imageToast": "Image deleted",
+    "imagesToast": "{count} images deleted",
+    "imagesTitle": "Delete images",
+    "imagesMessage": "These images will be removed from the project."
   },
   "unsaved": {
     "title": "Unsaved changes",
@@ -186,6 +203,7 @@
   },
   "settings": {
     "title": "Settings",
+    "editor": "Editor",
     "language": "Interface language",
     "export": "Export",
     "exportImages": "Images",
@@ -227,5 +245,22 @@
     "label": "Notification",
     "region": "Notifications ({hotkey})",
     "autosaveFailed": "Autosave failed"
+  },
+  "format": {
+    "toolbar": "Formatting",
+    "bold": "Bold",
+    "italic": "Italic",
+    "footnote": "Footnote",
+    "heading": "Chapter heading",
+    "quote": "Quote",
+    "sceneBreak": "Scene break",
+    "image": "Insert image",
+    "imageFromFile": "From file…",
+    "imageFromBook": "From the book…",
+    "noImages": "The book has no images yet",
+    "undo": "Undo",
+    "redo": "Redo",
+    "search": "Find in chapter",
+    "more": "More formatting"
   }
 }

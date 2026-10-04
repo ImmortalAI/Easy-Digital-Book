@@ -22,18 +22,21 @@ the matching `CHANGELOG.md` section for the draft release notes.
 
 Run the following on macOS 12+, Windows 10/WebView2, and Ubuntu 22.04/WebKitGTK.
 
-| Scenario                                                                  | macOS | Windows | Ubuntu |
-| ------------------------------------------------------------------------- | ----- | ------- | ------ |
-| First launch creates a new book and selects the OS locale                 | [ ]   | [ ]     | [ ]    |
-| Open `.edb` from the OS file association at first launch                  | [ ]   | [ ]     | [ ]    |
-| Open another `.edb` while the app is already running                      | [ ]   | [ ]     | [ ]    |
-| HTML5 chapter reorder and editor image drag/drop work                     | [ ]   | [ ]     | [ ]    |
-| Clipboard image paste imports an image into the project                   | [ ]   | [ ]     | [ ]    |
-| Save, Save As, overwrite confirmation, and scoped atomic write work       | [ ]   | [ ]     | [ ]    |
-| Recovery appears after an interrupted dirty session and restores edits    | [ ]   | [ ]     | [ ]    |
-| EPUB export writes the selected preset, cover, title page, and custom CSS | [ ]   | [ ]     | [ ]    |
-| `scripts/epubcheck.sh` validates the exported representative EPUB         | [ ]   | [ ]     | [ ]    |
-| Send to Kindle accepts the EPUB and it renders on a Paperwhite            | [ ]   | [ ]     | [ ]    |
+| Scenario                                                                                                                                                                                                                         | macOS | Windows | Ubuntu |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------- | ------ |
+| First launch creates a new book and selects the OS locale                                                                                                                                                                        | [ ]   | [ ]     | [ ]    |
+| Open `.edb` from the OS file association at first launch                                                                                                                                                                         | [ ]   | [ ]     | [ ]    |
+| Open another `.edb` while the app is already running                                                                                                                                                                             | [ ]   | [ ]     | [ ]    |
+| HTML5 chapter reorder and editor image drag/drop work                                                                                                                                                                            | [ ]   | [ ]     | [ ]    |
+| Clipboard image paste imports an image into the project                                                                                                                                                                          | [ ]   | [ ]     | [ ]    |
+| Save, Save As, overwrite confirmation, and scoped atomic write work                                                                                                                                                              | [ ]   | [ ]     | [ ]    |
+| Recovery appears after an interrupted dirty session and restores edits                                                                                                                                                           | [ ]   | [ ]     | [ ]    |
+| EPUB export writes the selected preset, cover, title page, and custom CSS                                                                                                                                                        | [ ]   | [ ]     | [ ]    |
+| `scripts/epubcheck.sh` validates the exported representative EPUB                                                                                                                                                                | [ ]   | [ ]     | [ ]    |
+| Send to Kindle accepts the EPUB and it renders on a Paperwhite                                                                                                                                                                   | [ ]   | [ ]     | [ ]    |
+| Footnotes: a book with notes in two chapters; in Calibre's viewer a note link opens the note; after "Send to device" (MOBI and AZW3) on a Paperwhite the note opens as a popup and the number in the note leads back to the text | [ ]   | [ ]     | [ ]    |
+| Preview: clicking a note number scrolls to the note and back                                                                                                                                                                     | [ ]   | [ ]     | [ ]    |
+| Gallery: long press selects, dragging extends the range, rename numbers follow the selection order, one Undo restores a batch delete                                                                                             | [ ]   | [ ]     | [ ]    |
 
 ## Environment evidence
 

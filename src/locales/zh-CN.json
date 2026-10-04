@@ -106,6 +106,8 @@
     "addContributor": "添加{label}",
     "description": "简介",
     "coverHint": "建议 1600×2560",
+    "coverSize": "尺寸",
+    "coverSmall": "封面尺寸较小，在 Kindle 上可能显得模糊",
     "drop": "将图片拖到此处",
     "choose": "选择…",
     "remove": "移除",
@@ -124,13 +126,28 @@
     "newChapter": "新建章节",
     "images": "图片"
   },
+  "gallery": {
+    "selected": "已选择：{count}",
+    "clear": "取消选择",
+    "cover": "封面",
+    "filter": "显示",
+    "all": "全部",
+    "used": "已使用",
+    "unused": "未使用",
+    "add": "添加…",
+    "rename": "重命名…",
+    "empty": "没有图片。请使用上方按钮添加，或将文件拖到这里。",
+    "renameTitle": "重命名图片",
+    "renameHint": "图片按选择顺序编号。仅限拉丁字母、数字、_ 和 -。",
+    "newName": "新名称",
+    "renameConflict": "{name} 已存在",
+    "renameConfirm": "重命名",
+    "renamedToast": "已重命名 {count} 张图片"
+  },
   "images": {
     "usedIn": "使用于",
-    "insert": "插入文本",
     "setCover": "设为封面",
     "findUsage": "查找使用位置",
-    "usedAsCover": "用作封面",
-    "usedInStyles": "用于样式",
     "unused": "未使用"
   },
   "chapters": {
@@ -155,13 +172,13 @@
   "delete": {
     "chapterTitle": "删除章节",
     "chapterMessage": "此章节将从书中删除。",
-    "imageTitle": "删除图片",
-    "imageMessage": "此图片将从项目中删除。",
     "unusedTitle": "删除未使用的图片",
-    "unusedMessage": "这些未使用的图片将从项目中删除。",
     "words": "字数",
     "chapterToast": "章节已删除",
-    "imageToast": "图片已删除"
+    "imageToast": "图片已删除",
+    "imagesToast": "已删除 {count} 张图片",
+    "imagesTitle": "删除图片",
+    "imagesMessage": "这些图片将从项目中删除。"
   },
   "unsaved": {
     "title": "未保存的更改",
@@ -186,6 +203,7 @@
   },
   "settings": {
     "title": "设置",
+    "editor": "编辑器",
     "language": "界面语言",
     "export": "导出",
     "exportImages": "图片",
@@ -227,5 +245,22 @@
     "label": "通知",
     "region": "通知（{hotkey}）",
     "autosaveFailed": "自动保存失败"
+  },
+  "format": {
+    "toolbar": "格式",
+    "bold": "粗体",
+    "italic": "斜体",
+    "footnote": "脚注",
+    "heading": "章节标题",
+    "quote": "引用",
+    "sceneBreak": "场景分隔",
+    "image": "插入图片",
+    "imageFromFile": "从文件…",
+    "imageFromBook": "从书中…",
+    "noImages": "书中还没有图片",
+    "undo": "撤销",
+    "redo": "重做",
+    "search": "在本章中查找",
+    "more": "更多格式"
   }
 }

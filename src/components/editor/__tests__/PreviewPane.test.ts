@@ -104,6 +104,8 @@ describe("PreviewPane security and rendering", () => {
         body,
         head: { querySelector: () => style },
         documentElement: { scrollHeight: 1000, clientHeight: 500, scrollTop: 0 },
+        addEventListener() {},
+        removeEventListener() {},
       },
     });
 

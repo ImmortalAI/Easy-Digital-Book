@@ -9,6 +9,8 @@ import { planImage } from "./resources";
 import { containerXml } from "./container";
 import { navXhtml } from "./nav";
 import { ncx } from "./ncx";
+import { notesXhtml } from "./notes";
+import { getLabels } from "./labels";
 import { opf } from "./opf";
 import { titlePage } from "./title-page";
 import { makeZip } from "./zip";
@@ -146,11 +148,23 @@ export async function buildEpub(
     allMap.set(path, `images/${candidate}`);
   }
   const chapters: RenderedChapter[] = [];
+  let nextNote = 1;
   for (let i = 0; i < book.chapters.length; i++) {
     check(deps.signal);
-    chapters.push(renderChapter(book.chapters[i], i, book, allMap, Boolean(book.customCss)));
+    const rendered = renderChapter(
+      book.chapters[i],
+      i,
+      book,
+      allMap,
+      Boolean(book.customCss),
+      nextNote,
+    );
+    nextNote += rendered.notes.length;
+    chapters.push(rendered);
     deps.onProgress?.({ stage: "chapters", done: i + 1, total: book.chapters.length });
   }
+  const notes = notesXhtml(chapters, book.metadata.language, Boolean(book.customCss));
+  const notesTitle = notes ? getLabels(book.metadata.language).notes : null;
   const used = new Set<string>();
   chapters.forEach((chapter) => chapter.referencedPaths.forEach((p) => used.add(p)));
   if (book.metadata.cover && book.resources.has(book.metadata.cover)) used.add(book.metadata.cover);
@@ -201,11 +215,12 @@ export async function buildEpub(
       options.titlePage,
       exported,
       options.versionInTitle,
+      notes !== null,
     ),
   ]);
   entries.push(
-    ["OEBPS/nav.xhtml", navXhtml(chapters, options.titlePage, book.metadata.title)],
-    ["OEBPS/toc.ncx", ncx(chapters, book.metadata.id, book.metadata.title)],
+    ["OEBPS/nav.xhtml", navXhtml(chapters, options.titlePage, book.metadata.title, notesTitle)],
+    ["OEBPS/toc.ncx", ncx(chapters, book.metadata.id, book.metadata.title, notesTitle)],
   );
   if (options.titlePage)
     entries.push([
@@ -213,6 +228,7 @@ export async function buildEpub(
       titlePage(book, Boolean(book.customCss), options.versionInTitle),
     ]);
   chapters.forEach((chapter) => entries.push([`OEBPS/c-${chapter.id}.xhtml`, chapter.xhtml]));
+  if (notes) entries.push(["OEBPS/notes.xhtml", notes]);
   entries.push(["OEBPS/theme.css", themeCss]);
   if (customCss)
     entries.push([

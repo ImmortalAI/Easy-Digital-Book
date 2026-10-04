@@ -12,6 +12,7 @@ import { useLayoutStore } from "@/stores/layout";
 import { collectImageUsage } from "@/services/checks/image-usage";
 import { extractTitle } from "@/services/book/extract-title";
 import { useSafeI18n } from "@/composables/use-safe-i18n";
+import { useResourceUrls } from "@/composables/use-resource-urls";
 import { imageDimensions } from "@/services/book/image-dimensions";
 const { t } = useSafeI18n();
 const props = defineProps<{ path: string }>();
@@ -30,11 +31,8 @@ const ratio = computed(() =>
 const usage = computed(() =>
   project.book ? (collectImageUsage(project.book).get(props.path) ?? []) : [],
 );
-const src = computed(() =>
-  resource.value
-    ? `data:${resource.value.mediaType};base64,${bytesToBase64(resource.value.bytes)}`
-    : "",
-);
+const { url } = useResourceUrls();
+const src = computed(() => url(props.path) ?? "");
 function chapterTitle(id: string) {
   const source = project.book?.chapters.find((chapter) => chapter.id === id)?.source ?? "";
   return extractTitle(source) || id;
@@ -42,19 +40,16 @@ function chapterTitle(id: string) {
 function openChapter(id: string) {
   layout.center = { kind: "chapter", id };
 }
-function bytesToBase64(bytes: Uint8Array) {
-  let text = "";
-  for (const byte of bytes) text += String.fromCharCode(byte);
-  return btoa(text);
-}
 </script>
 <template>
   <section v-if="resource" class="max-w-2xl p-8">
     <Card>
       <CardContent>
-        <AspectRatio :ratio="ratio" class="overflow-hidden rounded-lg bg-muted">
-          <img :src="src" :alt="path" class="size-full object-contain" />
-        </AspectRatio>
+        <div class="mx-auto w-full" data-image-frame :style="{ maxWidth: `calc(70vh * ${ratio})` }">
+          <AspectRatio :ratio="ratio" class="overflow-hidden rounded-lg bg-muted">
+            <img :src="src" :alt="path" class="size-full object-contain" />
+          </AspectRatio>
+        </div>
       </CardContent>
       <CardHeader>
         <CardTitle>

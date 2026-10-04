@@ -1,7 +1,8 @@
 # easy-digital-book — specification v1
 
 - **Date:** 2026-09-15
-- **Updated:** 2026-09-20
+- **Updated:** 2026-10-03 (endnotes, content header, image gallery and
+  rename; roadmap specs linked below)
 - **Status:** design approved by sections; technical bootstrap underway,
   new implementation plan not yet written
 - **Solution source:** brainstorm 2026-09-14/15 (context — `AGENTS.md`)
@@ -29,7 +30,8 @@ is open-source.
 - Book library, multiple projects in one window, chapter tabs.
 - Send to Kindle (email, USB), web and mobile versions.
 - Opening `.edb` by dragging file to window (see 13.3).
-- Image renaming, separate cover page in EPUB.
+- Separate cover page in EPUB. (Image renaming was moved into v1 on
+  2026-10-03, see 9.4.)
 - Auto-update (`tauri-plugin-updater`), build signing and notarization,
   e2e tests on real WebView (tauri-driver).
 - Telemetry.
@@ -71,8 +73,12 @@ not be changed:** the WebView origin is tied to it, and so are IndexedDB data.
   `[^id]: `) — the app adds the prefix width itself.
 - XHTML mode requires `xmlns:epub` on `<html>` and CSS
   `@namespace epub "http://www.idpf.org/2007/ops"; aside[epub|type~="footnote"] { display: none; }`.
+  **The app no longer uses this rule** (2026-10-03): footnotes are exported as
+  endnotes, see 11.6 and 11.7.
 - Styles on the app side: scene break — `p.novlang-scene-break`;
-  footnote in HTML mode — `div.footnote-def`, in XHTML — `aside` without class.
+  footnote in HTML mode — `div.footnote-def`, in XHTML — `aside` without class
+  (the app extracts footnote definitions itself and renders them as endnotes,
+  so these two classes are not styled).
 
 Future issues for `novlang-js` (do not block v1): block positions in AST
 (exact scroll synchronization), fix `column` offset.
@@ -261,6 +267,9 @@ new UUID, `created` = now.
 - **Modes** Text / Split / Preview (buttons and Mod+1/2/3) apply to
   `chapter` and `css`; for other views buttons are inactive. Source and preview
   are not less than 240 px; double-click on edge returns to 50/50.
+- A **content header** (breadcrumbs plus the formatting toolbar, 7.5) spans
+  source and preview, so the source/preview divider starts under it. This is
+  the exception to the rule below; the sidebar divider is still full height.
 - Dividers span down to a full-width status bar at the bottom of the window,
   VS Code style, running under the activity bar too. Left: ⚠ warnings for the
   book (opens the warnings list). Right: save state (Saved / Unsaved changes /
@@ -327,8 +336,11 @@ section from recovery storage (section 10.3).
   `default-src 'none'; img-src blob:; style-src 'unsafe-inline'`. Then only
   `body.innerHTML` is updated.
 - HTML — `renderToHTML` (HTML mode). Styles: `theme.css` + `custom.css` +
-  `preview.css` (footnotes `div.footnote-def` at the bottom, column ~36em,
-  serif font).
+  `preview.css` (column ~36em, serif font). Footnotes are shown as in the
+  EPUB: `a.noteref` numbers in the text and `div.endnote` blocks at the
+  bottom of the chapter (`preview-notes.ts`, same markup classes as
+  `notes.xhtml`, numbering continues across the book); clicking a number
+  scrolls to the note and the note's backlink scrolls back.
 - `images/…` are replaced with `blob:` URLs; URLs are cached and freed when
   resources are deleted and the project is closed. `url(images/…)` in
   `custom.css` are rewritten the same way.
@@ -342,6 +354,17 @@ and "Book" (`services/checks`: no chapter heading, link to missing image,
 empty book title, no cover, read warnings). Clicking an item opens the chapter
 at the right line. Counter is the sum across the book.
 
+### 7.5. Content header and formatting toolbar
+
+Above source and preview (`chapter` and `css` views) there is one header row:
+breadcrumbs on the left and the formatting toolbar (`FormatToolbar`) after
+them. Buttons: bold (Mod+B), italic (Mod+I), footnote (Mod+Alt+F); the rest
+in the "more" menu: chapter heading, quote, scene break, insert image
+(`ImagePickerPopover`: existing image or a file); undo / redo (Mod+Z,
+Mod+Shift+Z); find in chapter (Mod+F). Bold and italic show a pressed state
+for the selection; the toolbar is disabled when no chapter is open. The
+commands live in `editor-commands.ts`.
+
 ## 8. Sidebar
 
 ### 8.1. Explorer
@@ -349,17 +372,13 @@ at the right line. Counter is the sum across the book.
 Collapsible sections:
 
 - **Book:** "Metadata", "Styles" — the book's `custom.css` (if the file does
-  not exist — "Styles (create)").
+  not exist — "Styles (create)") and "Images" (counter) — opens the image
+  gallery (9.4). There is no separate "Images" section any more.
 - **Chapters** (counter in header, "+" on hover): number and title; chapter
   without heading — "Chapter N" in italics; chapters with warnings have yellow
   title and warning count. Navigation ↑/↓/Enter, reordering with drag&drop
   and Alt+↑/↓. Context menu: "New chapter after", "Delete".
-- **Images** (counter, "+"): name; cover is marked; unused are struck through
-  with "unused" label. Click opens `ImageView`. Context menu: "Insert in text",
-  "Make cover", "Find uses" (opens Search for `images/x.png`), "Delete". In
-  section header — "Delete unused".
-
-Context menu is a custom `common/ContextMenu` component (HTML).
+  Context menu is a custom `common/ContextMenu` component (HTML).
 
 ### 8.2. Search across book
 
@@ -420,13 +439,31 @@ Each change goes to the store immediately; validation errors — below the field
   not supported"). Name is cleaned (Latin, digits, `-`), on name collision
   suffix `-2`, `-3`… is added; on SHA-256 match (`crypto.subtle`) existing
   file is used.
-- **Sources** (`useImageImport`): "+" in "Images" section (file picker),
+- **Sources** (`useImageImport`): the gallery's "Add…" button (file picker),
   drag&drop files into editor, paste from clipboard (name
   `pasted-YYYYMMDD-HHmmss.png`). At cursor position, a separate paragraph
   `![](images/x.png)` is inserted, cursor is placed inside `[]`.
+- **Gallery** (`components/images/ImageGallery`, opened from Explorer →
+  Book → Images): tiles with thumbnails, filter All / Used / Unused, cover is
+  marked, unused are marked. "+" adds files; files can be dropped on it.
+  - Selection: long press selects a tile, dragging extends the range;
+    Mod-click toggles, Shift-click selects a range; Mod+A selects all, Esc
+    clears. The selection is limited to the images currently shown: switching
+    the filter drops the hidden ones.
+  - Delete / Backspace and the Delete button of the selection bar act on the
+    selection (or on the focused tile). A batch delete is one undo
+    notification.
+  - Batch rename (`RenameImagesDialog`, `services/book/rename-resources`):
+    names become `<name>_<NN>.<ext>`, `NN` is padded to the width of the
+    selection count and follows the **selection order**. References are
+    rewritten in chapters (`![](images/…)`), in the cover and in `custom.css`
+    `url(...)`. One undo; it is refused (disabled) if an original name was
+    taken again in the meantime. Image names may now contain `_`.
 - **ImageView:** image, dimensions in pixels, size, list of chapters where
-  it is used (click opens chapter).
+  it is used (click opens chapter). Context menu actions (insert in text,
+  make cover, find uses, delete) are available from the gallery tiles.
 - Cover is chosen in `CoverPicker` or via "Make cover".
+- Rename is in scope since 2026-10-03 (batch only, see Gallery above).
 
 ### 9.5. Deletion and "Undo" notifications
 
@@ -557,6 +594,7 @@ OEBPS/theme.css
 OEBPS/custom.css           if present
 OEBPS/title.xhtml          if title page enabled
 OEBPS/c-<id>.xhtml         one file per chapter
+OEBPS/notes.xhtml          endnotes, only if any chapter has a note
 OEBPS/images/…
 ```
 
@@ -575,6 +613,18 @@ without rewriting. Zip is deterministic (order, date).
    `<body><section epub:type="chapter" role="doc-chapter">…</section></body>`.
 5. XML validation via `XMLValidator.validate` (`fast-xml-parser`). Error is
    fatal: "Chapter N «…»: invalid XHTML (line, column)".
+
+**Footnotes are endnotes.** `[^id]` references become
+`<sup><a epub:type="noteref" class="noteref" id="fnref-N" href="notes.xhtml#fn-N">N</a></sup>`
+(`id` only on the first reference to a note). Numbering is sequential across
+the whole book, not per chapter. Definitions are moved out of the chapter into
+`notes.xhtml`, grouped by chapter (a heading linking to the chapter); each
+note is a `div.endnote` (`epub:type="endnote"`, `id="fn-N"`) whose first
+paragraph starts with a backlink `a.endnote-backlink` (`N.` →
+`c-<id>.xhtml#fnref-N`); a note that is never referenced gets a plain number
+instead. `notes.xhtml` is **last in the spine** and in nav and ncx. Reason:
+Calibre's MOBI conversion and Kindle never showed hidden `aside` footnotes,
+whereas internal links to a notes page become popups on Kindle.
 
 Chapter without `# heading` gets "Chapter N" only in `<title>` and TOC;
 heading is not inserted in text.
@@ -609,10 +659,11 @@ content="…">`. No separate cover page.
 
 ### 11.6. Navigation
 
-- `nav.xhtml`: `<nav epub:type="toc">` — flat chapter list; `<nav
+- `nav.xhtml`: `<nav epub:type="toc">` — flat chapter list, followed by the
+  notes page (localized title) when `notes.xhtml` exists; `<nav
 epub:type="landmarks">` — `titlepage` (if present) and `bodymatter` (first
   chapter).
-- `toc.ncx`: same list for old readers and Calibre, `dtb:uid` = `book.id`.
+- `toc.ncx`: same list (with the notes page) for old readers and Calibre, `dtb:uid` = `book.id`.
 
 ### 11.7. theme.css
 
@@ -623,7 +674,10 @@ epub:type="landmarks">` — `titlepage` (if present) and `bodymatter` (first
 - `p.novlang-scene-break` centered, no indent, vertical margins.
 - `blockquote` with margins in `em`.
 - `img { max-width: 100%; height: auto }`, paragraph with single image centered.
-- Hide `aside` footnotes (Kindle shows them as popups).
+- Footnotes are **endnotes** (2026-10-03), so there is no `aside` rule. The
+  reason: Calibre's MOBI conversion and Kindle never showed the hidden
+  `aside` footnotes. Styles for `a.noteref`, `div.endnote`, the backlink and
+  the notes page are in `theme.css`, so `custom.css` can restyle them.
 - Title page styles.
 
 ### 11.8. Images
@@ -802,3 +856,12 @@ false` on three OS.
 
 Known limitations: spell check on Linux is best effort; preview scroll
 synchronization is approximate.
+
+## 18. Roadmap (after v1)
+
+Separate specs written on 2026-10-03 from the user feedback session; not
+scheduled, no implementation plans yet:
+
+- `docs/superpowers/specs/2026-10-03-azw3-export-design.md` — AZW3 export.
+- `docs/superpowers/specs/2026-10-03-kindle-css-checker-design.md` — Kindle
+  CSS checker for `custom.css`.

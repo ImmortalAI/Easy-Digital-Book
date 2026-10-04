@@ -94,46 +94,20 @@ describe("ExplorerView boundaries", () => {
     expect(project.dirty).toBe(false);
   });
 
-  it("opens the image actions menu from a right click without changing the cover", async () => {
+  it("lists Images under Book with a count and no image rows", async () => {
     const pinia = createPinia();
     setActivePinia(pinia);
-    const project = useProjectStore();
-    const book = createBook({
-      locale: "en",
-      now: new Date(),
-      newUuid: () => "550e8400-e29b-41d4-a716-446655440000",
-      newChapterId: () => "chapter1",
-    });
-    book.resources.set("images/a.png", { bytes: new Uint8Array([1]), mediaType: "image/png" });
-    project.setBook(book);
-
+    const book = twoChapterBook();
+    book.resources.set("images/cover.png", { bytes: new Uint8Array([1]), mediaType: "image/png" });
+    book.resources.set("images/b.png", { bytes: new Uint8Array([2]), mediaType: "image/png" });
+    useProjectStore().setBook(book);
     render(ExplorerView, { global: { plugins: [pinia] } });
-    await userEvent.pointer({ keys: "[MouseRight]", target: screen.getByText("a.png") });
 
-    expect(await screen.findByRole("menuitem", { name: /make cover/i })).toBeVisible();
-    expect(screen.getByRole("menuitem", { name: /find usages/i })).toBeVisible();
-    expect(project.book?.metadata.cover).toBeNull();
-  });
-
-  it("forwards image contextmenu with its path alongside opening the menu", async () => {
-    const project = useProjectStore();
-    const book = createBook({
-      locale: "en",
-      now: new Date(),
-      newUuid: () => "550e8400-e29b-41d4-a716-446655440000",
-      newChapterId: () => "chapter1",
-    });
-    book.resources.set("images/a.png", { bytes: new Uint8Array([1]), mediaType: "image/png" });
-    project.setBook(book);
-    const wrapper = mount(ExplorerView);
-
-    const image = wrapper.findAll('[role="treeitem"]').find((row) => row.text().includes("a.png"));
-    await image!.trigger("contextmenu");
-
-    expect(wrapper.emitted("image-context-menu")?.[0]?.[0]).toBe("images/a.png");
-    expect(await screen.findByRole("menuitem", { name: /make cover/i })).toBeVisible();
-    expect(project.book?.metadata.cover).toBeNull();
-    wrapper.unmount();
+    const images = screen.getByRole("treeitem", { name: /images/i });
+    expect(images).toHaveTextContent("2");
+    expect(screen.queryByRole("treeitem", { name: /cover\.png/ })).toBeNull();
+    await userEvent.click(images);
+    expect(useLayoutStore().center).toEqual({ kind: "images" });
   });
 
   it("offers the chapter actions from a right click", async () => {
@@ -266,7 +240,7 @@ describe("ExplorerView boundaries", () => {
     // At the boundary nothing opens, as before; roving focus moves on as usual.
     await userEvent.keyboard("{ArrowDown}");
     expect(layout.center).toEqual({ kind: "chapter", id: "chapter2" });
-    expect(document.activeElement).toHaveAccessibleName(/^images$/i);
+    expect(document.activeElement).toBe(screen.getByRole("treeitem", { name: /2\. Chapter 2/ }));
 
     screen.getByRole("treeitem", { name: /2\. Chapter 2/ }).focus();
     await userEvent.keyboard("{ArrowUp}");

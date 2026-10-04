@@ -140,51 +140,62 @@ function resetSplit() {
         @blur="sidebarResize.end"
       />
       <SplitterPanel ref="content" :order="2" class="flex min-w-0">
-        <section
-          v-if="props.singlePane"
-          class="flex h-full min-w-0 flex-1 flex-col"
-          data-single-pane
-        >
-          <slot name="single" />
-        </section>
-        <SplitterGroup v-else direction="horizontal" class="flex" @layout="contentResize.report">
-          <SplitterPanel
-            ref="sourcePanel"
-            :order="1"
-            :collapsible="collapsible"
-            :collapsed-size="0"
-            :min-size="paneMin"
-            :default-size="sourceDefault"
-            class="relative min-h-0 overflow-hidden"
-            :inert="sourceInert"
-            data-pane="source"
+        <div class="flex min-w-0 flex-1 flex-col">
+          <slot name="header" />
+          <section
+            v-if="props.singlePane"
+            class="flex min-h-0 min-w-0 flex-1 flex-col"
+            data-single-pane
           >
-            <slot name="source" />
-          </SplitterPanel>
-          <SplitterResizeHandle
-            v-show="layout.mode === 'split'"
-            class="w-1 shrink-0 hover:bg-ring focus-visible:bg-ring focus-visible:outline-none"
-            :aria-label="t('layout.resizeSplit', 'Resize editor and preview')"
-            @dragging="contentResize.dragging"
-            @keydown="contentResize.start"
-            @keyup="contentResize.end"
-            @blur="contentResize.end"
-            @dblclick="resetSplit"
-          />
-          <SplitterPanel
-            ref="previewPanel"
-            :order="2"
-            :collapsible="collapsible"
-            :collapsed-size="0"
-            :min-size="paneMin"
-            :default-size="100 - sourceDefault"
-            class="relative min-h-0 overflow-hidden"
-            :inert="previewInert"
-            data-pane="preview"
-          >
-            <slot name="preview" />
-          </SplitterPanel>
-        </SplitterGroup>
+            <slot name="single" />
+          </section>
+          <!-- Reka's SplitterGroup sets height: 100%; under a header that would
+               overflow, so it fills a positioned box instead. -->
+          <div v-else class="relative min-h-0 flex-1">
+            <SplitterGroup
+              direction="horizontal"
+              class="absolute inset-0 flex"
+              @layout="contentResize.report"
+            >
+              <SplitterPanel
+                ref="sourcePanel"
+                :order="1"
+                :collapsible="collapsible"
+                :collapsed-size="0"
+                :min-size="paneMin"
+                :default-size="sourceDefault"
+                class="relative min-h-0 overflow-hidden"
+                :inert="sourceInert"
+                data-pane="source"
+              >
+                <slot name="source" />
+              </SplitterPanel>
+              <SplitterResizeHandle
+                v-show="layout.mode === 'split'"
+                class="w-1 shrink-0 hover:bg-ring focus-visible:bg-ring focus-visible:outline-none"
+                :aria-label="t('layout.resizeSplit', 'Resize editor and preview')"
+                @dragging="contentResize.dragging"
+                @keydown="contentResize.start"
+                @keyup="contentResize.end"
+                @blur="contentResize.end"
+                @dblclick="resetSplit"
+              />
+              <SplitterPanel
+                ref="previewPanel"
+                :order="2"
+                :collapsible="collapsible"
+                :collapsed-size="0"
+                :min-size="paneMin"
+                :default-size="100 - sourceDefault"
+                class="relative min-h-0 overflow-hidden"
+                :inert="previewInert"
+                data-pane="preview"
+              >
+                <slot name="preview" />
+              </SplitterPanel>
+            </SplitterGroup>
+          </div>
+        </div>
       </SplitterPanel>
     </SplitterGroup>
   </div>

@@ -66,6 +66,10 @@ export interface ImageImportOptions {
   pickFile?: () => Promise<ImageFile | null>;
   sha256?: ImageHash["sha256"];
 }
+export interface ImageImportCallOptions {
+  /** Show the result (its chapter, or the image) once imported; on by default. */
+  navigate?: boolean;
+}
 export interface ImageFile {
   name: string;
   bytes: Uint8Array;
@@ -83,6 +87,7 @@ export function useImageImport(options: ImageImportOptions = {}) {
     chapterId = options.chapterId,
     position?: number,
     expected?: ImageImportIdentity | null,
+    { navigate = true }: ImageImportCallOptions = {},
   ) {
     const identity = expected ?? captureImageImportIdentity(project);
     if (!identity || !isImageImportIdentityCurrent(project, identity) || !project.book) return null;
@@ -99,6 +104,7 @@ export function useImageImport(options: ImageImportOptions = {}) {
       options.onInserted?.(result, imageCursorPosition(chapter.source, position));
     }
     if (!isCurrent()) return null;
+    if (!navigate) return result;
     layout.center = chapter
       ? { kind: "chapter", id: chapter.id }
       : { kind: "image", path: result.path };
@@ -110,15 +116,20 @@ export function useImageImport(options: ImageImportOptions = {}) {
     chapterId?: string,
     position?: number,
     identity?: ImageImportIdentity | null,
+    callOptions?: ImageImportCallOptions,
   ) {
-    return add(file.name, file.bytes, chapterId, position, identity);
+    return add(file.name, file.bytes, chapterId, position, identity, callOptions);
   }
 
-  async function pickAndImport(chapterId?: string, position?: number) {
+  async function pickAndImport(
+    chapterId?: string,
+    position?: number,
+    callOptions?: ImageImportCallOptions,
+  ) {
     const expected = captureImageImportIdentity(project);
     if (!expected) return null;
     const file = await options.pickFile?.();
-    return file ? add(file.name, file.bytes, chapterId, position, expected) : null;
+    return file ? add(file.name, file.bytes, chapterId, position, expected, callOptions) : null;
   }
 
   async function importClipboardImage(

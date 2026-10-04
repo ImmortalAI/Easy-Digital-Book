@@ -167,4 +167,42 @@ describe("buildEpub", () => {
     expect(css).toContain('url("images/a.png")');
     expect(css).not.toContain("images/no.png");
   });
+
+  it("puts endnotes last in the spine and in both tables of contents", async () => {
+    const deps = { imageProcessor: processor, now: () => new Date("2026-01-02T03:04:05Z") };
+    const zip = await JSZip.loadAsync(
+      await buildEpub(
+        book,
+        { imagePreset: "original", grayscale: false, titlePage: false, versionInTitle: false },
+        deps,
+      ),
+    );
+    const opfText = await zip.file("OEBPS/content.opf")!.async("string");
+    expect(opfText).toMatch(/<itemref idref="chapter-2"\/><itemref idref="notes"\/><\/spine>/);
+    expect(await zip.file("OEBPS/nav.xhtml")!.async("string")).toContain(
+      '<li><a href="notes.xhtml">Notes</a></li>',
+    );
+    expect(await zip.file("OEBPS/toc.ncx")!.async("string")).toContain(
+      '<content src="notes.xhtml"/>',
+    );
+    const notes = await zip.file("OEBPS/notes.xhtml")!.async("string");
+    expect(notes).toContain('id="fn-1"');
+    expect(await zip.file("OEBPS/c-one.xhtml")!.async("string")).toContain(
+      'href="notes.xhtml#fn-1"',
+    );
+    expect(await zip.file("OEBPS/theme.css")!.async("string")).not.toContain("display: none");
+  });
+
+  it("writes no notes page for a book without footnotes", async () => {
+    const plain = { ...book, chapters: [{ id: "two", source: "No heading" }] };
+    const zip = await JSZip.loadAsync(
+      await buildEpub(
+        plain,
+        { imagePreset: "original", grayscale: false, titlePage: false, versionInTitle: false },
+        { imageProcessor: processor, now: () => new Date("2026-01-02T03:04:05Z") },
+      ),
+    );
+    expect(zip.file("OEBPS/notes.xhtml")).toBeNull();
+    expect(await zip.file("OEBPS/content.opf")!.async("string")).not.toContain("notes");
+  });
 });

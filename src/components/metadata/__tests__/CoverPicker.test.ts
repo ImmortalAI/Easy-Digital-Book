@@ -61,3 +61,30 @@ describe("CoverPicker", () => {
     expect(onDropFile).not.toHaveBeenCalled();
   });
 });
+
+function png(width: number, height: number): Uint8Array {
+  const bytes = new Uint8Array(33);
+  bytes.set([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82]);
+  new DataView(bytes.buffer).setUint32(16, width);
+  new DataView(bytes.buffer).setUint32(20, height);
+  return bytes;
+}
+
+describe("CoverPicker thumbnail", () => {
+  beforeEach(() => setActivePinia(createPinia()));
+
+  it("bounds the thumbnail width outside the aspect box and keeps the real ratio", () => {
+    const project = useProjectStore();
+    const book = makeBook();
+    book.resources.set("images/c.png", { mediaType: "image/png", bytes: png(1000, 1500) });
+    project.setBook(book);
+    const wrapper = mount(CoverPicker, { props: { cover: "images/c.png", preview: "blob:x" } });
+    const inner = wrapper.get('[data-slot="aspect-ratio"]');
+    const outer = inner.element.parentElement!;
+    expect(outer.parentElement!.className).toContain("w-32");
+    expect(inner.classes()).not.toContain("w-32");
+    expect(outer.getAttribute("style")).toContain("padding-bottom: 150%");
+    expect(wrapper.get("img").classes()).toContain("object-contain");
+    expect(wrapper.text()).toContain("1000×1500");
+  });
+});

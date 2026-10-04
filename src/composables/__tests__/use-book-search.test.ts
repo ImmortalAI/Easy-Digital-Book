@@ -217,4 +217,20 @@ describe("useBookSearch", () => {
     expect(project.book?.resources.has("images/a.png")).toBe(false);
     expect(notification.undoEnabled).toBe(false);
   });
+
+  it("deletes several images under one toast that restores them all", () => {
+    const project = useProjectStore();
+    const book = makeBook();
+    book.resources.set("images/a.png", { bytes: new Uint8Array([1]), mediaType: "image/png" });
+    book.resources.set("images/b.png", { bytes: new Uint8Array([2]), mediaType: "image/png" });
+    project.setBook(book);
+    const search = useBookSearch();
+    search.deleteResources(["images/a.png", "images/b.png"]);
+    const notifications = useNotificationsStore();
+    expect(notifications.items).toHaveLength(1);
+    expect(notifications.items[0]!.message).toBe("2 images deleted");
+    notifications.items[0]!.undo!();
+    expect(project.book!.resources.has("images/a.png")).toBe(true);
+    expect(project.book!.resources.has("images/b.png")).toBe(true);
+  });
 });
