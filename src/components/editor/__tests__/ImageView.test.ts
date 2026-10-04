@@ -7,6 +7,7 @@ import { createI18nPlugin } from "@/plugins/i18n";
 import { createBook } from "@/services/book/create";
 import { useLayoutStore } from "@/stores/layout";
 import { useProjectStore } from "@/stores/project";
+import { useNotificationsStore } from "@/stores/notifications";
 
 function openBook(source: string) {
   const book = createBook({
@@ -85,5 +86,20 @@ describe("ImageView", () => {
     await userEvent.type(field, "front{Enter}");
     expect(useProjectStore().book!.resources.has("images/front.png")).toBe(true);
     expect(useLayoutStore().center).toEqual({ kind: "image", path: "images/front.png" });
+  });
+
+  it("goes back to the old name when the rename is undone", async () => {
+    openBook("# Chapter 1\n\n![](images/cover.png)");
+    useLayoutStore().center = { kind: "image", path: "images/cover.png" };
+    renderImage();
+    await userEvent.click(screen.getByRole("button", { name: "Rename…" }));
+    const field = await screen.findByRole("textbox", { name: /new name/i });
+    await userEvent.clear(field);
+    await userEvent.type(field, "front{Enter}");
+
+    useNotificationsStore().items.at(-1)!.undo!();
+
+    expect(useProjectStore().book!.resources.has("images/cover.png")).toBe(true);
+    expect(useLayoutStore().center).toEqual({ kind: "image", path: "images/cover.png" });
   });
 });

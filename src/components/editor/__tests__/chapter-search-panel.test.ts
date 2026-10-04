@@ -1,7 +1,7 @@
 import { EditorState } from "@codemirror/state";
-import { openSearchPanel, searchKeymap } from "@codemirror/search";
+import { openSearchPanel, SearchQuery, searchKeymap, setSearchQuery } from "@codemirror/search";
 import { EditorView, keymap } from "@codemirror/view";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { chapterSearch, searchPanelLabels } from "@/components/editor/chapter-search-panel";
 
 const labels = () => searchPanelLabels((_key, fallback) => fallback);
@@ -65,7 +65,7 @@ describe("chapter search panel", () => {
 
   it("applies whole-word with the book search's word boundaries", () => {
     const { type, counter, button } = open("кот котик кот-кот");
-    button("Whole word").click();
+    if (button("Whole word").getAttribute("aria-pressed") !== "true") button("Whole word").click();
     type("кот");
     expect(counter()).toBe("3 matches");
   });
@@ -83,5 +83,45 @@ describe("chapter search panel", () => {
     replace.dispatchEvent(new Event("input"));
     panel.querySelector<HTMLButtonElement>('button[name="replaceAll"]')!.click();
     expect(view!.state.doc.toString()).toBe("dog dog");
+  });
+
+  it("survives Mod+F while it is already open", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { type, counter } = open("cat cat dog cat");
+    type("cat");
+    // What openSearchPanel does when focus is in the text: a new query from the selection.
+    view!.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search: "dog" })) });
+    await Promise.resolve();
+    expect(error).not.toHaveBeenCalled();
+    const panel = view!.dom.querySelector(".cm-chapter-search")!;
+    expect(panel).not.toBeNull();
+    expect(panel.querySelector<HTMLInputElement>("input[main-field]")!.value).toBe("dog");
+    expect(counter()).toBe("1 matches");
+    error.mockRestore();
+  });
+
+  it("shows the typed text again when a chapter's editor comes back", async () => {
+    const { type, button } = open("cat category");
+    // Toggles carry over between opens, so set it rather than flip it.
+    if (button("Whole word").getAttribute("aria-pressed") !== "true") button("Whole word").click();
+    type("cat");
+    const state = view!.state;
+    view!.destroy();
+    view = new EditorView({ state, parent: document.body });
+    await Promise.resolve();
+    const panel = view.dom.querySelector<HTMLElement>(".cm-chapter-search")!;
+    expect(panel.querySelector<HTMLInputElement>("input[main-field]")!.value).toBe("cat");
+    expect(panel.querySelector("[data-search-counter]")!.textContent).toBe("1 matches");
+  });
+
+  it("keeps the keys it handles away from the window shortcuts", () => {
+    const { field } = open("cat cat");
+    const windowKeys = vi.fn<(event: KeyboardEvent) => void>();
+    window.addEventListener("keydown", windowKeys);
+    field.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", altKey: true, ctrlKey: true, bubbles: true }),
+    );
+    window.removeEventListener("keydown", windowKeys);
+    expect(windowKeys).not.toHaveBeenCalled();
   });
 });

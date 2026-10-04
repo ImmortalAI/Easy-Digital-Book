@@ -29,7 +29,8 @@ export function useImageActions() {
     return true;
   }
 
-  function renameImages(renames: ResourceRename[]) {
+  /** `onUndo` runs after the toast's Undo has put the old names back. */
+  function renameImages(renames: ResourceRename[], options: { onUndo?: () => void } = {}) {
     const generation = project.bookGeneration;
     if (!apply(renames)) return;
     const targets = new Set(renames.map(({ to }) => to));
@@ -48,7 +49,8 @@ export function useImageActions() {
       kind: "success",
       undoState: canUndo,
       undo: () => {
-        if (canUndo()) apply(renames.map(({ from, to }) => ({ from: to, to: from })));
+        if (canUndo() && apply(renames.map(({ from, to }) => ({ from: to, to: from }))))
+          options.onUndo?.();
       },
     });
   }

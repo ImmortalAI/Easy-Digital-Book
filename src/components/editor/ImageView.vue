@@ -57,12 +57,18 @@ function makeCover() {
 }
 const { renameImages } = useImageActions();
 const renaming = ref(false);
+// The page is addressed by path; follow the image to its new name, and back
+// to the old one on Undo while this page still shows it.
+function showImage(from: string, to: string) {
+  if (layout.center.kind === "image" && layout.center.path === from)
+    layout.center = { kind: "image", path: to };
+}
 function confirmRename(renames: ResourceRename[]) {
-  renameImages(renames);
   renaming.value = false;
   const renamed = renames[0];
-  // The page is addressed by path; follow the image to its new name.
-  if (renamed) layout.center = { kind: "image", path: renamed.to };
+  if (!renamed) return;
+  renameImages(renames, { onUndo: () => showImage(renamed.to, renamed.from) });
+  showImage(renamed.from, renamed.to);
 }
 </script>
 <template>

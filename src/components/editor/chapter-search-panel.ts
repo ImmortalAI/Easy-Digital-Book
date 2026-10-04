@@ -71,8 +71,13 @@ const emptyInput: ChapterSearchInput = {
   regex: false,
   replace: "",
 };
-// The panel is recreated on every open; this keeps its toggles between opens.
-const lastInputs = new WeakMap<EditorView, ChapterSearchInput>();
+// The input behind each query the panel applied. A chapter's EditorState keeps
+// its query when its view is destroyed on a chapter switch, and Mod+F without a
+// selection hands back that same object, so the panel can show the typed text
+// and toggles again instead of the generated regexp source.
+const inputsByQuery = new WeakMap<CmSearchQuery, ChapterSearchInput>();
+// Case and whole-word carry over to a query that starts from a selection.
+let lastToggles: Pick<ChapterSearchInput, "caseSensitive" | "wholeWord"> = emptyInput;
 
 function element<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -179,6 +184,7 @@ class ChapterSearchPanel implements Panel {
       this.commit();
     });
     this.dom.addEventListener("keydown", (event) => this.keydown(event));
+    this.syncToggles();
   }
 
   mount() {
@@ -193,10 +199,15 @@ class ChapterSearchPanel implements Panel {
     for (const transaction of update.transactions)
       for (const effect of transaction.effects)
         if (effect.is(setSearchQuery) && effect.value !== this.applied) {
-          // Mod+F with a selection while the panel is open.
+          // Mod+F (or the toolbar button) while the panel is open. Dispatching
+          // here would throw: commit right after this update instead.
           this.input = this.adopt(effect.value);
           this.searchField.value = this.input.text;
-          this.commit();
+          this.replaceField.value = this.input.replace;
+          this.syncToggles();
+          queueMicrotask(() => {
+            if (this.dom.isConnected) this.commit();
+          });
           return;
         }
     if (update.docChanged || update.selectionSet) this.renderCounter();
@@ -204,21 +215,25 @@ class ChapterSearchPanel implements Panel {
 
   /** Our own query keeps its toggles; anything else (a selection) becomes plain text. */
   private adopt(query: CmSearchQuery): ChapterSearchInput {
-    const last = lastInputs.get(this.view) ?? emptyInput;
-    const built = buildChapterQuery(last);
-    if ("query" in built && built.query.eq(query)) return { ...last };
-    return { ...last, text: query.search, regex: false };
+    const own = inputsByQuery.get(query);
+    if (own) return { ...own };
+    return { ...emptyInput, ...lastToggles, text: query.search };
   }
 
   private commit() {
     const built = buildChapterQuery(this.input);
     this.invalid = "error" in built;
     this.applied = "query" in built ? built.query : new CmSearchQuery({ search: "" });
-    lastInputs.set(this.view, this.input);
-    for (const [key, button] of Object.entries(this.toggles))
-      button.setAttribute("aria-pressed", String(this.input[key as keyof typeof this.toggles]));
+    inputsByQuery.set(this.applied, this.input);
+    lastToggles = { caseSensitive: this.input.caseSensitive, wholeWord: this.input.wholeWord };
+    this.syncToggles();
     this.view.dispatch({ effects: setSearchQuery.of(this.applied) });
     this.renderCounter();
+  }
+
+  private syncToggles() {
+    for (const [key, button] of Object.entries(this.toggles))
+      button.setAttribute("aria-pressed", String(this.input[key as keyof typeof this.toggles]));
   }
 
   private renderCounter() {
@@ -236,15 +251,17 @@ class ChapterSearchPanel implements Panel {
 
   private keydown(event: KeyboardEvent) {
     if (event.key === "Enter" && event.target === this.searchField) {
-      event.preventDefault();
       if (event.altKey) selectMatches(this.view);
       else (event.shiftKey ? findPrevious : findNext)(this.view);
     } else if (event.key === "Enter" && event.target === this.replaceField) {
-      event.preventDefault();
       replaceNext(this.view);
-    } else if (runScopeHandlers(this.view, event, "search-panel")) {
-      event.preventDefault();
+    } else if (!runScopeHandlers(this.view, event, "search-panel")) {
+      return;
     }
+    // Handled here: keep it from the window shortcuts too (Mod+Alt+Enter there
+    // is the book-wide Replace all).
+    event.preventDefault();
+    event.stopPropagation();
   }
 }
 
