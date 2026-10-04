@@ -85,4 +85,21 @@ describe("ImageGallery", () => {
     const stops = screen.getAllByRole("gridcell").filter((c) => c.getAttribute("tabindex") === "0");
     expect(stops).toHaveLength(1);
   });
+
+  it("toggles with Mod+click and numbers the tiles in selection order", async () => {
+    mountGallery();
+    const user = userEvent.setup();
+    await user.keyboard("{Meta>}");
+    await user.click(screen.getByRole("gridcell", { name: /spare\.png/ }));
+    await user.click(screen.getByRole("gridcell", { name: /cover\.png/ }));
+    await user.keyboard("{/Meta}");
+    expect(
+      within(screen.getByRole("gridcell", { name: /spare\.png/ })).getByText("1"),
+    ).toBeTruthy();
+    expect(
+      within(screen.getByRole("gridcell", { name: /cover\.png/ })).getByText("2"),
+    ).toBeTruthy();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByText(/selected:/i)).toBeNull();
+  });
 });

@@ -4,6 +4,14 @@ import { IconPlus, IconTrash } from "@tabler/icons-vue";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import ImageTile from "./ImageTile.vue";
+import {
+  emptySelection,
+  selectAll,
+  selectRange,
+  toggle,
+  type Selection,
+} from "./gallery-selection";
+import { useLongPressSelect } from "@/composables/use-long-press-select";
 import { collectUsedImagePaths } from "@/services/checks/image-usage";
 import { setCover } from "@/services/book/metadata";
 import { useLayoutStore } from "@/stores/layout";
@@ -41,6 +49,33 @@ const items = computed(() =>
 const tabStop = computed(() => Math.max(0, Math.min(focusedIndex.value, items.value.length - 1)));
 const unusedCount = computed(() => all.value.filter((path) => !used.value.has(path)).length);
 
+const selection = ref<Selection>(emptySelection());
+const selecting = computed(() => selection.value.order.length > 0);
+let gestureBase: string[] = [];
+let gestureAnchor = "";
+const scroller = ref<HTMLElement>();
+const press = useLongPressSelect({
+  onStart(path) {
+    gestureBase = selection.value.order.filter((item) => item !== path);
+    gestureAnchor = path;
+    selection.value = selectRange(items.value, gestureBase, path, path);
+  },
+  onExtend(path) {
+    selection.value = selectRange(items.value, gestureBase, gestureAnchor, path);
+  },
+  onEnd() {},
+  scroller: () => scroller.value,
+});
+
+function onTileClick(event: MouseEvent, path: string) {
+  if (press.suppressClick()) return;
+  if (event.shiftKey && selection.value.anchor) {
+    selection.value = selectRange(items.value, selection.value.order, selection.value.anchor, path);
+  } else if (event.metaKey || event.ctrlKey || selecting.value) {
+    selection.value = toggle(selection.value, path);
+  } else open(path);
+}
+
 function open(path: string) {
   layout.center = { kind: "image", path };
 }
@@ -68,7 +103,15 @@ function onKeydown(event: KeyboardEvent) {
     void focusAt(focusedIndex.value + step);
   } else if (event.key === "Home") void focusAt(0);
   else if (event.key === "End") void focusAt(items.value.length - 1);
-  else if (event.key === "Enter") {
+  else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") {
+    event.preventDefault();
+    selection.value = selectAll(items.value);
+  } else if (event.key === "Escape") selection.value = emptySelection();
+  else if (event.key === " ") {
+    event.preventDefault();
+    const path = items.value[focusedIndex.value];
+    if (path) selection.value = toggle(selection.value, path);
+  } else if (event.key === "Enter") {
     const path = items.value[focusedIndex.value];
     if (path) open(path);
   }
@@ -100,7 +143,13 @@ async function drop(event: DragEvent) {
 </script>
 
 <template>
-  <section class="flex flex-col gap-4 p-6" data-image-gallery @dragover.prevent @drop="drop">
+  <section
+    ref="scroller"
+    class="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-6"
+    data-image-gallery
+    @dragover.prevent
+    @drop="drop"
+  >
     <div class="flex flex-wrap items-center gap-2">
       <h1 class="mr-auto text-xl font-semibold">
         {{ t("explorer.images", "Images") }}
@@ -125,6 +174,14 @@ async function drop(event: DragEvent) {
         <IconTrash aria-hidden="true" />{{ t("delete.unusedTitle", "Delete unused images") }}
       </Button>
     </div>
+    <div v-if="selecting" class="flex items-center gap-2 text-sm" data-selection-bar>
+      <span class="mr-auto">{{
+        t("gallery.selected", "Selected: {count}", { count: selection.order.length })
+      }}</span>
+      <Button variant="outline" size="sm" @click="selection = emptySelection()">{{
+        t("gallery.clear", "Clear selection")
+      }}</Button>
+    </div>
     <div
       ref="grid"
       role="grid"
@@ -141,9 +198,12 @@ async function drop(event: DragEvent) {
           :url="url(path)"
           :cover="project.book?.metadata.cover === path"
           :unused="!used.has(path)"
-          :selected="false"
+          :selected="selection.order.includes(path)"
+          :order="selecting ? selection.order.indexOf(path) + 1 || undefined : undefined"
+          :selecting="selecting"
           :focused="index === tabStop"
-          @open="open(path)"
+          @activate="onTileClick($event, path)"
+          @press="press.onPointerDown($event, path)"
           @context-action="contextAction(path, $event)"
         />
       </div>

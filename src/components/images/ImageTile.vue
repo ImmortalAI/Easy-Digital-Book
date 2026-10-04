@@ -18,9 +18,12 @@ const props = defineProps<{
   /** 1-based position in the selection order, shown while selecting. */
   order?: number;
   focused: boolean;
+  /** Selection mode: a touch drag selects instead of scrolling. */
+  selecting?: boolean;
 }>();
 const emit = defineEmits<{
-  open: [];
+  activate: [event: MouseEvent];
+  press: [event: PointerEvent];
   "context-action": [value: "cover" | "search" | "rename" | "delete"];
 }>();
 const { t } = useSafeI18n();
@@ -36,9 +39,14 @@ const name = () => props.path.replace(/^images\//, "");
         :aria-selected="selected"
         :tabindex="focused ? 0 : -1"
         :data-gallery-path="path"
-        @click="emit('open')"
+        @click="emit('activate', $event)"
+        @pointerdown="emit('press', $event)"
         class="group relative flex cursor-default select-none flex-col gap-1 rounded-lg p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        :class="{ 'bg-accent ring-2 ring-primary': selected, 'opacity-60': unused && !selected }"
+        :class="{
+          'bg-accent ring-2 ring-primary': selected,
+          'opacity-60': unused && !selected,
+          'touch-none': selecting,
+        }"
       >
         <div class="aspect-square overflow-hidden rounded-md bg-muted">
           <img

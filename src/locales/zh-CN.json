@@ -127,6 +127,8 @@
     "images": "图片"
   },
   "gallery": {
+    "selected": "已选择：{count}",
+    "clear": "取消选择",
     "cover": "封面",
     "filter": "显示",
     "all": "全部",

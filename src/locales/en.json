@@ -127,6 +127,8 @@
     "images": "Images"
   },
   "gallery": {
+    "selected": "Selected: {count}",
+    "clear": "Clear selection",
     "cover": "Cover",
     "filter": "Show",
     "all": "All",
