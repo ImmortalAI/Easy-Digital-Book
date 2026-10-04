@@ -83,7 +83,9 @@
   "fileMenu": {
     "open": "Open…",
     "saveAs": "Save as…",
-    "close": "Close project"
+    "close": "Close project",
+    "reveal": "Show in folder",
+    "revealFailed": "Could not open the folder"
   },
   "metadata": {
     "title": "Metadata",
@@ -109,12 +111,13 @@
     "coverSize": "Size",
     "coverSmall": "The cover is small and may look blurry on Kindle",
     "drop": "Drop an image here",
-    "choose": "Choose…",
     "remove": "Remove",
     "created": "Created",
     "modified": "Modified",
     "bytes": "bytes",
-    "contributorName": "{label} {number}"
+    "contributorName": "{label} {number}",
+    "coverFromFile": "From file…",
+    "coverFromBook": "From book images…"
   },
   "explorer": {
     "title": "Explorer",
@@ -142,7 +145,9 @@
     "newName": "New name",
     "renameConflict": "{name} already exists",
     "renameConfirm": "Rename",
-    "renamedToast": "{count} images renamed"
+    "renamedToast": "{count} images renamed",
+    "renameOneTitle": "Rename image",
+    "renameOneHint": "Latin letters, digits, _ and - only."
   },
   "images": {
     "usedIn": "Used in",
@@ -167,7 +172,13 @@
     "replaceChapter": "Replace chapter",
     "replaced": "Replaced {count} matches",
     "hide": "Hide",
-    "invalidRegex": "Invalid regular expression"
+    "invalidRegex": "Invalid regular expression",
+    "previous": "Previous match",
+    "next": "Next match",
+    "close": "Close",
+    "counter": "{current} of {total}",
+    "counterTotal": "{total} matches",
+    "noResults": "No results"
   },
   "delete": {
     "chapterTitle": "Delete chapter",
@@ -262,5 +273,12 @@
     "redo": "Redo",
     "search": "Find in chapter",
     "more": "More formatting"
+  },
+  "preview": {
+    "paperStyle": "Paper style",
+    "paperStyleHint": "Paper style (Mod+Alt+P). Off shows the original look",
+    "dimImages": "Dim images",
+    "styledNotice": "Styled preview — not how the book will look",
+    "showOriginal": "Show the original look"
   }
 }

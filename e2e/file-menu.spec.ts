@@ -8,14 +8,14 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("the file menu closes the project, asking about unsaved changes first", async ({ page }) => {
-  await page.getByRole("button", { name: /Untitled book/ }).click();
+  await page.getByRole("button", { name: /^Untitled/ }).click();
   await page.getByRole("menuitem", { name: /^Close project/ }).click();
 
   // A new project is unsaved: cancelling keeps it open.
   await page.getByRole("alertdialog").getByRole("button", { name: "Cancel" }).click();
   await expect(page.locator("[data-shell]")).toBeVisible();
 
-  await page.getByRole("button", { name: /Untitled book/ }).click();
+  await page.getByRole("button", { name: /^Untitled/ }).click();
   await page.getByRole("menuitem", { name: /^Close project/ }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Don't save" }).click();
 

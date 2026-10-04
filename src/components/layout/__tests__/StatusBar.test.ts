@@ -1,5 +1,6 @@
 import { createPinia, setActivePinia } from "pinia";
 import { cleanup, render, screen } from "@testing-library/vue";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import StatusBar from "@/components/layout/StatusBar.vue";
 import { createI18nPlugin } from "@/plugins/i18n";
@@ -30,6 +31,22 @@ describe("StatusBar", () => {
     render(StatusBar, { props: { saveState: "saved", counts: null } });
 
     expect(screen.getByRole("region", { name: "Status bar" })).not.toHaveTextContent(/words/);
+  });
+
+  it("says when the preview is styled and offers the original look", async () => {
+    const { emitted } = render(StatusBar, {
+      props: { saveState: "saved", counts: null, previewStyled: true },
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: /styled preview/i }));
+
+    expect(emitted("showOriginalPreview")).toHaveLength(1);
+  });
+
+  it("keeps quiet about the preview when it shows the original look", () => {
+    render(StatusBar, { props: { saveState: "saved", counts: null, previewStyled: false } });
+
+    expect(screen.queryByRole("button", { name: /styled preview/i })).toBeNull();
   });
 
   it("carries the warnings button", () => {

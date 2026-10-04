@@ -21,6 +21,7 @@ import { diagnosticRange, novlangHighlightStyle, novlangLanguage } from "./novla
 import { editorColorScheme, editorColorTheme } from "./editor-theme";
 import { useResolvedTheme } from "@/composables/use-theme";
 import { useSafeI18n } from "@/composables/use-safe-i18n";
+import { chapterSearch, searchPanelLabels } from "@/components/editor/chapter-search-panel";
 import { chapterParseResults, useNovlangParse } from "@/composables/use-novlang-parse";
 import { useProjectStore } from "@/stores/project";
 import {
@@ -73,6 +74,7 @@ function editorExtensions(chapterId: string) {
     editorColorTheme,
     editorColorScheme(resolvedTheme.value),
     EditorView.lineWrapping,
+    chapterSearch(() => searchPanelLabels(t)),
     EditorView.contentAttributes.of({
       spellcheck: "true",
       lang: language,

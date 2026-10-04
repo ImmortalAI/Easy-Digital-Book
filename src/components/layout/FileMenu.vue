@@ -12,15 +12,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-defineProps<{ title: string; dirty: boolean }>();
-const emit = defineEmits<{ new: []; open: []; save: []; saveAs: []; close: [] }>();
+const props = defineProps<{ title: string; dirty: boolean; canReveal: boolean }>();
+const emit = defineEmits<{
+  new: [];
+  open: [];
+  save: [];
+  saveAs: [];
+  reveal: [];
+  close: [];
+}>();
 const { t } = useSafeI18n();
 
-type Command = "new" | "open" | "save" | "saveAs" | "close";
+type Command = "new" | "open" | "save" | "saveAs" | "reveal" | "close";
+type MenuItem = { command: Command; label: string; shortcut: string; disabled?: boolean };
 
 // Computed so the labels follow a live locale switch from Settings. Groups are
 // separated in the menu: create/open, save, close.
-const groups = computed<Array<Array<{ command: Command; label: string; shortcut: string }>>>(() => [
+const groups = computed<MenuItem[][]>(() => [
   [
     { command: "new", label: t("welcome.newProject", "New project"), shortcut: "Mod+N" },
     { command: "open", label: t("fileMenu.open", "Open…"), shortcut: "Mod+O" },
@@ -28,6 +36,12 @@ const groups = computed<Array<Array<{ command: Command; label: string; shortcut:
   [
     { command: "save", label: t("common.save", "Save"), shortcut: "Mod+S" },
     { command: "saveAs", label: t("fileMenu.saveAs", "Save as…"), shortcut: "Mod+Shift+S" },
+    {
+      command: "reveal",
+      label: t("fileMenu.reveal", "Show in folder"),
+      shortcut: "",
+      disabled: !props.canReveal,
+    },
   ],
   [{ command: "close", label: t("fileMenu.close", "Close project"), shortcut: "Mod+W" }],
 ]);
@@ -38,6 +52,7 @@ function run(command: Command) {
   else if (command === "open") emit("open");
   else if (command === "save") emit("save");
   else if (command === "saveAs") emit("saveAs");
+  else if (command === "reveal") emit("reveal");
   else emit("close");
 }
 </script>
@@ -59,9 +74,14 @@ function run(command: Command) {
     <DropdownMenuContent align="start" class="min-w-56">
       <template v-for="(group, index) in groups" :key="index">
         <DropdownMenuSeparator v-if="index > 0" />
-        <DropdownMenuItem v-for="item in group" :key="item.command" @select="run(item.command)">
+        <DropdownMenuItem
+          v-for="item in group"
+          :key="item.command"
+          :disabled="item.disabled"
+          @select="run(item.command)"
+        >
           {{ item.label }}
-          <DropdownMenuShortcut>{{ item.shortcut }}</DropdownMenuShortcut>
+          <DropdownMenuShortcut v-if="item.shortcut">{{ item.shortcut }}</DropdownMenuShortcut>
         </DropdownMenuItem>
       </template>
     </DropdownMenuContent>

@@ -4,7 +4,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createBook } from "@/services/book/create";
 import { chapterParseResults, resetChapterParseResults } from "@/composables/use-novlang-parse";
 import { useProjectStore } from "@/stores/project";
+import { useSettingsStore } from "@/stores/settings";
 import PreviewPane from "@/components/editor/PreviewPane.vue";
+
+function fakeFrame(iframe: HTMLIFrameElement) {
+  const style = { textContent: "" };
+  Object.defineProperty(iframe, "contentDocument", {
+    configurable: true,
+    value: {
+      body: { innerHTML: "" },
+      head: { querySelector: () => style },
+      documentElement: { scrollHeight: 1000, clientHeight: 500, scrollTop: 0 },
+      addEventListener() {},
+      removeEventListener() {},
+    },
+  });
+  iframe.dispatchEvent(new Event("load"));
+  return style;
+}
 
 describe("PreviewPane security and rendering", () => {
   beforeEach(() => {
@@ -39,6 +56,52 @@ describe("PreviewPane security and rendering", () => {
     expect(iframe.attributes("srcdoc")).toContain("default-src 'none'");
     expect(iframe.attributes("srcdoc")).toContain("img-src blob:");
     expect(iframe.attributes("srcdoc")).toContain("style-src 'unsafe-inline'");
+    wrapper.unmount();
+  });
+
+  it("keeps the text off the pane edges", async () => {
+    const wrapper = mount(PreviewPane, { props: { chapterId: "chapter1" } });
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get("iframe").attributes("srcdoc")).toContain(
+      "body { max-width: 36em; margin: 0 auto; padding: 1.5em 1.5em 4em; }",
+    );
+    wrapper.unmount();
+  });
+
+  it("paints the paper look under the dark theme and switches it off in place", async () => {
+    useSettingsStore().theme = "dark";
+    const wrapper = mount(PreviewPane, {
+      props: { chapterId: "chapter1" },
+      attachTo: document.body,
+    });
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get("iframe").attributes("srcdoc")).toContain("--paper-bg");
+    const style = fakeFrame(wrapper.get("iframe").element as HTMLIFrameElement);
+
+    await wrapper.get('button[aria-label="Paper style"]').trigger("click");
+    await wrapper.vm.$nextTick();
+
+    expect(style.textContent).not.toContain("--paper-bg");
+    expect(wrapper.findAll("iframe")).toHaveLength(1);
+    expect(wrapper.get('button[aria-label="Dim images"]').attributes()).toHaveProperty("disabled");
+    wrapper.unmount();
+  });
+
+  it("puts the user's custom.css after the paper layer", () => {
+    useSettingsStore().theme = "dark";
+    useProjectStore().book!.customCss = "body { color: #000; }";
+    const wrapper = mount(PreviewPane, { props: { chapterId: "chapter1" } });
+    const srcdoc = wrapper.get("iframe").attributes("srcdoc")!;
+    expect(srcdoc.indexOf("--paper-bg")).toBeGreaterThan(-1);
+    expect(srcdoc.indexOf("--paper-bg")).toBeLessThan(srcdoc.indexOf("body { color: #000; }"));
+    wrapper.unmount();
+  });
+
+  it("shows neither the paper look nor its toggles under the light theme", () => {
+    useSettingsStore().theme = "light";
+    const wrapper = mount(PreviewPane, { props: { chapterId: "chapter1" } });
+    expect(wrapper.get("iframe").attributes("srcdoc")).not.toContain("--paper-bg");
+    expect(wrapper.find('button[aria-label="Paper style"]').exists()).toBe(false);
     wrapper.unmount();
   });
 

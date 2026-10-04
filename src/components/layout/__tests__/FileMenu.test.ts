@@ -8,7 +8,7 @@ describe("FileMenu", () => {
   afterEach(cleanup);
 
   it("opens from the book title and lists the file commands with their shortcuts", async () => {
-    render(FileMenu, { props: { title: "saga.edb", dirty: false } });
+    render(FileMenu, { props: { title: "saga.edb", dirty: false, canReveal: true } });
 
     await userEvent.click(screen.getByRole("button", { name: /saga\.edb/ }));
 
@@ -18,12 +18,13 @@ describe("FileMenu", () => {
       "Open… Mod+O",
       "Save Mod+S",
       "Save as… Mod+Shift+S",
+      "Show in folder",
       "Close project Mod+W",
     ]);
   });
 
   it("marks unsaved changes on the title", () => {
-    render(FileMenu, { props: { title: "saga.edb", dirty: true } });
+    render(FileMenu, { props: { title: "saga.edb", dirty: true, canReveal: true } });
 
     expect(screen.getByRole("img", { name: "Unsaved changes" })).toBeInTheDocument();
   });
@@ -35,7 +36,9 @@ describe("FileMenu", () => {
     ["Save as…", "saveAs"],
     ["Close project", "close"],
   ])("runs %s", async (label, event) => {
-    const { emitted } = render(FileMenu, { props: { title: "saga.edb", dirty: false } });
+    const { emitted } = render(FileMenu, {
+      props: { title: "saga.edb", dirty: false, canReveal: true },
+    });
 
     await userEvent.click(screen.getByRole("button", { name: /saga\.edb/ }));
     const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -46,9 +49,27 @@ describe("FileMenu", () => {
     expect(emitted(event)).toHaveLength(1);
   });
 
+  it("shows the project in its folder, once it has been saved", async () => {
+    const { emitted } = render(FileMenu, {
+      props: { title: "Saga", dirty: false, canReveal: true },
+    });
+    await userEvent.click(screen.getByRole("button", { name: /Saga/ }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Show in folder" }));
+    expect(emitted("reveal")).toHaveLength(1);
+  });
+
+  it("can't show a never-saved project in a folder", async () => {
+    render(FileMenu, { props: { title: "Saga", dirty: false, canReveal: false } });
+    await userEvent.click(screen.getByRole("button", { name: /Saga/ }));
+    expect(await screen.findByRole("menuitem", { name: "Show in folder" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+  });
+
   it("speaks the interface language", async () => {
     render(FileMenu, {
-      props: { title: "saga.edb", dirty: false },
+      props: { title: "saga.edb", dirty: false, canReveal: true },
       global: { plugins: [createI18nPlugin("ru")] },
     });
 

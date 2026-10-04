@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onMounted, ref, watch } from "vue";
 import { useShortcuts } from "@/composables/use-shortcuts";
+import { useResolvedTheme } from "@/composables/use-theme";
 import { projectFilesKey } from "@/composables/use-project-files";
 import { useLayoutStore, type CenterView, type LayoutMode } from "@/stores/layout";
 import { useProjectStore } from "@/stores/project";
@@ -94,6 +95,20 @@ const saveState = computed<SaveState>(() =>
   project.saving ? "saving" : project.dirty ? "unsaved" : "saved",
 );
 const imageImport = useImageImport({ pickFile: files?.pickImage });
+const resolvedTheme = useResolvedTheme();
+// The preview is on screen in Split and Preview modes of a chapter or custom.css.
+const previewStyled = computed(
+  () =>
+    resolvedTheme.value === "dark" &&
+    settings.preview.paperStyle &&
+    canUseModes.value &&
+    layout.mode !== "text" &&
+    Boolean(previewChapterId.value),
+);
+function togglePaperStyle() {
+  if (resolvedTheme.value !== "dark") return;
+  void settings.setPreview({ paperStyle: !settings.preview.paperStyle });
+}
 
 async function insertImageFromFile(position: number) {
   const chapter = selectedChapter.value;
@@ -233,6 +248,7 @@ useShortcuts({
   textMode: () => setMode("text"),
   splitMode: () => setMode("split"),
   previewMode: () => setMode("preview"),
+  togglePaperStyle,
 });
 
 watch(
@@ -275,12 +291,14 @@ onMounted(findSourceScroller);
          header included, instead of scrolling the pane that holds the text. -->
     <header class="flex min-h-13 items-center justify-between gap-4 border-b px-4">
       <FileMenu
-        :title="project.filePath ?? t('editor.unnamedBook', 'Untitled book')"
+        :title="project.book?.metadata.title.trim() || t('editor.unnamedBook', 'Untitled book')"
         :dirty="project.dirty"
+        :can-reveal="Boolean(project.filePath)"
         @new="files?.newBook()"
         @open="files?.open()"
         @save="files?.save()"
         @save-as="files?.saveAs()"
+        @reveal="files?.reveal()"
         @close="files?.close()"
       />
       <AppToolbar @export="exportOpen = true" />
@@ -376,7 +394,9 @@ onMounted(findSourceScroller);
       :save-state="saveState"
       :counts="selectedChapter ? { words: wordCount, characters: characterCount } : null"
       :chapter-id="selectedChapterId || previewChapterId"
+      :preview-styled="previewStyled"
       @select-warning="selectWarning"
+      @show-original-preview="settings.setPreview({ paperStyle: false })"
     />
     <ExportDialog
       v-if="exportController"

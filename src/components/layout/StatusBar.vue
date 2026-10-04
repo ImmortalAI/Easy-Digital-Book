@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useSafeI18n } from "@/composables/use-safe-i18n";
+import { IconPalette } from "@tabler/icons-vue";
+import { Button } from "@/components/ui/button";
 import WarningsPopover from "@/components/editor/WarningsPopover.vue";
 
 export type SaveState = "saved" | "unsaved" | "saving";
@@ -11,9 +13,12 @@ const props = defineProps<{
   counts: { words: number; characters: number } | null;
   /** The chapter whose parse warnings the warnings list shows first. */
   chapterId?: string;
+  /** The preview is on screen with the preview-only paper look. */
+  previewStyled?: boolean;
 }>();
 const emit = defineEmits<{
   selectWarning: [item: { chapterId?: string; position?: { line: number; column: number } }];
+  showOriginalPreview: [];
 }>();
 const { t } = useSafeI18n();
 
@@ -44,7 +49,22 @@ const countsLabel = computed(() => {
     :aria-label="t('editor.statusBar', 'Status bar')"
     class="flex h-7 shrink-0 items-center justify-between gap-4 border-t bg-sidebar px-2 text-xs text-muted-foreground"
   >
-    <WarningsPopover :chapter-id="chapterId" @select="emit('selectWarning', $event)" />
+    <div class="flex min-w-0 items-center gap-2">
+      <WarningsPopover :chapter-id="chapterId" @select="emit('selectWarning', $event)" />
+      <Button
+        v-if="previewStyled"
+        variant="ghost"
+        size="xs"
+        class="min-w-0 font-normal text-muted-foreground"
+        :title="t('preview.showOriginal', 'Show the original look')"
+        @click="emit('showOriginalPreview')"
+      >
+        <IconPalette aria-hidden="true" />
+        <span class="truncate">{{
+          t("preview.styledNotice", "Styled preview — not how the book will look")
+        }}</span>
+      </Button>
+    </div>
     <div class="flex min-w-0 items-center gap-4">
       <span class="truncate">{{ saveLabel }}</span>
       <span v-if="counts" class="truncate">{{ countsLabel }}</span>

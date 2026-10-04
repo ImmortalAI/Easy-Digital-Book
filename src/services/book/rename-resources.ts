@@ -12,14 +12,24 @@ export type TextEdit = { from: number; to: number; insert: string };
 const IMAGE_REF = /!\[[^\]]*\]\(([^)\s]+)\)/g;
 const CSS_URL = /url\(\s*(["']?)([^"')]+)\1\s*\)/g;
 
-export function planBatchRename(book: Book, selection: string[], name: string): RenamePlan {
-  if (name === "") return { error: "empty" };
+const extensionOf = (path: string) => path.slice(path.lastIndexOf("."));
+
+/** One image keeps a plain name; several get `_NN`, padded to the count's width, in selection order. */
+export function renameTargets(selection: string[], name: string): string[] {
+  if (selection.length === 1) return [`images/${name}${extensionOf(selection[0]!)}`];
   const width = String(selection.length).length;
+  return selection.map(
+    (from, index) => `images/${name}_${String(index + 1).padStart(width, "0")}${extensionOf(from)}`,
+  );
+}
+
+export function planRename(book: Book, selection: string[], name: string): RenamePlan {
+  if (name === "") return { error: "empty" };
+  const targets = renameTargets(selection, name);
   const selected = new Set(selection);
   const renames: ResourceRename[] = [];
   for (const [index, from] of selection.entries()) {
-    const extension = from.slice(from.lastIndexOf("."));
-    const to = `images/${name}_${String(index + 1).padStart(width, "0")}${extension}`;
+    const to = targets[index]!;
     if (book.resources.has(to) && !selected.has(to)) return { error: "conflict", path: to };
     if (to !== from) renames.push({ from, to });
   }

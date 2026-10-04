@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createBook } from "@/services/book/create";
 import { createInMemoryPlatformServices } from "@/services/platform";
 import { writeEdb } from "@/services/edb/write";
+import { readEdb } from "@/services/edb/read";
 import { useDiagnosticsStore } from "@/stores/diagnostics";
 import { useProjectStore } from "@/stores/project";
 import { useLayoutStore } from "@/stores/layout";
@@ -20,6 +21,64 @@ const makeBook = () =>
 
 describe("project files", () => {
   beforeEach(() => setActivePinia(createPinia()));
+
+  it("names a never-saved untitled book after the file on first save", async () => {
+    const services = createInMemoryPlatformServices();
+    const project = useProjectStore();
+    project.configure(services);
+    project.setBook(makeBook(), null, { dirty: true });
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await expect(files.saveAs("/books/My novel.edb")).resolves.toBe(true);
+
+    expect(project.book?.metadata.title).toBe("My novel");
+    const saved = await readEdb(await services.files.readFile("/books/My novel.edb"), {
+      now: () => new Date("2026-01-03"),
+    });
+    expect(saved.book.metadata.title).toBe("My novel");
+  });
+
+  it("keeps a title the author typed, and never renames on later saves", async () => {
+    const services = createInMemoryPlatformServices();
+    const project = useProjectStore();
+    project.configure(services);
+    const book = makeBook();
+    project.setBook({ ...book, metadata: { ...book.metadata, title: "Saga" } }, null, {
+      dirty: true,
+    });
+    const files = createProjectFiles({ services, locale: "en" });
+    await files.saveAs("/books/draft.edb");
+    expect(project.book?.metadata.title).toBe("Saga");
+
+    project.setBook(makeBook(), "/books/old.edb", { dirty: false });
+    await files.saveAs("/books/copy.edb");
+    expect(project.book?.metadata.title).toBe("Untitled");
+  });
+
+  it("leaves the title alone when the save dialog is cancelled", async () => {
+    const services = createInMemoryPlatformServices();
+    const project = useProjectStore();
+    project.configure(services);
+    project.setBook(makeBook(), null, { dirty: true });
+    vi.spyOn(services.dialogs, "save").mockResolvedValue(null);
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await expect(files.saveAs()).resolves.toBe(false);
+    expect(project.book?.metadata.title).toBe("Untitled");
+  });
+
+  it("reveals the saved project file", async () => {
+    const services = createInMemoryPlatformServices();
+    const project = useProjectStore();
+    project.configure(services);
+    project.setBook(makeBook(), "/books/saga.edb", { dirty: false });
+    const reveal = vi.spyOn(services.opener, "reveal").mockResolvedValue(undefined);
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await files.reveal();
+
+    expect(reveal).toHaveBeenCalledWith("/books/saga.edb");
+  });
 
   it("creates a dirty untitled project", async () => {
     const services = createInMemoryPlatformServices();
@@ -80,9 +139,7 @@ describe("project files", () => {
 
     await expect(files.saveAs("copy.edb")).resolves.toBe(true);
     const saved = await services.files.readFile("copy.edb");
-    const roundTrip = await import("@/services/edb/read").then(({ readEdb }) =>
-      readEdb(saved, { now: () => new Date("2026-01-03") }),
-    );
+    const roundTrip = await readEdb(saved, { now: () => new Date("2026-01-03") });
     expect(roundTrip.book.metadata.modified).toBe(original.metadata.modified);
   });
 

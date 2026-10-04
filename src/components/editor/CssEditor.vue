@@ -11,6 +11,7 @@ import { preserveOpenShortcutKeymap } from "@/components/editor/editor-commands"
 import { editorColorScheme, editorColorTheme } from "@/components/editor/editor-theme";
 import { useResolvedTheme } from "@/composables/use-theme";
 import { useSafeI18n } from "@/composables/use-safe-i18n";
+import { chapterSearch, searchPanelLabels } from "@/components/editor/chapter-search-panel";
 const project = useProjectStore();
 const host = ref<HTMLElement>();
 let view: EditorView | undefined;
@@ -40,6 +41,7 @@ function mount() {
         lineNumbers(),
         history(),
         ...cssEditingExtensions(),
+        chapterSearch(() => searchPanelLabels(t)),
         editorTheme,
         editorColorTheme,
         liveSettings.of(liveExtensions()),

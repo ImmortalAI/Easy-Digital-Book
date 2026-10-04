@@ -1,5 +1,8 @@
 import { inject, ref, type InjectionKey, type Ref } from "vue";
-import { createBook } from "@/services/book/create";
+import { createBook, isDefaultTitle } from "@/services/book/create";
+import { updateMetadata } from "@/services/book/metadata";
+import { appErrorFromUnknown } from "@/types/errors";
+import { useNotificationsStore } from "@/stores/notifications";
 import { readEdb } from "@/services/edb/read";
 import { useDiagnosticsStore } from "@/stores/diagnostics";
 import { useLayoutStore } from "@/stores/layout";
@@ -49,6 +52,8 @@ export interface ProjectFilesController {
   restoreRecovery(bookId: string): Promise<boolean>;
   save(): Promise<boolean>;
   saveAs(path?: string): Promise<boolean>;
+  /** Shows the saved project file in the OS file manager. */
+  reveal(): Promise<void>;
   /** Closes the project (after the unsaved-changes check) and returns to the start screen. */
   close(): Promise<boolean>;
   /** Throws away a recovery session listed on the start screen. */
@@ -74,6 +79,10 @@ function defaultChapterId(): string {
   const bytes = new Uint8Array(8);
   crypto.getRandomValues(bytes);
   return [...bytes].map((byte) => (byte % 36).toString(36)).join("");
+}
+
+function fileStem(path: string): string {
+  return (path.split(/[\\/]/).pop() ?? "").replace(/\.edb$/i, "").trim();
 }
 
 function projectFileName(title: string, fallback: string): string {
@@ -287,6 +296,7 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
   };
 
   async function saveAs(path?: string): Promise<boolean> {
+    const neverSaved = project.filePath === null;
     const target =
       path ??
       (await services.dialogs.save({
@@ -297,7 +307,28 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
         ),
         filters: [{ name: t("files.openFilter", "Easy Digital Book"), extensions: ["edb"] }],
       }));
-    return target ? project.save(target) : false;
+    if (!target) return false;
+    // A book saved for the first time under a placeholder title is named after
+    // its file, in the same write.
+    const stem = fileStem(target);
+    if (neverSaved && project.book && stem && isDefaultTitle(project.book.metadata.title))
+      project.applyMutation(updateMetadata(project.book, { title: stem }));
+    return project.save(target);
+  }
+
+  async function reveal(): Promise<void> {
+    if (!project.filePath) return;
+    try {
+      await services.opener.reveal(project.filePath);
+    } catch (error) {
+      services.logger.warn("Could not reveal the project file", {
+        code: appErrorFromUnknown(error, "platform.opener").code,
+      });
+      useNotificationsStore().add({
+        kind: "error",
+        message: t("fileMenu.revealFailed", "Could not open the folder"),
+      });
+    }
   }
 
   async function deleteRecovery(bookId: string): Promise<void> {
@@ -405,6 +436,7 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
     deleteRecovery,
     save,
     saveAs,
+    reveal,
     close,
     pickImage,
     startLifecycle,

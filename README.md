@@ -22,7 +22,7 @@ spelunking.
 ![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue?style=flat-square)](LICENSE)
 
-[**Download**](#download) · [**Features**](#features) · [**Markup**](#markup) · [**Shortcuts**](#shortcuts) · [**Contributing**](CONTRIBUTING.md)
+[**Download**](#download) · [**Features**](#features) · [**Markup**](#markup) · [**Shortcuts**](#shortcuts) · [**Roadmap**](#roadmap) · [**Contributing**](CONTRIBUTING.md)
 
 <br />
 
@@ -217,10 +217,27 @@ Grab the latest build for your system from
 | Show or hide the sidebar      | Mod+\\                              |
 | Explorer / Search the book    | Mod+Shift+E / Mod+Shift+F           |
 | Find & replace in the chapter | Mod+F                               |
+| Preview: paper style on / off | Mod+Alt+P                           |
 | Replace all in the book       | Mod+Alt+Enter                       |
 | Move the selected chapter     | Alt+↑ / Alt+↓                       |
 
 </details>
+
+<a id="roadmap"></a>
+
+## 🗺️ Roadmap
+
+Planned after v1, in no particular order and with no dates yet:
+
+- [ ] **AZW3 export.** Save a Kindle-native book directly, without
+      converting the EPUB in Calibre.
+- [ ] **Kindle CSS check.** Warn about rules in `custom.css` that Kindle
+      ignores or renders differently.
+- [ ] **Language check for English and Russian.** Catch spelling and wording
+      mistakes in chapters beyond the system spell checker.
+
+Ideas and votes are welcome in
+[Issues](https://github.com/ImmortalAI/easy-digital-book/issues).
 
 ## 🛠️ Built with
 

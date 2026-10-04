@@ -45,4 +45,30 @@ describe("RenameImagesDialog", () => {
     expect(screen.getByRole("button", { name: /rename/i })).toBeDisabled();
     expect(screen.getByText(/already exists/i)).toBeTruthy();
   });
+
+  it("renames one image without a number, starting from its current name", async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const book = createBook({
+      locale: "en",
+      now: new Date("2026-01-01"),
+      newUuid: () => "550e8400-e29b-41d4-a716-446655440000",
+      newChapterId: () => "chapter1",
+    });
+    useProjectStore().setBook({ ...book, resources: new Map([["images/a.png", png]]) });
+    const { emitted } = render(RenameImagesDialog, {
+      props: { open: true, paths: ["images/a.png"] },
+      global: { plugins: [pinia] },
+    });
+    const field = await screen.findByRole("textbox", { name: /new name/i });
+    expect(screen.getByRole("heading", { name: "Rename image" })).toBeTruthy();
+    expect(field).toHaveValue("a");
+    expect(screen.getByRole("button", { name: /^rename$/i })).toBeDisabled();
+
+    await userEvent.clear(field);
+    await userEvent.type(field, "cover");
+    expect(screen.getByText("cover.png")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: /^rename$/i }));
+    expect(emitted("confirm")?.[0]).toEqual([[{ from: "images/a.png", to: "images/cover.png" }]]);
+  });
 });
