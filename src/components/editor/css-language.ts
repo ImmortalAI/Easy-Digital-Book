@@ -1,9 +1,11 @@
 import {
+  acceptCompletion,
   autocompletion,
   closeBrackets,
   closeBracketsKeymap,
   completionKeymap,
 } from "@codemirror/autocomplete";
+import { indentWithTab } from "@codemirror/commands";
 import { css } from "@codemirror/lang-css";
 import {
   bracketMatching,
@@ -50,7 +52,12 @@ export function cssEditingExtensions(): Extension[] {
     autocompletion(),
     highlightActiveLine(),
     highlightActiveLineGutter(),
+    // Tab first accepts an open completion; otherwise it indents. Without these
+    // the browser moves focus to the splitter. Esc then Tab still leaves the
+    // editor from the keyboard (CodeMirror's tab-focus escape).
     keymap.of([
+      { key: "Tab", run: acceptCompletion },
+      indentWithTab,
       { key: "Mod-f", run: openSearchPanel },
       ...closeBracketsKeymap,
       ...completionKeymap,
