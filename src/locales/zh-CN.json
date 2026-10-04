@@ -142,7 +142,9 @@
     "newName": "新名称",
     "renameConflict": "{name} 已存在",
     "renameConfirm": "重命名",
-    "renamedToast": "已重命名 {count} 张图片"
+    "renamedToast": "已重命名 {count} 张图片",
+    "renameOneTitle": "重命名图片",
+    "renameOneHint": "仅限拉丁字母、数字、_ 和 -。"
   },
   "images": {
     "usedIn": "使用于",

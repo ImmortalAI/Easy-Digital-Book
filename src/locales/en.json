@@ -142,7 +142,9 @@
     "newName": "New name",
     "renameConflict": "{name} already exists",
     "renameConfirm": "Rename",
-    "renamedToast": "{count} images renamed"
+    "renamedToast": "{count} images renamed",
+    "renameOneTitle": "Rename image",
+    "renameOneHint": "Latin letters, digits, _ and - only."
   },
   "images": {
     "usedIn": "Used in",

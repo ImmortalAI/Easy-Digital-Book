@@ -142,7 +142,9 @@
     "newName": "Новое имя",
     "renameConflict": "{name} уже существует",
     "renameConfirm": "Переименовать",
-    "renamedToast": "Переименовано изображений: {count}"
+    "renamedToast": "Переименовано изображений: {count}",
+    "renameOneTitle": "Переименовать изображение",
+    "renameOneHint": "Только латиница, цифры, _ и -."
   },
   "images": {
     "usedIn": "Используется в",

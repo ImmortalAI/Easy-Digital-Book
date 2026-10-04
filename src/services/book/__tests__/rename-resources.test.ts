@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planBatchRename, renameResources } from "@/services/book/rename-resources";
+import { planRename, renameResources, renameTargets } from "@/services/book/rename-resources";
 import type { Book } from "@/types/book";
 
 const res = { mediaType: "image/png" as const, bytes: new Uint8Array([1]) };
@@ -29,10 +29,10 @@ function book(
   };
 }
 
-describe("planBatchRename", () => {
+describe("planRename", () => {
   it("numbers in selection order with zero padding by count", () => {
     const paths = Array.from({ length: 10 }, (_, i) => `images/p${i}.png`);
-    const plan = planBatchRename(
+    const plan = planRename(
       book(paths, []),
       [paths[3]!, ...paths.filter((_, i) => i !== 3)],
       "scene",
@@ -45,7 +45,7 @@ describe("planBatchRename", () => {
   });
 
   it("keeps each file's extension and pads 1–9 to one digit", () => {
-    const plan = planBatchRename(
+    const plan = planRename(
       book(["images/a.jpg", "images/b.png"], []),
       ["images/b.png", "images/a.jpg"],
       "x",
@@ -59,16 +59,37 @@ describe("planBatchRename", () => {
   });
 
   it("rejects an empty name and a clash with an unselected image", () => {
-    expect(planBatchRename(book(["images/a.png"], []), ["images/a.png"], "")).toEqual({
+    expect(planRename(book(["images/a.png"], []), ["images/a.png"], "")).toEqual({
       error: "empty",
     });
-    expect(
-      planBatchRename(book(["images/a.png", "images/x_1.png"], []), ["images/a.png"], "x"),
-    ).toEqual({ error: "conflict", path: "images/x_1.png" });
+    expect(planRename(book(["images/a.png", "images/x.png"], []), ["images/a.png"], "x")).toEqual({
+      error: "conflict",
+      path: "images/x.png",
+    });
+  });
+
+  it("names a single image without a number", () => {
+    expect(planRename(book(["images/a.jpg"], []), ["images/a.jpg"], "cover")).toEqual({
+      renames: [{ from: "images/a.jpg", to: "images/cover.jpg" }],
+    });
+  });
+
+  it("has nothing to do when a single image keeps its name", () => {
+    expect(planRename(book(["images/a.jpg"], []), ["images/a.jpg"], "a")).toEqual({
+      renames: [],
+    });
+  });
+
+  it("numbers only when there are several images", () => {
+    expect(renameTargets(["images/a.png", "images/b.jpg"], "x")).toEqual([
+      "images/x_1.png",
+      "images/x_2.jpg",
+    ]);
+    expect(renameTargets(["images/a.png"], "x")).toEqual(["images/x.png"]);
   });
 
   it("allows swapping names inside the selection", () => {
-    const plan = planBatchRename(
+    const plan = planRename(
       book(["images/x_1.png", "images/x_2.png"], []),
       ["images/x_2.png", "images/x_1.png"],
       "x",
