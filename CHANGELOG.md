@@ -2,6 +2,12 @@
 
 All notable changes to easy-digital-book are documented here.
 
+## [Unreleased]
+
+### Changed
+
+- New app icon on every platform; the macOS icon follows the system icon grid.
+
 ## [1.0.0] — 2026-10-04
 
 ### Added
