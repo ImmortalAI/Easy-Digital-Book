@@ -1,6 +1,6 @@
-# easy-digital-book
+# Easy Digital Book
 
-`easy-digital-book` is a desktop-only open-source editor that turns NovLang
+Easy Digital Book is a desktop-only open-source editor that turns NovLang
 novels into EPUB3 books for Kindle Paperwhite. It supports Windows, macOS 12+
 and Ubuntu 22.04-level WebKitGTK. There is no web or mobile version in v1.
 
