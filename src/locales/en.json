@@ -175,7 +175,10 @@
     "unusedMessage": "These unused images will be removed from the project.",
     "words": "Words",
     "chapterToast": "Chapter deleted",
-    "imageToast": "Image deleted"
+    "imageToast": "Image deleted",
+    "imagesToast": "{count} images deleted",
+    "imagesTitle": "Delete images",
+    "imagesMessage": "These images will be removed from the project."
   },
   "unsaved": {
     "title": "Unsaved changes",

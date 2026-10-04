@@ -12,7 +12,10 @@ import {
   type Selection,
 } from "./gallery-selection";
 import { useLongPressSelect } from "@/composables/use-long-press-select";
-import { collectUsedImagePaths } from "@/services/checks/image-usage";
+import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
+import { useBookSearch } from "@/composables/use-book-search";
+import { useSettingsStore } from "@/stores/settings";
+import { collectImageUsage, collectUsedImagePaths } from "@/services/checks/image-usage";
 import { setCover } from "@/services/book/metadata";
 import { useLayoutStore } from "@/stores/layout";
 import { useProjectStore } from "@/stores/project";
@@ -25,6 +28,8 @@ const props = defineProps<{
   onDropFiles: (files: ImageFile[]) => Promise<void>;
 }>();
 const project = useProjectStore();
+const search = useBookSearch();
+const settings = useSettingsStore();
 const layout = useLayoutStore();
 const { url } = useResourceUrls();
 const { t } = useSafeI18n();
@@ -62,6 +67,38 @@ watch(items, (visible) => {
     anchor: anchor && keep.has(anchor) && order.length ? anchor : null,
   };
 });
+const pendingDelete = ref<string[] | null>(null);
+const usage = computed(() =>
+  project.book ? collectImageUsage(project.book) : new Map<string, string[]>(),
+);
+function requestDelete(paths: string[]) {
+  if (paths.length === 0) return;
+  if (!settings.confirmDelete) return finishDelete(paths);
+  pendingDelete.value = paths;
+}
+function finishDelete(paths: string[]) {
+  search.deleteResources(paths);
+  selection.value = emptySelection();
+}
+function confirmDelete(value: { askAgain: boolean }) {
+  if (pendingDelete.value) finishDelete(pendingDelete.value);
+  pendingDelete.value = null;
+  if (!value.askAgain) {
+    settings.confirmDelete = false;
+    void settings.persist();
+  }
+}
+const deleteDetails = computed(() =>
+  (pendingDelete.value ?? [])
+    .map((path) => {
+      const chapters = usage.value.get(path) ?? [];
+      const name = path.replace(/^images\//, "");
+      return chapters.length
+        ? `${name} — ${t("images.usedIn", "Used in")}: ${chapters.length}`
+        : name;
+    })
+    .join("\n"),
+);
 let gestureBase: string[] = [];
 let gestureAnchor = "";
 const scroller = ref<HTMLElement>();
@@ -122,6 +159,10 @@ function onKeydown(event: KeyboardEvent) {
     event.preventDefault();
     const path = items.value[focusedIndex.value];
     if (path) selection.value = toggle(selection.value, path);
+  } else if (event.key === "Delete" || event.key === "Backspace") {
+    event.preventDefault();
+    const focused = items.value[focusedIndex.value];
+    requestDelete(selecting.value ? [...selection.value.order] : focused ? [focused] : []);
   } else if (event.key === "Enter") {
     const path = items.value[focusedIndex.value];
     if (path) open(path);
@@ -133,7 +174,9 @@ function contextAction(path: string, value: "cover" | "search" | "rename" | "del
     layout.activeView = "search";
     layout.setSidebarVisible(true);
   }
-  // "rename" and "delete": Tasks 14 and 15.
+  if (value === "delete")
+    requestDelete(selection.value.order.includes(path) ? [...selection.value.order] : [path]);
+  // "rename": Task 15.
 }
 async function drop(event: DragEvent) {
   const files = [...(event.dataTransfer?.files ?? [])].filter((file) =>
@@ -181,7 +224,13 @@ async function drop(event: DragEvent) {
       <Button variant="outline" size="sm" @click="onImport">
         <IconPlus aria-hidden="true" />{{ t("gallery.add", "Add…") }}
       </Button>
-      <Button variant="outline" size="sm" :disabled="unusedCount === 0" data-delete-unused>
+      <Button
+        variant="outline"
+        size="sm"
+        :disabled="unusedCount === 0"
+        data-delete-unused
+        @click="requestDelete(all.filter((p) => !used.has(p)))"
+      >
         <IconTrash aria-hidden="true" />{{ t("delete.unusedTitle", "Delete unused images") }}
       </Button>
     </div>
@@ -190,6 +239,14 @@ async function drop(event: DragEvent) {
         <span class="mr-auto" data-selection-bar>{{
           t("gallery.selected", "Selected: {count}", { count: selection.order.length })
         }}</span>
+        <Button
+          variant="destructive"
+          size="sm"
+          data-selection-delete
+          @click="requestDelete([...selection.order])"
+        >
+          <IconTrash aria-hidden="true" />{{ t("common.delete", "Delete") }}
+        </Button>
         <Button variant="outline" size="sm" @click="selection = emptySelection()">{{
           t("gallery.clear", "Clear selection")
         }}</Button>
@@ -224,5 +281,14 @@ async function drop(event: DragEvent) {
     <p v-if="items.length === 0" class="text-sm text-muted-foreground">
       {{ t("gallery.empty", "No images. Add them with the button above or drop files here.") }}
     </p>
+    <ConfirmDialog
+      :open="pendingDelete !== null"
+      :title="t('delete.imagesTitle', 'Delete images')"
+      :message="t('delete.imagesMessage', 'These images will be removed from the project.')"
+      :details="deleteDetails"
+      :ask-again-label="t('common.doNotAskAgain', 'Do not ask again')"
+      @cancel="pendingDelete = null"
+      @confirm="confirmDelete"
+    />
   </section>
 </template>

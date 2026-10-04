@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createBook } from "@/services/book/create";
 import { addChapter } from "@/services/book/chapters";
 import { extractTitle } from "@/services/book/extract-title";
-import { importImage } from "@/services/book/resources";
+import { importImage, removeResources } from "@/services/book/resources";
 
 const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
@@ -71,5 +71,22 @@ describe("book domain", () => {
     });
     const result = await importImage(book, "cover.exe", png, { sha256: async () => "png-hash" });
     expect(result.path).toBe("images/cover.png");
+  });
+
+  it("removes several resources and clears a removed cover", () => {
+    const book = createBook({
+      locale: "en",
+      now: new Date(0),
+      newUuid: () => "550e8400-e29b-41d4-a716-446655440000",
+      newChapterId: () => "abc12345",
+    });
+    for (const name of ["a", "b", "c"])
+      book.resources.set(`images/${name}.png`, { bytes: png, mediaType: "image/png" });
+    book.metadata.cover = "images/b.png";
+    const result = removeResources(book, ["images/a.png", "images/b.png", "images/missing.png"]);
+    expect([...result.book.resources.keys()]).toEqual(["images/c.png"]);
+    expect(result.book.metadata.cover).toBeNull();
+    expect(result.metadataCoverChanged).toBe(true);
+    expect(result.removedResources).toEqual(new Set(["images/a.png", "images/b.png"]));
   });
 });

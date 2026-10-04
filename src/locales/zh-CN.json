@@ -175,7 +175,10 @@
     "unusedMessage": "这些未使用的图片将从项目中删除。",
     "words": "字数",
     "chapterToast": "章节已删除",
-    "imageToast": "图片已删除"
+    "imageToast": "图片已删除",
+    "imagesToast": "已删除 {count} 张图片",
+    "imagesTitle": "删除图片",
+    "imagesMessage": "这些图片将从项目中删除。"
   },
   "unsaved": {
     "title": "未保存的更改",

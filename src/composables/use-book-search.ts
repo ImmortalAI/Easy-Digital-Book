@@ -4,12 +4,13 @@ import {
   chapterEditorStates,
 } from "@/components/editor/editor-commands";
 import { removeChapter } from "@/services/book/chapters";
-import { removeResource } from "@/services/book/resources";
+import { removeResources } from "@/services/book/resources";
 import { replaceMatches, type ReplacementChange } from "@/services/search/replace";
 import type { SearchQuery, SearchResult } from "@/services/search/query";
 import { useNotificationsStore } from "@/stores/notifications";
 import { useProjectStore } from "@/stores/project";
 import { useLayoutStore } from "@/stores/layout";
+import type { Resource } from "@/types/book";
 import { useSafeI18n } from "@/composables/use-safe-i18n";
 export type ReplaceAllUndo = { originals: Map<string, string>; revisionAfter: Map<string, number> };
 
@@ -183,28 +184,39 @@ export function useBookSearch() {
     });
   }
 
-  function deleteResource(path: string): void {
+  function deleteResources(paths: string[]): void {
     if (!project.book) return;
     const generationAtDelete = project.bookGeneration;
     const bookIdAtDelete = project.book.metadata.id;
-    const resource = project.book.resources.get(path);
-    if (!resource) return;
+    const existing = project.book.resources;
+    const saved = new Map<string, Resource>();
+    for (const path of paths) {
+      const resource = existing.get(path);
+      if (resource) saved.set(path, resource);
+    }
+    if (saved.size === 0) return;
     const previousCover = project.book.metadata.cover;
-    const removed = removeResource(project.book, path);
+    const removed = removeResources(project.book, [...saved.keys()]);
     project.applyMutation(removed);
     const expectedCoverAfterDelete = removed.book.metadata.cover;
     const coverRevisionAfterDelete = project.coverRevision;
     const canUndo = () =>
       project.bookGeneration === generationAtDelete &&
       project.book?.metadata.id === bookIdAtDelete &&
-      !project.book.resources.has(path);
+      [...saved.keys()].every((path) => !project.book?.resources.has(path));
     notifications.add({
-      message: t("delete.imageToast", "Image deleted"),
+      message:
+        saved.size === 1
+          ? t("delete.imageToast", "Image deleted")
+          : t("delete.imagesToast", "{count} images deleted").replace(
+              "{count}",
+              String(saved.size),
+            ),
       undoState: canUndo,
       undo: () => {
         if (!project.book || !canUndo()) return;
         const resources = new Map(project.book.resources);
-        resources.set(path, resource);
+        for (const [path, resource] of saved) resources.set(path, resource);
         const restoreCover = project.book.metadata.cover === expectedCoverAfterDelete;
         const canRestoreCover = project.coverRevision === coverRevisionAfterDelete && restoreCover;
         project.applyMutation({
@@ -217,12 +229,24 @@ export function useBookSearch() {
           },
           changedChapters: new Set(),
           removedChapters: new Set(),
-          changedResources: new Set([path]),
+          changedResources: new Set(saved.keys()),
           removedResources: new Set(),
         });
       },
     });
   }
 
-  return { replaceOne, replaceChapter, replaceAll, undoReplace, deleteChapter, deleteResource };
+  function deleteResource(path: string): void {
+    deleteResources([path]);
+  }
+
+  return {
+    replaceOne,
+    replaceChapter,
+    replaceAll,
+    undoReplace,
+    deleteChapter,
+    deleteResource,
+    deleteResources,
+  };
 }
