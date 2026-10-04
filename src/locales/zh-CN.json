@@ -136,7 +136,13 @@
     "unused": "未使用",
     "add": "添加…",
     "rename": "重命名…",
-    "empty": "没有图片。请使用上方按钮添加，或将文件拖到这里。"
+    "empty": "没有图片。请使用上方按钮添加，或将文件拖到这里。",
+    "renameTitle": "重命名图片",
+    "renameHint": "图片按选择顺序编号。仅限拉丁字母、数字、_ 和 -。",
+    "newName": "新名称",
+    "renameConflict": "{name} 已存在",
+    "renameConfirm": "重命名",
+    "renamedToast": "已重命名 {count} 张图片"
   },
   "images": {
     "usedIn": "使用于",

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
-import { IconPlus, IconTrash } from "@tabler/icons-vue";
+import { IconPencil, IconPlus, IconTrash } from "@tabler/icons-vue";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import ImageTile from "./ImageTile.vue";
@@ -13,6 +13,9 @@ import {
 } from "./gallery-selection";
 import { useLongPressSelect } from "@/composables/use-long-press-select";
 import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
+import RenameImagesDialog from "./RenameImagesDialog.vue";
+import { useImageActions } from "@/composables/use-image-actions";
+import type { ResourceRename } from "@/services/book/rename-resources";
 import { useBookSearch } from "@/composables/use-book-search";
 import { useSettingsStore } from "@/stores/settings";
 import { collectImageUsage, collectUsedImagePaths } from "@/services/checks/image-usage";
@@ -67,6 +70,13 @@ watch(items, (visible) => {
     anchor: anchor && keep.has(anchor) && order.length ? anchor : null,
   };
 });
+const { renameImages } = useImageActions();
+const renaming = ref<string[] | null>(null);
+function confirmRename(renames: ResourceRename[]) {
+  renameImages(renames);
+  renaming.value = null;
+  selection.value = emptySelection();
+}
 const pendingDelete = ref<string[] | null>(null);
 const usage = computed(() =>
   project.book ? collectImageUsage(project.book) : new Map<string, string[]>(),
@@ -176,7 +186,8 @@ function contextAction(path: string, value: "cover" | "search" | "rename" | "del
   }
   if (value === "delete")
     requestDelete(selection.value.order.includes(path) ? [...selection.value.order] : [path]);
-  // "rename": Task 15.
+  if (value === "rename")
+    renaming.value = selection.value.order.includes(path) ? [...selection.value.order] : [path];
 }
 async function drop(event: DragEvent) {
   const files = [...(event.dataTransfer?.files ?? [])].filter((file) =>
@@ -240,6 +251,14 @@ async function drop(event: DragEvent) {
           t("gallery.selected", "Selected: {count}", { count: selection.order.length })
         }}</span>
         <Button
+          variant="outline"
+          size="sm"
+          data-selection-rename
+          @click="renaming = [...selection.order]"
+        >
+          <IconPencil aria-hidden="true" />{{ t("gallery.rename", "Rename…") }}
+        </Button>
+        <Button
           variant="destructive"
           size="sm"
           data-selection-delete
@@ -289,6 +308,12 @@ async function drop(event: DragEvent) {
       :ask-again-label="t('common.doNotAskAgain', 'Do not ask again')"
       @cancel="pendingDelete = null"
       @confirm="confirmDelete"
+    />
+    <RenameImagesDialog
+      :open="renaming !== null"
+      :paths="renaming ?? []"
+      @cancel="renaming = null"
+      @confirm="confirmRename"
     />
   </section>
 </template>

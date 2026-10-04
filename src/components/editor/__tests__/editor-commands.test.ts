@@ -1,3 +1,4 @@
+import { undoDepth } from "@codemirror/commands";
 import { EditorSelection, EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { describe, expect, it } from "vitest";
@@ -76,6 +77,17 @@ describe("editor commands", () => {
       "champion walks",
     );
     expect(chapterEditorStates.get("one")?.doc.toString()).toBe("champion walks");
+  });
+
+  it("can leave an edit out of the undo history", () => {
+    resetChapterEditors();
+    createChapterEditor("one", "hero walks");
+    replaceChapterEditorText("one", [{ from: 0, to: 4, insert: "champion" }], {
+      addToHistory: false,
+    });
+    expect(undoDepth(chapterEditorStates.get("one")!)).toBe(0);
+    replaceChapterEditorText("one", [{ from: 0, to: 8, insert: "hero" }]);
+    expect(undoDepth(chapterEditorStates.get("one")!)).toBe(1);
   });
 
   it("keeps one editor state per chapter and can reset the lifecycle", () => {

@@ -6,7 +6,7 @@ import {
   type Extension,
   type SelectionRange,
   type StateEffect,
-  type Transaction,
+  Transaction,
 } from "@codemirror/state";
 import type { EditorView, KeyBinding } from "@codemirror/view";
 import { ref } from "vue";
@@ -63,10 +63,14 @@ function applyChapterEditorChanges(
   changes:
     | Array<{ from: number; to: number; insert: string }>
     | { from: number; to: number; insert: string },
+  addToHistory = true,
 ): EditorState | null {
   const state = currentChapterEditorState(chapterId);
   if (!state) return null;
-  const transaction = state.update({ changes });
+  const transaction = state.update({
+    changes,
+    annotations: addToHistory ? [] : [Transaction.addToHistory.of(false)],
+  });
   chapterEditorViews.get(chapterId)?.dispatch(transaction);
   chapterEditorStates.set(chapterId, transaction.state);
   return transaction.state;
@@ -75,8 +79,9 @@ function applyChapterEditorChanges(
 export function replaceChapterEditorText(
   chapterId: string,
   changes: Array<{ from: number; to: number; insert: string }>,
+  options: { addToHistory?: boolean } = {},
 ): string {
-  const state = applyChapterEditorChanges(chapterId, changes);
+  const state = applyChapterEditorChanges(chapterId, changes, options.addToHistory ?? true);
   if (!state) throw new Error(`Editor state not found for ${chapterId}`);
   return state.doc.toString();
 }

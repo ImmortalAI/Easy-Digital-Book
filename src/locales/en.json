@@ -136,7 +136,13 @@
     "unused": "Unused",
     "add": "Add…",
     "rename": "Rename…",
-    "empty": "No images. Add them with the button above or drop files here."
+    "empty": "No images. Add them with the button above or drop files here.",
+    "renameTitle": "Rename images",
+    "renameHint": "Images are numbered in the order you selected them. Latin letters, digits, _ and - only.",
+    "newName": "New name",
+    "renameConflict": "{name} already exists",
+    "renameConfirm": "Rename",
+    "renamedToast": "{count} images renamed"
   },
   "images": {
     "usedIn": "Used in",
