@@ -73,6 +73,9 @@ function mobiLanguage(tag: string): number {
   const parts = canonical.split("-");
   const base = parts[0]!.toLowerCase();
   if (base === "zh") {
+    const region = parts.find((part) => /^[A-Z]{2}$/.test(part) || /^\d{3}$/.test(part));
+    const regionalCode = region ? exactLocales[`zh-${region}`] : undefined;
+    if (regionalCode !== undefined) return regionalCode;
     const script = parts.find((part) => part.length === 4)?.toLowerCase();
     if (script === "hans") return 0x0804;
     if (script === "hant") return 0x0404;

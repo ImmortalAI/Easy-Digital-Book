@@ -159,6 +159,15 @@ describe("buildRecordZero", () => {
     expect(
       u32(buildRecordZero(input({ metadata: { ...metadata, language: "zh-Hant" } })), 92),
     ).toBe(0x0404);
+    expect(
+      u32(buildRecordZero(input({ metadata: { ...metadata, language: "zh-Hans-TW" } })), 92),
+    ).toBe(0x0404);
+    expect(
+      u32(buildRecordZero(input({ metadata: { ...metadata, language: "zh-Hant-CN" } })), 92),
+    ).toBe(0x0804);
+    const hongKong = buildRecordZero(input({ metadata: { ...metadata, language: "zh-Hant-HK" } }));
+    expect(u32(hongKong, 92)).toBe(0x0c04);
+    expect(exthEntries(hongKong).get(524)?.[0]).toEqual(new TextEncoder().encode("zh-Hant-HK"));
     expect(u32(buildRecordZero(input({ metadata: { ...metadata, language: "es-MX" } })), 92)).toBe(
       0x080a,
     );
