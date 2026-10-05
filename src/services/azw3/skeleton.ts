@@ -2,15 +2,7 @@ import type { PreparedExport } from "@/services/export/types";
 import { AppError } from "@/types/errors";
 import type { KindlePosition, TextLayout } from "./types";
 import { linkTarget, normalizePath, positionUri, radix32, requirePosition } from "./links";
-import {
-  buildXml,
-  children,
-  parseXml,
-  tagName,
-  validateXml,
-  visitElements,
-  type XmlNode,
-} from "./xml";
+import { buildXml, children, parseXml, tagName, validateXml, type XmlNode } from "./xml";
 
 const encoder = new TextEncoder();
 const placeholder = "kindle:pos:fid:0000:off:0000000000";
@@ -50,9 +42,13 @@ function assertU32(value: number): void {
 }
 
 /** Complete body-child runs become fragments; large sections retain their shells. */
-function partition(body: XmlNode, ranges: Map<XmlNode, NodeRange>): FragmentRange[] {
+function* partitionSteps(
+  body: XmlNode,
+  ranges: Map<XmlNode, NodeRange>,
+): Generator<void, FragmentRange[], void> {
   const fragments: FragmentRange[] = [];
-  function inside(parent: XmlNode): void {
+  let visited = 0;
+  function* inside(parent: XmlNode): Generator<void, void, void> {
     let pending: FragmentRange | undefined;
     let precedingSkeletonAid: string | undefined;
     const flush = () => {
@@ -60,11 +56,13 @@ function partition(body: XmlNode, ranges: Map<XmlNode, NodeRange>): FragmentRang
       pending = undefined;
     };
     for (const node of children(parent)) {
+      visited++;
+      if (visited % 128 === 0) yield;
       const range = ranges.get(node)!;
       const size = range.end - range.start;
       if (tagName(node) === "section" && size > targetFragmentBytes && children(node).length > 0) {
         flush();
-        inside(node);
+        yield* inside(node);
         precedingSkeletonAid = node[":@"]!["@_aid"];
       } else {
         if (pending && range.end - pending.start > targetFragmentBytes) flush();
@@ -81,32 +79,53 @@ function partition(body: XmlNode, ranges: Map<XmlNode, NodeRange>): FragmentRang
     }
     flush();
   }
-  inside(body);
+  yield* inside(body);
   return fragments;
 }
 
-function serializeDocument(
+function* walkElements(
+  nodes: XmlNode[],
+  visit: (node: XmlNode, tag: string) => void,
+): Generator<void, void, void> {
+  let visited = 0;
+  function* walk(list: XmlNode[]): Generator<void, void, void> {
+    for (const node of list) {
+      const tag = tagName(node);
+      if (!tag) continue;
+      visit(node, tag);
+      visited++;
+      if (visited % 128 === 0) yield;
+      yield* walk(children(node));
+    }
+  }
+  yield* walk(nodes);
+}
+
+function* serializeDocumentSteps(
   path: string,
   nodes: XmlNode[],
   body: XmlNode,
   pendingLinks: Map<XmlNode, string>,
-): DocumentLayout {
+): Generator<void, DocumentLayout, void> {
   const parts: Uint8Array[] = [];
   const ranges = new Map<XmlNode, NodeRange>();
   const targets = new Map<string, number>();
   const patches: DocumentLayout["patches"] = [];
   let length = 0;
+  let visited = 0;
   const append = (text: string) => {
     const bytes = encoder.encode(text);
     parts.push(bytes);
     length += bytes.length;
   };
-  function serialize(node: XmlNode): void {
+  function* serialize(node: XmlNode): Generator<void, void, void> {
     const start = length;
     const tag = tagName(node);
     if (!tag) {
       append(buildXml([node]));
       ranges.set(node, { start, end: length });
+      visited++;
+      if (visited % 128 === 0) yield;
       return;
     }
     // Ask XMLBuilder to escape attributes and create the tag; no XML tokenizer.
@@ -128,36 +147,41 @@ function serializeDocument(
       targets.set(id, start);
     }
     append(opening);
-    for (const child of children(node)) serialize(child);
+    for (const child of children(node)) yield* serialize(child);
     append(closing);
     ranges.set(node, { start, end: length });
+    visited++;
+    if (visited % 128 === 0) yield;
   }
-  for (const node of nodes) serialize(node);
+  for (const node of nodes) yield* serialize(node);
   const bytes = join(parts);
   validateXml(new TextDecoder().decode(bytes));
-  return { path, bytes, targets, patches, fragments: partition(body, ranges) };
+  const fragments = yield* partitionSteps(body, ranges);
+  return { path, bytes, targets, patches, fragments };
 }
 
 /** Final patched physical stream: all HTML files in flow0, then ordered CSS flows. */
-export function layoutText(
+function* layoutTextSteps(
   documents: PreparedExport["documents"],
   styles: PreparedExport["styles"],
-): TextLayout {
-  const parsed = documents.map((document) => ({
-    path: normalizePath(document.path),
-    nodes: parseXml(document.xhtml),
-  }));
+): Generator<void, TextLayout, void> {
+  const parsed: Array<{ path: string; nodes: XmlNode[] }> = [];
+  for (const [index, document] of documents.entries()) {
+    parsed.push({ path: normalizePath(document.path), nodes: parseXml(document.xhtml) });
+    if ((index + 1) % 128 === 0) yield;
+  }
   const paths = new Set<string>();
   const usedAids = new Set<string>();
-  for (const document of parsed) {
+  for (const [index, document] of parsed.entries()) {
     if (paths.has(document.path))
       throw new AppError("export.azw3Link", "Duplicate document path", { path: document.path });
     paths.add(document.path);
-    visitElements(document.nodes, (node) => {
+    yield* walkElements(document.nodes, (node) => {
       const aid = node[":@"]?.["@_aid"];
       if (aid && /^[0-9A-V]+$/.test(aid) && !usedAids.has(aid)) usedAids.add(aid);
       else if (aid !== undefined) delete node[":@"]!["@_aid"];
     });
+    if ((index + 1) % 128 === 0) yield;
   }
   let aidCounter = 0;
   const newAid = () => {
@@ -167,9 +191,10 @@ export function layoutText(
     return aid;
   };
   const styleFlows = new Map(styles.map((style, index) => [normalizePath(style.path), index + 1]));
-  const files = parsed.map((document) => {
+  const files: DocumentLayout[] = [];
+  for (const [documentIndex, document] of parsed.entries()) {
     let body: XmlNode | undefined;
-    visitElements(document.nodes, (node, tag) => {
+    yield* walkElements(document.nodes, (node, tag) => {
       if (tag === "body") body = node;
     });
     if (!body)
@@ -178,7 +203,7 @@ export function layoutText(
       });
     if (!children(body).some((node) => tagName(node))) children(body).unshift({ p: [] });
     const pendingLinks = new Map<XmlNode, string>();
-    visitElements(document.nodes, (node, tag) => {
+    yield* walkElements(document.nodes, (node, tag) => {
       const attrs = (node[":@"] ??= {});
       attrs["@_aid"] ??= newAid();
       if (attrs["@_href"] === undefined) return;
@@ -194,8 +219,9 @@ export function layoutText(
         attrs["@_href"] = placeholder;
       }
     });
-    return serializeDocument(document.path, document.nodes, body, pendingLinks);
-  });
+    files.push(yield* serializeDocumentSteps(document.path, document.nodes, body, pendingLinks));
+    if ((documentIndex + 1) % 128 === 0) yield;
+  }
   const positions = new Map<string, KindlePosition>();
   const skeletons: TextLayout["skeletons"] = [];
   const fragments: TextLayout["fragments"] = [];
@@ -208,7 +234,7 @@ export function layoutText(
     );
     const skeletonByteLength = file.bytes.length - fragmentLength;
     let fragmentStart = 0;
-    for (const range of file.fragments) {
+    for (const [fragmentIndex, range] of file.fragments.entries()) {
       radix32(fragments.length, 4);
       fragments.push({
         fileIndex,
@@ -220,6 +246,7 @@ export function layoutText(
         bytes: file.bytes.slice(range.start, range.end),
       });
       fragmentStart += range.end - range.start;
+      if ((fragmentIndex + 1) % 128 === 0) yield;
     }
     const positionAt = (offset: number): KindlePosition => {
       const index = file.fragments.findIndex((range) => range.end > offset);
@@ -236,8 +263,12 @@ export function layoutText(
       };
     };
     positions.set(file.path, positionAt(file.fragments[0]!.start));
-    for (const [id, offset] of file.targets)
+    let targetIndex = 0;
+    for (const [id, offset] of file.targets) {
       positions.set(`${file.path}#${id}`, positionAt(offset));
+      targetIndex++;
+      if (targetIndex % 128 === 0) yield;
+    }
     skeletons.push({
       fileIndex,
       key: `SKEL${fileIndex.toString().padStart(10, "0")}`,
@@ -249,14 +280,17 @@ export function layoutText(
     });
     fileStart += file.bytes.length;
     assertU32(fileStart);
+    if ((fileIndex + 1) % 128 === 0) yield;
   }
   const physical: Uint8Array[] = [];
   for (const [fileIndex, file] of files.entries()) {
-    for (const patch of file.patches)
+    for (const [patchIndex, patch] of file.patches.entries()) {
       file.bytes.set(
         encoder.encode(positionUri(requirePosition(positions, patch.target))),
         patch.offset,
       );
+      if ((patchIndex + 1) % 128 === 0) yield;
+    }
     const shell: Uint8Array[] = [];
     let end = 0;
     for (const range of file.fragments) {
@@ -267,11 +301,12 @@ export function layoutText(
     physical.push(join(shell));
     const skel = skeletons[fileIndex]!;
     const firstFid = positions.get(file.path)!.fid;
-    file.fragments.forEach((range, index) => {
+    for (const [index, range] of file.fragments.entries()) {
       const bytes = file.bytes.slice(range.start, range.end);
       fragments[firstFid + index]!.bytes = bytes;
       physical.push(bytes);
-    });
+      if ((index + 1) % 128 === 0) yield;
+    }
     assertU32(skel.physicalStart + skel.reconstructedLength);
   }
   const flows = [{ start: 0, end: fileStart }];
@@ -284,4 +319,38 @@ export function layoutText(
     flows.push({ start, end: fileStart });
   }
   return { text: join(physical), skeletons, fragments, flows, positions };
+}
+
+function complete<T>(steps: Generator<void, T, void>): T {
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
+}
+
+export function layoutText(
+  documents: PreparedExport["documents"],
+  styles: PreparedExport["styles"],
+): TextLayout {
+  return complete(layoutTextSteps(documents, styles));
+}
+
+/** Cancellable counterpart used by the export pipeline; sync wrapper shares its algorithm. */
+export async function layoutTextAsync(
+  documents: PreparedExport["documents"],
+  styles: PreparedExport["styles"],
+  control: { signal?: AbortSignal; yieldControl?: () => Promise<void> } = {},
+): Promise<TextLayout> {
+  const cancelled = () => {
+    if (control.signal?.aborted) throw new AppError("export.cancelled", "Export cancelled");
+  };
+  const steps = layoutTextSteps(documents, styles);
+  cancelled();
+  let step = steps.next();
+  while (!step.done) {
+    cancelled();
+    await control.yieldControl?.();
+    cancelled();
+    step = steps.next();
+  }
+  return step.value;
 }

@@ -95,7 +95,7 @@ describe("rewriteResources", () => {
     expect(source).toEqual(original);
     expect(rewritten.documents[0]!.xhtml).toContain('src="kindle:embed:0003?mime=image/jpeg"');
     expect(rewritten.documents[0]!.xhtml).toContain('src="kindle:embed:0001?mime=image/png"');
-    expect(rewritten.styles[1]!.css).toContain('url("kindle:embed:0002?mime=image/png")');
+    expect(rewritten.styles[1]!.css).toContain("url(kindle:embed:0002?mime=image/png)");
     expect(rewritten.styles[1]!.css).toContain("url(https://x/y.png)");
   });
 

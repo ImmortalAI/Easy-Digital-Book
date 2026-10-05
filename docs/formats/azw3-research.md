@@ -151,3 +151,61 @@ The actionable contract is the format description, not upstream code.
   measurements are Tasks3–7. The reference conversion is not the future writer.
 - Popup, library cover and rendering on **both** Paperwhites remain Task10
   manual release gates. Device unavailability does not block implementation.
+
+## Task 7 complete-builder measurements — 2026-10-05
+
+The reproducible fixture generator is `scripts/build-fixture-azw3.mts`; it
+writes four files to a unique OS temporary directory and embeds no user text.
+Run it with `node --import tsx scripts/build-fixture-azw3.mts`. The images/CSS
+fixture uses real decodable 64×64 JPEG and real 1×1 PNG bytes; Calibre extracted
+all three resource records as PNG/PNG/JPEG. It covers equal image basenames in
+different project paths and a CSS-only image reference.
+
+One observed generator run:
+
+| Synthetic fixture                                     |     AZW3 size | Build time |
+| ----------------------------------------------------- | ------------: | ---------: |
+| minimal                                               |   2,977 bytes |       5 ms |
+| multilingual notes                                    |   3,817 bytes |       3 ms |
+| images and CSS                                        |   6,244 bytes |       3 ms |
+| 300 chapters, including 9,000 paragraphs in chapter 1 | 300,641 bytes |     159 ms |
+
+The four-fixture Node process peak RSS was 192,208 KiB. Times and memory are
+local synthetic measurements, include JS startup/fixture creation in the RSS
+high-water mark, and are not editor performance guarantees. The long stream
+has 1,039,134 uncompressed bytes, 254 PalmDOC text records, one HTML flow and
+one CSS flow. One HTML flow plus fragments reconstructed through Calibre and
+round-tripped into 304 HTML/XHTML files. The converted EPUB audit checked all
+606 local links and 300 inline image references; all linked files/fragments and
+image targets existed. This exercises the selected single-flow design with a
+large chapter and 299 other chapters. A separate multiple-HTML-FDST-flow
+encoding was not implemented or benchmarked; the current contract concatenates
+all HTML documents in flow 0. A user-authored real-book file was not supplied,
+so no claim is made about measurements on one.
+
+All four outputs passed both independent Calibre commands (Calibre 9.15.0):
+
+```sh
+calibre-debug --inspect-mobi fixture.azw3
+ebook-convert fixture.azw3 roundtrip.epub
+```
+
+The ElementTree audit of the multilingual output found two repeated references
+to `notes...#fn-1`; the note linked back to the first `fnref-1`. It also
+confirmed all local links and fragments resolve. This checks reconstruction
+and navigation, not Kindle popup behavior.
+
+The first quoted CSS URL form
+`url("kindle:embed:0001?mime=image/png")` exposed an interoperability issue:
+Calibre converted it to malformed `url(""../images/00001.png"); }"` and
+dropped the background rule. The AZW3 writer now emits
+`url(kindle:embed:0001?mime=image/png)`; Calibre outputs
+`url(images/00001.png)`, and that image exists in the EPUB. The fix is scoped to
+AZW3 serialization; EPUB CSS remains quoted.
+
+`thumbnailIndex` is currently `null`, so cover-only exports contain no
+thumbnail record. The fixture confirms real covers/resources and EXTH offsets,
+but library-thumbnail behavior is unknown. Neither physical Paperwhite was
+available; cover visibility, 180×240 thumbnail comparison, and popup behavior
+remain open for Task 10. No release-readiness conclusion follows from desktop
+Calibre checks.

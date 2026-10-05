@@ -165,14 +165,14 @@ export function rewriteResources(prepared: PreparedExport, plan: Azw3ResourcePla
     validateXml(xhtml);
     return { ...document, xhtml };
   });
-  const styles = prepared.styles.map((style) => ({
-    ...style,
-    css: rewriteCssResourceUrls(style.css, (rawPath) => {
+  const styles = prepared.styles.map((style) => {
+    const css = rewriteCssResourceUrls(style.css, (rawPath) => {
       if (/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(rawPath)) return undefined;
       const path = pathForImage(style.path, rawPath);
       return path === null ? undefined : mapUri(path);
-    }),
-  }));
+    }).replace(/url\("(kindle:embed:[^"]+)"\)/g, "url($1)");
+    return { ...style, css };
+  });
   return { ...prepared, documents, styles };
 }
 

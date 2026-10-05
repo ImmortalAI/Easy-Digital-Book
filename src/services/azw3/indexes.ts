@@ -97,11 +97,11 @@ function indexRecord(entries: Uint8Array[], table?: Uint8Array): Uint8Array {
   return record;
 }
 
-function family(
+function* familySteps(
   kind: keyof typeof descriptors,
   rows: Row[],
   strings = new Strings(),
-): Uint8Array[] {
+): Generator<void, Uint8Array[], void> {
   const table = new Uint8Array(16 + descriptors[kind].length);
   table.set(utf8.encode("TAGX"));
   writeUint32BE(table, 4, table.length);
@@ -121,7 +121,7 @@ function family(
     entries = [];
     entryLength = 0;
   };
-  for (const row of rows) {
+  for (const [rowIndex, row] of rows.entries()) {
     const entry = concatBytes(
       keyBytes(row.key),
       Uint8Array.of(row.control),
@@ -133,6 +133,7 @@ function family(
     entries.push(entry);
     entryLength += entry.length;
     lastKey = row.key;
+    if ((rowIndex + 1) % 128 === 0) yield;
   }
   if (entries.length || !data.length) flush();
   const cncx = strings.records();
@@ -140,6 +141,12 @@ function family(
   writeUint32BE(meta, 36, rows.length);
   writeUint32BE(meta, 52, cncx.length);
   return [meta, ...data, ...cncx];
+}
+
+function complete<T>(steps: Generator<void, T, void>): T {
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
 }
 
 /** Complete trailers, including the backward VWI length, appended after UTF-8 overlap. */
@@ -181,17 +188,21 @@ function textTrailers(sections: Section[], lengths: readonly number[]): Uint8Arr
   });
 }
 
-export function buildIndexes(
+function* buildIndexesSteps(
   layout: TextLayout,
   navigation: PreparedExport["navigation"],
   textRecordPayloadLengths: readonly number[],
-): {
-  skel: Uint8Array[];
-  frag: Uint8Array[];
-  ncx: Uint8Array[];
-  fdst: Uint8Array;
-  tbs: Uint8Array[];
-} {
+): Generator<
+  void,
+  {
+    skel: Uint8Array[];
+    frag: Uint8Array[];
+    ncx: Uint8Array[];
+    fdst: Uint8Array;
+    tbs: Uint8Array[];
+  },
+  void
+> {
   if (
     textRecordPayloadLengths.some(
       (length) => !Number.isInteger(length) || length < 1 || length > 4096,
@@ -215,7 +226,7 @@ export function buildIndexes(
   }
   if (!layout.flows.length || flowEnd !== layout.text.length)
     limit("FDST flows must cover the uncompressed stream");
-  const skel = family(
+  const skel = yield* familySteps(
     "skel",
     layout.skeletons.map((skeleton) => ({
       key: skeleton.key,
@@ -231,7 +242,7 @@ export function buildIndexes(
     })),
   );
   const selectors = new Strings();
-  const frag = family(
+  const frag = yield* familySteps(
     "frag",
     layout.fragments.map((fragment) => ({
       key: String(fragment.insertionOffset).padStart(10, "0"),
@@ -247,26 +258,29 @@ export function buildIndexes(
     selectors,
   );
   const labels = new Strings();
-  const positions = navigation.map((entry) => {
+  const positions: Array<ReturnType<typeof requirePosition>> = [];
+  for (const [index, entry] of navigation.entries()) {
     const target = linkTarget("", entry.href);
     if (target === null)
       throw new AppError("export.azw3Link", "Navigation target must be internal", {
         href: entry.href,
       });
-    return requirePosition(layout.positions, target);
-  });
+    positions.push(requirePosition(layout.positions, target));
+    if ((index + 1) % 128 === 0) yield;
+  }
   const sections = positions.map((position, i) => ({
     start: position.reconstructedOffset,
     end: positions[i + 1]?.reconstructedOffset ?? layout.flows[0]!.end,
   }));
-  const rows = positions.map((position, i) => {
+  const rows: Row[] = [];
+  for (const [i, position] of positions.entries()) {
     const section = sections[i]!;
     if (section.start < 0 || section.end < section.start || section.end > layout.flows[0]!.end)
       limit("NCX sections must be in reading order inside HTML flow0");
     const fragment = layout.fragments[position.fid];
     if (!fragment || position.offset < 0 || position.offset >= fragment.byteLength)
       limit("NCX position points outside its fragment");
-    return {
+    rows.push({
       key: i.toString(16).toUpperCase().padStart(2, "0"),
       control: 0x8f,
       values: [
@@ -277,13 +291,46 @@ export function buildIndexes(
         position.fid,
         position.offset,
       ],
-    };
-  });
+    });
+    if ((i + 1) % 128 === 0) yield;
+  }
   return {
     skel,
     frag,
-    ncx: rows.length ? family("ncx", rows, labels) : [],
+    ncx: rows.length ? yield* familySteps("ncx", rows, labels) : [],
     fdst,
     tbs: textTrailers(sections, textRecordPayloadLengths),
   };
+}
+
+export function buildIndexes(
+  layout: TextLayout,
+  navigation: PreparedExport["navigation"],
+  textRecordPayloadLengths: readonly number[],
+): ReturnType<typeof buildIndexesSteps> extends Generator<void, infer Result, void>
+  ? Result
+  : never {
+  return complete(buildIndexesSteps(layout, navigation, textRecordPayloadLengths));
+}
+
+/** Cancellable counterpart used by the exporter; synchronous callers share the same generator. */
+export async function buildIndexesAsync(
+  layout: TextLayout,
+  navigation: PreparedExport["navigation"],
+  textRecordPayloadLengths: readonly number[],
+  control: { signal?: AbortSignal; yieldControl?: () => Promise<void> } = {},
+): Promise<Awaited<ReturnType<typeof buildIndexes>>> {
+  const cancelled = () => {
+    if (control.signal?.aborted) throw new AppError("export.cancelled", "Export cancelled");
+  };
+  const steps = buildIndexesSteps(layout, navigation, textRecordPayloadLengths);
+  cancelled();
+  let step = steps.next();
+  while (!step.done) {
+    cancelled();
+    await control.yieldControl?.();
+    cancelled();
+    step = steps.next();
+  }
+  return step.value;
 }

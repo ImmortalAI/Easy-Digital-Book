@@ -18,6 +18,7 @@
     "test:e2e": "playwright test --config=e2e/playwright.config.ts",
     "check": "vue-tsc --noEmit && pnpm lint && pnpm format:check && pnpm test",
     "build:fixture-epubs": "tsx scripts/build-fixture-epubs.mts",
+    "build:fixture-azw3": "node --import tsx scripts/build-fixture-azw3.mts",
     "sync:cargo-version": "tsx scripts/sync-cargo-version.mts",
     "verify:release-tag": "tsx scripts/verify-release-tag.mts"
   },

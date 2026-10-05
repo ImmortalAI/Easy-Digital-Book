@@ -21,6 +21,7 @@ export interface BuildDependencies {
   imageDimensions?: (resource: Resource) => ImageMetadata | null | Promise<ImageMetadata | null>;
   onProgress?: (progress: ExportProgress) => void;
   signal?: AbortSignal;
+  yieldControl?: () => Promise<void>;
   hash?: (bytes: Uint8Array) => Promise<string>;
 }
 export interface PreparedExport {

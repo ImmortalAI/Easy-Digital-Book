@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { writePalmDb } from "../palmdb";
+import { writePalmDb, writePalmDbAsync } from "../palmdb";
 import { readPalmDb } from "./read-palmdb";
 import vectors from "./vectors.json";
 
@@ -7,7 +7,7 @@ const hex = (bytes: Uint8Array) =>
   Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 const created = new Date("1904-01-01T00:00:42Z");
 describe("PalmDB container", () => {
-  it("matches a complete hand-calculated two-record fixture", () => {
+  it("matches a complete hand-calculated two-record fixture", async () => {
     const records = [new Uint8Array(16), Uint8Array.of(0x61, 0x62, 0x63)];
     const bytes = writePalmDb(records, "Fixture", { created });
     expect(hex(bytes)).toBe(
@@ -31,6 +31,7 @@ describe("PalmDB container", () => {
       records,
     });
     expect(writePalmDb(records, "Fixture", { created })).toEqual(bytes);
+    await expect(writePalmDbAsync(records, "Fixture", { created })).resolves.toEqual(bytes);
   });
   it("uses the Palm epoch, truncates fractions and handles byte views", () => {
     const record = Uint8Array.of(0, 0x61, 0).subarray(1, 2);
@@ -85,6 +86,24 @@ describe("PalmDB container", () => {
         writePalmDb([new Uint8Array()], "Last", { created: new Date("2040-02-06T06:28:15Z") }),
       ).created,
     ).toBe(0xffffffff);
+  });
+  it("cancels while copying a large record and never returns a completed buffer", async () => {
+    const controller = new AbortController();
+    let yields = 0;
+    const task = writePalmDbAsync(
+      [new Uint8Array(3 * 1024 * 1024).fill(0x5a)],
+      "Large",
+      { created },
+      {
+        signal: controller.signal,
+        yieldControl: async () => {
+          yields++;
+          controller.abort();
+        },
+      },
+    );
+    await expect(task).rejects.toMatchObject({ code: "export.cancelled" });
+    expect(yields).toBe(1);
   });
   it.each([0, 95, 114])(
     "the independent reader rejects out-of-file/record-area offset %s",

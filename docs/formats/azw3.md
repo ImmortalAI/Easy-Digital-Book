@@ -658,3 +658,83 @@ valid namespaces. Calibre round-trip can establish anchor survival and first
 backlink semantics, **not** actual popup behavior. Both physical Paperwhites
 are still required for the release gate. Whole popup/reference fixtures belong
 to Tasks4/7/10; position/UTF8 literals above supply Task1 vectors.
+
+## Complete builder fixture (Task 7, 2026-10-05)
+
+`buildAzw3(book, options, deps)` reuses the shared EPUB preparation, then runs
+resource ordering and URI rewrite, async text layout/link resolution, async
+FRAG/SKEL/NCX index construction, PalmDOC payload compression plus UTF-8 overlap
+and complete TBS trailers, contiguous record assignment, record zero/end
+records, and PalmDB assembly. `deps.now()` is read once for EXTH 106; PalmDB
+creation/modification dates come from `book.created`. The same inputs, including
+fixed `now`, produce identical output bytes. With a fixed-width EXTH 106 value,
+changing `now` changes only that payload. The builder does not mutate `Book`.
+
+Cancellation checks run between every 128 XML elements, layout documents and
+index rows, during text-record processing, between appended record batches,
+and after every 1 MiB copied into the final PalmDB. `yieldControl` is optional
+for deterministic core callers; production supplies its timer-based yield
+callback. The final `Uint8Array` allocation itself is synchronous. A single
+very large XML text node also serializes synchronously before the next element
+checkpoint.
+
+The `multilingual-notes.azw3` fixture has 14 records and a 591-byte record zero.
+Its PalmDB descriptors begin at file offset 78:
+`000000c0 00 000000` (record 0 at 192) and
+`0000030f 00 000002` (record 1 at 783). Record zero begins
+`00020000 00000c3d 00011000 00000000` (PalmDOC, 3133 uncompressed bytes),
+then `4d4f4249 00000108 00000002 0000fde9`. EXTH begins at record-zero offset
+280 with `45585448 0000011d 0000000a`; the Calibre inspector reports ten
+entries, `EBOK`, the fixed ISO build date and canonical `zh-Hans-CN`.
+
+Actual assembled record map and first bytes from that fixture:
+
+| Record(s) | Role                       | Example bytes / offsets                                                    | Calibre 9.15 inspection                                                       |
+| --------- | -------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| 0         | PalmDB + PalmDOC/MOBI/EXTH | PalmDB first record offset `000000c0`; record-zero prefix above            | 14 records, MOBI v8 header 264, one text record, EXTH date/title/UUID present |
+| 1         | Text + overlap/TBS trailer | begins `3c 3f 78 6d` (`<?xm`); ends `… 86 88 03 84`; total text `00000c3d` | One text record reconstructed; TBS reports three NCX sections                 |
+| 2–4       | FRAG meta/data/CNCX        | record 2 begins `494e4458 000000c0`; meta index is record 2                | FRAG meta 2 and child/CNCX records accepted                                   |
+| 5–6       | SKEL meta/data             | record 5 begins `494e4458 000000c0`; meta index is record 5                | SKEL meta 5; all three XHTML documents reconstructed                          |
+| 7–8       | NCX meta/data/CNCX         | record 7 begins `494e4458 000000c0`; meta index is record 7                | NCX meta 7 and three navigation entries accepted                              |
+| 9         | NCX CNCX string record     | starts `89 e7 ac ac` (encoded navigation labels)                           | NCX labels are reconstructed from CNCX                                        |
+| 10        | FDST                       | `46445354 0000000c 00000002 00000000 000009f2 000009f2 00000c3d`           | FDST record 10, flow count 2; HTML `0..2546`, CSS `2546..3133`                |
+| 11–13     | FLIS, FCIS, EOF            | `464c4953…`; `46434953…00000c3d…`; `e98e0d0a`                              | Records 11/12/13, expected 36/52/4-byte lengths                               |
+
+The `images-css.azw3` fixture adds three real resources. `firstResource` is
+record 10; resources 10–12 begin with PNG, PNG and JPEG signatures. Its EXTH
+resource count is 3 and cover offset is 1 because resources sort by normalized
+source path (`images/art/cover.png` precedes `images/cover.png`). Image markup
+uses one-based `kindle:embed:0001..0003`; EXTH 201 remains zero-based. CSS image
+URIs are emitted unquoted, for example
+`url(kindle:embed:0001?mime=image/png)`. Calibre's CSS parser turned the quoted
+form into malformed nested quotes and dropped the background rule; the
+unquoted form round-trips to `url(images/00001.png)` and the referenced image
+exists in the converted EPUB. Generic EPUB CSS serialization is unchanged.
+
+Calibre 9.15 commands used for independent inspection and reconstruction:
+
+```sh
+node --import tsx scripts/build-fixture-azw3.mts
+calibre-debug --inspect-mobi images-css.azw3
+ebook-convert multilingual-notes.azw3 multilingual-notes.epub
+```
+
+All four generated fixtures (minimal, multilingual notes, images/CSS, and
+synthetic 300-chapter long book) passed `--inspect-mobi` and AZW3-to-EPUB
+conversion. A separate ElementTree/ZIP audit found no missing local links,
+fragments, inline images or CSS image targets. The multilingual conversion
+resolved both references to the same `fn-1` target and its backlink to the
+first `fnref-1`. The long fixture reconstructs a 1,039,134-byte text stream
+with 254 PalmDOC records; the HTML flow is `0..1,038,547`, followed by one CSS
+flow. Calibre emitted 304 XHTML/HTML documents on conversion and the audit
+resolved all 606 links and 300 inline image references. This validates the
+current single HTML flow plus fragments on this synthetic fixture; it is not a
+measurement of an alternate multi-HTML-flow encoding or a user-supplied real
+book. No arbitrary chapter-count limit is introduced.
+
+The thumbnail index remains `NULL`; no thumbnail record is generated. The
+cover resource and EXTH 201 are written when a cover exists. Library cover
+visibility with cover-only versus a provisional 180×240 thumbnail still needs
+manual checks on both Paperwhites. No physical devices or user real-book file
+were available for this task; these checks remain open and are not a release
+readiness claim.
