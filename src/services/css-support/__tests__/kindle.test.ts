@@ -32,9 +32,12 @@ describe("Kindle support table", () => {
     ])
       for (const row of rows) {
         expect(row.support).toBe("partial");
-        if ("values" in row)
-          expect(Object.values(row.values ?? {})).toEqual(expect.arrayContaining(["partial"]));
       }
+  });
+  it("keeps every keyword override partial", () => {
+    const statuses = kindleSupport.properties.flatMap((row) => Object.values(row.values ?? {}));
+    expect(statuses.length).toBeGreaterThan(0);
+    expect(new Set(statuses)).toEqual(new Set(["partial"]));
   });
   it("has unique rule identities and covers the four selector patterns", () => {
     for (const rows of [

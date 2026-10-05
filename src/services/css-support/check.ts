@@ -30,7 +30,7 @@ function isBookImage(path: string): boolean {
   return (
     decoded.startsWith("images/") &&
     decoded.length > 7 &&
-    !/[\\\u0000-\u001f]/.test(decoded) &&
+    !Array.from(decoded).some((char) => char === "\\" || char.charCodeAt(0) < 32) &&
     !decoded.split("/").some((segment) => segment === "." || segment === "..")
   );
 }

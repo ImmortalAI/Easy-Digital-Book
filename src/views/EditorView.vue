@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onMounted, ref, watch } from "vue";
+import { useCssSupport } from "@/composables/use-css-support";
 import { useShortcuts } from "@/composables/use-shortcuts";
 import { useResolvedTheme } from "@/composables/use-theme";
 import { projectFilesKey } from "@/composables/use-project-files";
@@ -41,6 +42,7 @@ import { syncChapterEditorText } from "@/components/editor/editor-commands";
 
 const project = useProjectStore();
 const diagnostics = useDiagnosticsStore();
+useCssSupport();
 const { t } = useSafeI18n();
 const files = inject(projectFilesKey, null);
 const layout = useLayoutStore();
