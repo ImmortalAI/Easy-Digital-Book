@@ -1,6 +1,6 @@
 export const restrictedImports = [
   {
-    target: "src/services/{book,edb,epub,azw3,export,search,checks}/**",
+    target: "src/services/{book,edb,epub,azw3,export,search,checks,css-support}/**",
     paths: ["vue", "pinia"],
     patterns: ["@tauri-apps/**"],
   },
@@ -54,7 +54,7 @@ export default {
         files: ["src/**"],
         excludeFiles: [
           "src/services/platform/**",
-          "src/services/{book,edb,epub,azw3,export,search,checks}/**",
+          "src/services/{book,edb,epub,azw3,export,search,checks,css-support}/**",
           "src/utils/**",
         ],
         rules: {
@@ -62,7 +62,10 @@ export default {
         },
       },
       {
-        files: ["src/services/{book,edb,epub,azw3,export,search,checks}/**", "src/utils/**"],
+        files: [
+          "src/services/{book,edb,epub,azw3,export,search,checks,css-support}/**",
+          "src/utils/**",
+        ],
         env: { browser: false },
         rules: {
           "eslint/no-restricted-globals": [
