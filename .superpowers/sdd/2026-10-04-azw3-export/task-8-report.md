@@ -34,4 +34,4 @@
 ## Concerns
 
 - The `exportEpub` alias intentionally remains until Task 9 migrates the UI consumer.
-- Commit SHA is provided in the implementer handoff after commit creation.
+- Implementation commit: `4007fb6` (`feat: select export format in controller and settings`).
