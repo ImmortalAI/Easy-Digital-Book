@@ -117,7 +117,10 @@ function requestClose(next: boolean) {
         <DialogDescription>{{ controller.fileName.value }}</DialogDescription>
       </DialogHeader>
 
-      <Alert v-if="controller.warnings.value.length" variant="destructive">
+      <Alert
+        v-if="controller.warnings.value.length || controller.cssFindings.value.length"
+        variant="destructive"
+      >
         <AlertDescription>
           <ul class="list-disc space-y-1 pl-4">
             <li
@@ -125,6 +128,12 @@ function requestClose(next: boolean) {
               :key="`${warning.code}-${warning.chapterId ?? ''}`"
             >
               {{ warning.message }}
+            </li>
+            <li
+              v-for="finding in controller.cssFindings.value"
+              :key="`css-${finding.from}-${finding.to}-${finding.code}`"
+            >
+              {{ t(`cssSupport.${finding.code}`, finding.code, finding.params) }}
             </li>
           </ul>
         </AlertDescription>

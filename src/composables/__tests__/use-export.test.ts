@@ -325,3 +325,48 @@ describe("export controller", () => {
     expect(writeAtomic).not.toHaveBeenCalled();
   });
 });
+
+it("checks current CSS immediately without a mounted editor or debounce", () => {
+  const { services, project, settings } = setup();
+  const controller = createExportController({
+    services,
+    project,
+    settings,
+    imageProcessor: processor,
+  });
+  expect(controller.cssFindings.value).toEqual([]);
+  project.book!.customCss = "p{mystery:x}";
+  expect(controller.cssFindings.value[0]?.code).toBe("unknownProperty");
+  project.book!.customCss = "p{color:red";
+  expect(controller.cssFindings.value.some((f) => f.code === "syntax")).toBe(true);
+  project.book!.customCss = "";
+  expect(controller.cssFindings.value).toEqual([]);
+  project.book!.customCss = null;
+  expect(controller.cssFindings.value).toEqual([]);
+});
+it.each(["epub", "azw3"] as const)(
+  "exports %s with CSS findings without altering the source",
+  async (format) => {
+    const { services, project, settings } = setup();
+    const css = "p { mystery:x; color:red";
+    project.book!.customCss = css;
+    const builder = vi.fn<typeof buildEpub>(async () => new Uint8Array([1, 2, 3]));
+    const write = vi.spyOn(services.files, "writeFileAtomic");
+    const controller = createExportController({
+      services,
+      project,
+      settings,
+      imageProcessor: processor,
+      builders: { [format]: builder },
+    });
+    controller.format.value = format;
+    expect(controller.cssFindings.value.some((f) => f.severity === "warning")).toBe(true);
+    expect(controller.cssFindings.value.some((f) => f.severity === "info")).toBe(true);
+    await expect(controller.exportBook({ path: `/exports/novel.${format}` })).resolves.toBe(
+      `/exports/novel.${format}`,
+    );
+    expect(builder).toHaveBeenCalledOnce();
+    expect(builder.mock.calls[0]?.[0].customCss).toBe(css);
+    expect(write).toHaveBeenCalledWith(`/exports/novel.${format}`, new Uint8Array([1, 2, 3]));
+  },
+);

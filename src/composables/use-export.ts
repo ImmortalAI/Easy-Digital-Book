@@ -1,5 +1,7 @@
 import type { ExportProgress } from "@/services/export/types";
 import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
+import { checkKindleCss } from "@/services/css-support/check";
+import type { CssFinding } from "@/services/css-support/types";
 import { checkBook } from "@/services/checks/book-checks";
 import { buildAzw3 } from "@/services/azw3/build";
 import { buildEpub } from "@/services/epub/build";
@@ -36,6 +38,7 @@ export interface ExportController {
   format: Ref<ExportFormat>;
   fileName: ComputedRef<string>;
   warnings: ComputedRef<ReturnType<typeof checkBook>>;
+  cssFindings: ComputedRef<CssFinding[]>;
   progress: Ref<ExportProgress | null>;
   exporting: Ref<boolean>;
   error: Ref<AppError | null>;
@@ -89,6 +92,7 @@ export function createExportController(options: ExportControllerOptions): Export
       ? makeExportFileName(project.book.metadata, exportOptions.value.versionInTitle, format.value)
       : `book.${format.value}`,
   );
+  const cssFindings = computed(() => checkKindleCss(project.book?.customCss ?? ""));
   const warnings = computed(() => (project.book ? checkBook(snapshotBook(project.book)) : []));
 
   async function exportBook(request: ExportRequest = {}): Promise<string | null> {
@@ -183,6 +187,7 @@ export function createExportController(options: ExportControllerOptions): Export
     format,
     fileName,
     warnings,
+    cssFindings,
     progress,
     exporting,
     error,

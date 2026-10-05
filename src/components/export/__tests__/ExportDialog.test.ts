@@ -1,8 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/vue";
 import userEvent from "@testing-library/user-event";
-import { computed, ref } from "vue";
+import { computed, ref, nextTick } from "vue";
 import { createPinia, setActivePinia } from "pinia";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createI18nPlugin } from "@/plugins/i18n";
 import ExportDialog from "@/components/export/ExportDialog.vue";
 import { useProjectStore } from "@/stores/project";
 import type { ExportController } from "@/composables/use-export";
@@ -35,6 +36,7 @@ function makeController(format: "epub" | "azw3" = "epub") {
     format: selectedFormat,
     fileName: computed(() => `Novel.${selectedFormat.value}`),
     warnings: ref([]),
+    cssFindings: ref([]),
     progress: ref(null),
     exporting: ref(false),
     error: ref(null),
@@ -244,4 +246,40 @@ describe("ExportDialog", () => {
     expect(screen.queryByRole("status")).toBeNull();
     expect(await screen.findByRole("button", { name: /export/i })).not.toBeNull();
   });
+});
+
+it("shows CSS warning and info messages, updates locale, and allows export", async () => {
+  setActivePinia(createPinia());
+  const controller = makeController();
+  controller.cssFindings = {
+    value: [
+      {
+        from: 4,
+        to: 11,
+        code: "unknownProperty",
+        severity: "warning",
+        params: { property: "mystery" },
+      },
+      {
+        from: 20,
+        to: 27,
+        code: "unknownProperty",
+        severity: "warning",
+        params: { property: "another" },
+      },
+      { from: 30, to: 31, code: "syntax", severity: "info", params: {} },
+    ],
+  } as unknown as ExportController["cssFindings"];
+  const i18n = createI18nPlugin("en");
+  render(ExportDialog, { props: { controller }, global: { plugins: [i18n] } });
+  expect(
+    await screen.findByText("Property “mystery” is not in the Kindle support table."),
+  ).toBeVisible();
+  expect(screen.getByText("Property “another” is not in the Kindle support table.")).toBeVisible();
+  expect(screen.getByText("CSS syntax error. Other valid rules are still checked.")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Export…" })).toBeEnabled();
+  i18n.global.locale.value = "ru";
+  await nextTick();
+  expect(screen.getByText("Свойства «mystery» нет в таблице поддержки Kindle.")).toBeVisible();
+  cleanup();
 });
