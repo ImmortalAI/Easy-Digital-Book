@@ -74,6 +74,20 @@ describe("export controller", () => {
     expect(controller.fileName.value).toBe("Novel.epub");
   });
 
+  it("restores the format saved in export settings", () => {
+    const { services, project, settings } = setup();
+    settings.exportSettings.format = "azw3";
+    const controller = createExportController({
+      services,
+      project,
+      settings,
+      imageProcessor: processor,
+    });
+
+    expect(controller.format.value).toBe("azw3");
+    expect(controller.fileName.value).toBe("Novel (v1).azw3");
+  });
+
   it("does not write output when export is cancelled", async () => {
     const { services, project, settings } = setup();
     const writeAtomic = vi.spyOn(services.files, "writeFileAtomic");
@@ -88,7 +102,7 @@ describe("export controller", () => {
     aborted.abort();
 
     await expect(
-      controller.exportEpub({ signal: aborted.signal, path: "/tmp/novel.epub" }),
+      controller.exportBook({ signal: aborted.signal, path: "/tmp/novel.epub" }),
     ).resolves.toBeNull();
     expect(writeAtomic).not.toHaveBeenCalled();
   });
@@ -107,7 +121,7 @@ describe("export controller", () => {
     controller.options.value.grayscale = true;
     controller.options.value.titlePage = false;
 
-    await controller.exportEpub({ path: "/exports/Novel.epub" });
+    await controller.exportBook({ path: "/exports/Novel.epub" });
 
     expect(reveal).not.toHaveBeenCalled();
 
@@ -130,7 +144,7 @@ describe("export controller", () => {
       builders: { epub: vi.fn<typeof buildEpub>(async () => new Uint8Array([1])) },
     });
 
-    await controller.exportEpub({ dialogFilterName: "Livre EPUB" });
+    await controller.exportBook({ dialogFilterName: "Livre EPUB" });
 
     expect(services.dialogs.save).toHaveBeenCalledWith(
       expect.objectContaining({ filters: [{ name: "Livre EPUB", extensions: ["epub"] }] }),
@@ -159,7 +173,7 @@ describe("export controller", () => {
       },
     });
 
-    await expect(controller.exportEpub({ path: "/exports/Novel.epub" })).rejects.toThrow(source);
+    await expect(controller.exportBook({ path: "/exports/Novel.epub" })).rejects.toThrow(source);
     expect(logger.error).toHaveBeenCalled();
     expect(JSON.stringify(logger.error.mock.calls)).not.toContain(source);
   });

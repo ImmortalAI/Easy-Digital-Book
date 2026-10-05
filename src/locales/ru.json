@@ -197,7 +197,8 @@
     "discard": "Не сохранять"
   },
   "export": {
-    "title": "Экспорт EPUB",
+    "format": "Формат",
+    "title": "Экспорт {format}",
     "preset": "Пресет изображений",
     "kindle": "Kindle Paperwhite",
     "original": "Без изменений",
@@ -207,10 +208,11 @@
     "action": "Экспортировать…",
     "progressImages": "Картинки {done}/{total}",
     "progressChapters": "Главы {done}/{total}",
+    "progressAzw3": "Создание AZW3…",
     "progressZip": "Создание EPUB…",
-    "saved": "EPUB сохранён",
+    "saved": "{format} сохранён",
     "showInFolder": "Показать в папке",
-    "filterName": "Книга EPUB"
+    "filterName": "Книга {format}"
   },
   "settings": {
     "title": "Настройки",
@@ -248,7 +250,10 @@
     "export": {
       "cancelled": "Экспорт отменён",
       "noProject": "Проект не открыт",
-      "failed": "Не удалось экспортировать EPUB",
+      "failed": "Не удалось экспортировать книгу",
+      "azw3Limit": "Книга превышает ограничение формата AZW3",
+      "azw3Link": "Не удалось создать ссылки AZW3",
+      "azw3Resource": "Не удалось добавить ресурс книги в AZW3",
       "invalidXhtml": "Глава {chapter} «{title}»: некорректный XHTML"
     }
   },

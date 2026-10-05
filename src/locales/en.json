@@ -197,7 +197,8 @@
     "discard": "Don't save"
   },
   "export": {
-    "title": "Export EPUB",
+    "format": "Format",
+    "title": "Export {format}",
     "preset": "Image preset",
     "kindle": "Kindle Paperwhite",
     "original": "Without changes",
@@ -207,10 +208,11 @@
     "action": "Export…",
     "progressImages": "Images {done}/{total}",
     "progressChapters": "Chapters {done}/{total}",
+    "progressAzw3": "Creating AZW3…",
     "progressZip": "Creating EPUB…",
-    "saved": "EPUB saved",
+    "saved": "{format} saved",
     "showInFolder": "Show in folder",
-    "filterName": "EPUB book"
+    "filterName": "{format} book"
   },
   "settings": {
     "title": "Settings",
@@ -248,7 +250,10 @@
     "export": {
       "cancelled": "Export cancelled",
       "noProject": "No project is open",
-      "failed": "Could not export EPUB",
+      "failed": "Could not export book",
+      "azw3Limit": "The book exceeds an AZW3 format limit",
+      "azw3Link": "Could not build AZW3 links",
+      "azw3Resource": "Could not include a book resource in AZW3",
       "invalidXhtml": "Chapter {chapter} “{title}” produced invalid XHTML"
     }
   },

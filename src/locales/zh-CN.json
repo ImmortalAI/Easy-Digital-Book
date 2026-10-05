@@ -197,7 +197,8 @@
     "discard": "不保存"
   },
   "export": {
-    "title": "导出 EPUB",
+    "format": "格式",
+    "title": "导出 {format}",
     "preset": "图片预设",
     "kindle": "Kindle Paperwhite",
     "original": "不做更改",
@@ -207,10 +208,11 @@
     "action": "导出…",
     "progressImages": "图片 {done}/{total}",
     "progressChapters": "章节 {done}/{total}",
+    "progressAzw3": "正在生成 AZW3…",
     "progressZip": "正在创建 EPUB…",
-    "saved": "EPUB 已保存",
+    "saved": "{format} 已保存",
     "showInFolder": "在文件夹中显示",
-    "filterName": "EPUB 书籍"
+    "filterName": "{format} 书籍"
   },
   "settings": {
     "title": "设置",
@@ -248,7 +250,10 @@
     "export": {
       "cancelled": "导出已取消",
       "noProject": "没有打开项目",
-      "failed": "无法导出 EPUB",
+      "failed": "无法导出书籍",
+      "azw3Limit": "书籍超出 AZW3 格式限制",
+      "azw3Link": "无法创建 AZW3 链接",
+      "azw3Resource": "无法将书籍资源加入 AZW3",
       "invalidXhtml": "第 {chapter} 章《{title}》生成了无效的 XHTML"
     }
   },

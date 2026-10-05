@@ -72,6 +72,7 @@ describe("SettingsView", () => {
 
   it("persists export and deletion switches", async () => {
     const settings = useSettingsStore();
+    settings.exportSettings.format = "azw3";
     const actions = createActions();
     render(SettingsView, { props: { settings, actions } });
     const user = userEvent.setup();
@@ -84,6 +85,7 @@ describe("SettingsView", () => {
     expect(settings.exportSettings.grayscale).toBe(true);
     expect(settings.confirmDelete).toBe(false);
     expect(settings.exportSettings.imagePreset).toBe("original");
+    expect(settings.exportSettings.format).toBe("azw3");
     expect(actions.persist).toHaveBeenCalledTimes(3);
   });
 

@@ -41,8 +41,6 @@ export interface ExportController {
   error: Ref<AppError | null>;
   lastOutput: Ref<string | null>;
   exportBook(request?: ExportRequest): Promise<string | null>;
-  /** Temporary compatibility alias for the export dialog, migrated in Task 9. */
-  exportEpub(request?: ExportRequest): Promise<string | null>;
   revealOutput(): Promise<void>;
 }
 
@@ -169,8 +167,6 @@ export function createExportController(options: ExportControllerOptions): Export
     }
   }
 
-  const exportEpub = exportBook;
-
   async function revealOutput(): Promise<void> {
     if (!lastOutput.value) return;
     try {
@@ -192,7 +188,6 @@ export function createExportController(options: ExportControllerOptions): Export
     error,
     lastOutput,
     exportBook,
-    exportEpub,
     revealOutput,
   };
 }
