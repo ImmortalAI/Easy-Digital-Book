@@ -79,18 +79,28 @@ MULTI_CHAPTER_XHTML = """<html xmlns="http://www.w3.org/1999/xhtml"><body>
 
 def write_multichapter_epub(
     path: Path,
-    first_target: str = "combined.xhtml#chapter-one",
-    second_target: str = "combined.xhtml#chapter-two",
+    first_target: str | None = None,
+    second_target: str | None = None,
+    first_title: str = "Chapter One",
+    second_title: str = "Chapter Two",
+    first_anchor: str = "chapter-one",
+    second_anchor: str = "chapter-two",
 ) -> None:
+    first_target = first_target or f"combined.xhtml#{first_anchor}"
+    second_target = second_target or f"combined.xhtml#{second_anchor}"
     ncx = f'''<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/"><navMap>
-<navPoint id="n1"><navLabel><text>Chapter One</text></navLabel><content src="{first_target}"/></navPoint>
-<navPoint id="n2"><navLabel><text>Chapter Two</text></navLabel><content src="{second_target}"/></navPoint>
+<navPoint id="n1"><navLabel><text>{first_title}</text></navLabel><content src="{first_target}"/></navPoint>
+<navPoint id="n2"><navLabel><text>{second_title}</text></navLabel><content src="{second_target}"/></navPoint>
 </navMap></ncx>'''
+    xhtml = f'''<html xmlns="http://www.w3.org/1999/xhtml"><body>
+<h1 id="{first_anchor}">{first_title}</h1><p>First semantic marker</p>
+<h1 id="{second_anchor}">{second_title}</h1><p>Second semantic marker</p>
+</body></html>'''
     entries = {
         "META-INF/container.xml": b'''<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/book.opf"/></rootfiles></container>''',
         "OEBPS/book.opf": MULTI_CHAPTER_OPF.encode(),
         "OEBPS/toc.ncx": ncx.encode(),
-        "OEBPS/combined.xhtml": MULTI_CHAPTER_XHTML.encode(),
+        "OEBPS/combined.xhtml": xhtml.encode(),
     }
     with zipfile.ZipFile(path, "w") as archive:
         for name, content in entries.items():
@@ -212,6 +222,27 @@ class VerifyAzw3Tests(unittest.TestCase):
                 epub,
                 first_target="combined.xhtml#chapter-two",
                 second_target="combined.xhtml#chapter-one",
+            )
+            result = verify_azw3.audit_epub(epub, expected)
+            self.assertIn("nav", " ".join(result["failures"]).lower())
+
+    def test_ncx_anchor_rejects_prefix_collision_between_chapter_titles(self) -> None:
+        expected = {
+            "chapters": [
+                {"title": "Chapter 1", "markers": ["First semantic marker"]},
+                {"title": "Chapter 10", "markers": ["Second semantic marker"]},
+            ],
+            "nav": ["Chapter 1", "Chapter 10"],
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            epub = Path(temporary) / "converted.epub"
+            write_multichapter_epub(
+                epub,
+                first_target="combined.xhtml#chapter-ten",
+                first_title="Chapter 1",
+                second_title="Chapter 10",
+                first_anchor="chapter-one",
+                second_anchor="chapter-ten",
             )
             result = verify_azw3.audit_epub(epub, expected)
             self.assertIn("nav", " ".join(result["failures"]).lower())

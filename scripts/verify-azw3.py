@@ -259,7 +259,12 @@ def audit_epub(epub: Path, expected: dict) -> dict:
                     ]
                     if re.fullmatch(r"h[1-6]", local_name(target_node.tag).lower()):
                         target_headings.insert(0, text_content(target_node))
-                    if expected_title not in target_headings and expected_title not in text_content(target_node):
+                    # A wrapper may contain the chapter heading and its body;
+                    # use the first heading at the target, or exact text for
+                    # direct paragraph/anchor targets. Substring matching here
+                    # confuses prefix-colliding titles such as Chapter 1/10.
+                    target_title = target_headings[0] if target_headings else text_content(target_node)
+                    if target_title != expected_title:
                         failures.append(f"nav target anchor belongs to a different chapter for {expected_title}: #{fragment}")
                 elif chapter_paths.count(expected_path) > 1:
                     failures.append(f"nav target is ambiguous without an anchor for {expected_title}: {target_path}")
