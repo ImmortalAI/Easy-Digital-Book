@@ -83,12 +83,19 @@ def audit_epub(epub: Path, expected: dict) -> dict:
             if path.lower().endswith((".xhtml", ".html", ".htm"))
         )
         ids: dict[str, set[str]] = {}
+        nodes_by_id: dict[str, dict[str, ET.Element]] = {}
         parsed_html = {}
         for path in html_paths:
             root = ET.fromstring(archive.read(path))
             parsed_html[path] = root
             ids[path] = {
                 value
+                for node in root.iter()
+                for value in (node.attrib.get("id"), node.attrib.get("name"))
+                if value
+            }
+            nodes_by_id[path] = {
+                value: node
                 for node in root.iter()
                 for value in (node.attrib.get("id"), node.attrib.get("name"))
                 if value
@@ -147,7 +154,7 @@ def audit_epub(epub: Path, expected: dict) -> dict:
 
         spine_text = [(path, text_content(parsed_html[path])) for path in spine_paths if path in parsed_html]
         spine_headings = [
-            (path, text_content(node))
+            (path, text_content(node), node)
             for path in spine_paths
             if path in parsed_html
             for node in parsed_html[path].iter()
@@ -163,12 +170,12 @@ def audit_epub(epub: Path, expected: dict) -> dict:
                 None,
             )
             if match_index is None:
-                all_indices = [index for index, (_path, heading) in enumerate(spine_headings) if heading == title]
+                all_indices = [index for index, (_path, heading, _node) in enumerate(spine_headings) if heading == title]
                 issue = "chapter order mismatch" if all_indices else "missing expected chapter"
                 failures.append(f"{issue}: {title}")
                 chapter_paths.append("")
                 continue
-            path, _heading = spine_headings[match_index]
+            path, _heading, heading_node = spine_headings[match_index]
             content = next(content for source, content in spine_text if source == path)
             heading_cursor = match_index + 1
             chapter_paths.append(path)
@@ -180,7 +187,7 @@ def audit_epub(epub: Path, expected: dict) -> dict:
         # round-trip conversion. Verify actual href targets against matching
         # chapter documents, allowing rewritten file names and anchor IDs.
         nav_items = []
-        nav_target_paths: list[str] = []
+        nav_targets: list[tuple[str, str]] = []
         ordered_paths = [path for path in spine_paths if path in parsed_html] + [
             path for path in parsed_html if path not in spine_paths
         ]
@@ -194,7 +201,8 @@ def audit_epub(epub: Path, expected: dict) -> dict:
                         if local_name(link.tag) in ("a", "content") and link.attrib.get("href", link.attrib.get("src")):
                             href = link.attrib.get("href", link.attrib.get("src", ""))
                             nav_items.append(text_content(link))
-                            nav_target_paths.append(href_path(posixpath.dirname(path), href))
+                            target = local_target(path, href)
+                            nav_targets.append(target or ("", ""))
         for item in (node for node in opf.iter() if local_name(node.tag) == "item"):
             if item.attrib.get("media-type") == "application/x-dtbncx+xml":
                 ncx_path = href_path(base, item.attrib.get("href", ""))
@@ -212,7 +220,8 @@ def audit_epub(epub: Path, expected: dict) -> dict:
                                 parent_text = label
                                 break
                         nav_items.append(parent_text)
-                        nav_target_paths.append(href_path(posixpath.dirname(ncx_path), content.attrib.get("src", "")))
+                        target = local_target(ncx_path, content.attrib.get("src", ""))
+                        nav_targets.append(target or ("", ""))
         expected_nav = expected.get("nav", [])
         if not expected_nav and "nav_title_prefix" in expected:
             expected_nav = [
@@ -230,12 +239,30 @@ def audit_epub(epub: Path, expected: dict) -> dict:
                 if next_index is None:
                     failures.append(f"nav missing or out of order: {expected_title}")
                     continue
-                matched.append(nav_target_paths[next_index])
+                matched.append((nav_targets[next_index], expected_title))
                 cursor = next_index + 1
-            for index, target in enumerate(matched):
+            for index, (target, expected_title) in enumerate(matched):
+                target_path, fragment = target
                 expected_path = chapter_paths[index] if index < len(chapter_paths) else ""
-                if target not in names or (expected_path and target != expected_path):
-                    failures.append(f"nav target mismatch for {expected_nav[index]}: {target}")
+                if target_path not in names or (expected_path and target_path != expected_path):
+                    failures.append(f"nav target mismatch for {expected_title}: {target_path}")
+                    continue
+                if fragment:
+                    target_node = nodes_by_id.get(target_path, {}).get(fragment)
+                    if target_node is None:
+                        failures.append(f"nav target missing #{fragment} for {expected_title}: {target_path}")
+                        continue
+                    target_headings = [
+                        text_content(node)
+                        for node in target_node.iter()
+                        if re.fullmatch(r"h[1-6]", local_name(node.tag).lower())
+                    ]
+                    if re.fullmatch(r"h[1-6]", local_name(target_node.tag).lower()):
+                        target_headings.insert(0, text_content(target_node))
+                    if expected_title not in target_headings and expected_title not in text_content(target_node):
+                        failures.append(f"nav target anchor belongs to a different chapter for {expected_title}: #{fragment}")
+                elif chapter_paths.count(expected_path) > 1:
+                    failures.append(f"nav target is ambiguous without an anchor for {expected_title}: {target_path}")
 
         # Every expected note must be present, receive the expected number of
         # noteref links, and begin its content with a working backlink.
@@ -371,14 +398,27 @@ def main() -> int:
     parser.add_argument("--calibre-dir", type=Path, default=CALIBRE)
     parser.add_argument("--manifest", type=Path, default=MANIFEST_PATH)
     args = parser.parse_args()
+    calibre_dir = args.calibre_dir.expanduser().resolve()
     fixture_dir = args.fixture_dir.resolve()
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
+    fixture_stems = {path.stem for path in fixture_dir.glob("*.azw3")}
+    manifest_stems = set(manifest)
+    if fixture_stems != manifest_stems:
+        missing = sorted(manifest_stems - fixture_stems)
+        unexpected = sorted(fixture_stems - manifest_stems)
+        details = []
+        if missing:
+            details.append(f"missing fixture files: {', '.join(missing)}")
+        if unexpected:
+            details.append(f"fixtures without manifest entries: {', '.join(unexpected)}")
+        print("AZW3 fixture/manifest mismatch: " + "; ".join(details), file=sys.stderr)
+        return 1
     audit_dir = fixture_dir / "calibre-audit"
     audit_dir.mkdir(parents=True, exist_ok=True)
     version_log = audit_dir / "calibre-version.txt"
     try:
         version_result = subprocess.run(
-            [str(args.calibre_dir / "ebook-convert"), "--version"],
+            [str(calibre_dir / "ebook-convert"), "--version"],
             cwd=fixture_dir,
             text=True,
             capture_output=True,
@@ -400,7 +440,7 @@ def main() -> int:
         inspect_dir.mkdir(exist_ok=True)
         inspect_log = work / "inspect.txt"
         run(
-            [str(args.calibre_dir / "calibre-debug"), "--inspect-mobi", str(azw3)],
+            [str(calibre_dir / "calibre-debug"), "--inspect-mobi", str(azw3)],
             inspect_dir,
             inspect_log,
         )
@@ -413,7 +453,7 @@ def main() -> int:
         epub = work / f"{stem}.epub"
         convert_log = work / "convert.txt"
         run(
-            [str(args.calibre_dir / "ebook-convert"), str(azw3), str(epub)],
+            [str(calibre_dir / "ebook-convert"), str(azw3), str(epub)],
             work,
             convert_log,
         )

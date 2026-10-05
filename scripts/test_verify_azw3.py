@@ -7,6 +7,7 @@ import importlib.util
 import hashlib
 import contextlib
 import io
+import os
 from unittest.mock import patch
 import subprocess
 import sys
@@ -65,6 +66,35 @@ OPF = """<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
 <item id="cssimage" href="Images/css.png" media-type="image/png"/>
 </manifest><spine><itemref idref="c1"/><itemref idref="c2"/><itemref idref="notes"/></spine>
 </package>"""
+
+MULTI_CHAPTER_OPF = """<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+<metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Test</dc:title></metadata>
+<manifest><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="combined" href="combined.xhtml" media-type="application/xhtml+xml"/></manifest>
+<spine toc="ncx"><itemref idref="combined"/></spine></package>"""
+MULTI_CHAPTER_XHTML = """<html xmlns="http://www.w3.org/1999/xhtml"><body>
+<h1 id="chapter-one">Chapter One</h1><p>First semantic marker</p>
+<h1 id="chapter-two">Chapter Two</h1><p>Second semantic marker</p>
+</body></html>"""
+
+
+def write_multichapter_epub(
+    path: Path,
+    first_target: str = "combined.xhtml#chapter-one",
+    second_target: str = "combined.xhtml#chapter-two",
+) -> None:
+    ncx = f'''<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/"><navMap>
+<navPoint id="n1"><navLabel><text>Chapter One</text></navLabel><content src="{first_target}"/></navPoint>
+<navPoint id="n2"><navLabel><text>Chapter Two</text></navLabel><content src="{second_target}"/></navPoint>
+</navMap></ncx>'''
+    entries = {
+        "META-INF/container.xml": b'''<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/book.opf"/></rootfiles></container>''',
+        "OEBPS/book.opf": MULTI_CHAPTER_OPF.encode(),
+        "OEBPS/toc.ncx": ncx.encode(),
+        "OEBPS/combined.xhtml": MULTI_CHAPTER_XHTML.encode(),
+    }
+    with zipfile.ZipFile(path, "w") as archive:
+        for name, content in entries.items():
+            archive.writestr(name, content)
 
 
 def write_epub(path: Path, *, replacements: dict[str, bytes | None] | None = None) -> None:
@@ -153,6 +183,128 @@ class VerifyAzw3Tests(unittest.TestCase):
             write_epub(epub, replacements={"OEBPS/nav.xhtml": broken_nav.encode()})
             result = verify_azw3.audit_epub(epub, MANIFEST)
             self.assertIn("nav", " ".join(result["failures"]).lower())
+
+    def test_ncx_missing_anchor_fails_when_chapters_share_xhtml(self) -> None:
+        expected = {
+            "chapters": [
+                {"title": "Chapter One", "markers": ["First semantic marker"]},
+                {"title": "Chapter Two", "markers": ["Second semantic marker"]},
+            ],
+            "nav": ["Chapter One", "Chapter Two"],
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            epub = Path(temporary) / "converted.epub"
+            write_multichapter_epub(epub, first_target="combined.xhtml#missing")
+            result = verify_azw3.audit_epub(epub, expected)
+            self.assertIn("nav", " ".join(result["failures"]).lower())
+
+    def test_ncx_existing_anchor_must_belong_to_expected_chapter(self) -> None:
+        expected = {
+            "chapters": [
+                {"title": "Chapter One", "markers": ["First semantic marker"]},
+                {"title": "Chapter Two", "markers": ["Second semantic marker"]},
+            ],
+            "nav": ["Chapter One", "Chapter Two"],
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            epub = Path(temporary) / "converted.epub"
+            write_multichapter_epub(
+                epub,
+                first_target="combined.xhtml#chapter-two",
+                second_target="combined.xhtml#chapter-one",
+            )
+            result = verify_azw3.audit_epub(epub, expected)
+            self.assertIn("nav", " ".join(result["failures"]).lower())
+
+    def test_relative_calibre_dir_is_resolved_before_fixture_cwd(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture_dir = root / "fixtures"
+            fixture_dir.mkdir()
+            (fixture_dir / "case.azw3").write_bytes(b"fake AZW3")
+            manifest = fixture_dir / "manifest.json"
+            manifest.write_text(json.dumps({"case": {"chapters": [], "nav": []}}), encoding="utf-8")
+            calibre_dir = root / ".tools" / "calibre"
+            calibre_dir.mkdir(parents=True)
+            version_executable = calibre_dir / "ebook-convert"
+            version_executable.write_text(
+                "#!/bin/sh\nprintf 'ebook-convert (calibre 9.15.0)\\n'\n",
+                encoding="utf-8",
+            )
+            version_executable.chmod(0o755)
+
+            def fake_run(command: list[str], cwd: Path, output: Path) -> None:
+                self.assertTrue(Path(command[0]).is_absolute())
+                output.write_text("mocked Calibre output\n", encoding="utf-8")
+                if "--inspect-mobi" in command:
+                    report = cwd / "decompiled_case" / "header.txt"
+                    report.parent.mkdir(parents=True)
+                    report.write_text(
+                        "******** MOBI 8 Header ********\nFile version: 8\nCDE Type (501): b'EBOK'",
+                        encoding="utf-8",
+                    )
+                else:
+                    write_epub(Path(command[2]))
+
+            cwd = Path.cwd()
+            try:
+                os.chdir(root)
+                with (
+                    patch.object(
+                        sys,
+                        "argv",
+                        [
+                            str(VERIFY_PATH),
+                            str(fixture_dir),
+                            "--calibre-dir",
+                            ".tools/calibre",
+                            "--manifest",
+                            str(manifest),
+                        ],
+                    ),
+                    patch.object(verify_azw3, "run", side_effect=fake_run),
+                    contextlib.redirect_stdout(io.StringIO()),
+                ):
+                    self.assertEqual(verify_azw3.main(), 0)
+            finally:
+                os.chdir(cwd)
+
+    def test_missing_manifest_fixture_is_rejected_before_conversion(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture_dir = Path(temporary)
+            (fixture_dir / "present.azw3").write_bytes(b"fake AZW3")
+            manifest = fixture_dir / "manifest.json"
+            manifest.write_text(json.dumps({"present": MANIFEST, "missing": MANIFEST}), encoding="utf-8")
+            stderr = io.StringIO()
+            completed = subprocess.CompletedProcess(
+                args=["ebook-convert", "--version"],
+                returncode=0,
+                stdout="ebook-convert (calibre 9.15.0)\n",
+                stderr="",
+            )
+
+            def fake_run(command: list[str], cwd: Path, output: Path) -> None:
+                output.write_text("mocked Calibre output\n", encoding="utf-8")
+                if "--inspect-mobi" in command:
+                    report = cwd / "decompiled_present" / "header.txt"
+                    report.parent.mkdir(parents=True)
+                    report.write_text(
+                        "******** MOBI 8 Header ********\nFile version: 8\nCDE Type (501): b'EBOK'",
+                        encoding="utf-8",
+                    )
+                else:
+                    write_epub(Path(command[2]))
+
+            with (
+                patch.object(sys, "argv", [str(VERIFY_PATH), str(fixture_dir), "--manifest", str(manifest)]),
+                patch.object(verify_azw3.subprocess, "run", return_value=completed),
+                patch.object(verify_azw3, "run", side_effect=fake_run) as converter,
+                contextlib.redirect_stderr(stderr),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                self.assertEqual(verify_azw3.main(), 1)
+                converter.assert_not_called()
+            self.assertIn("missing", stderr.getvalue().lower())
 
     def test_missing_calibre_executable_is_a_failure(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
