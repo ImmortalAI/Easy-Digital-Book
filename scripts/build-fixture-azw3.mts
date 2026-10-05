@@ -1,6 +1,8 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
+import { cssSupportSamples } from "./css-support-fixtures";
+import { writeEdb } from "../src/services/edb/write";
 import { buildAzw3 } from "../src/services/azw3/build";
 import {
   exportOptions,
@@ -66,6 +68,36 @@ imagesCss.resources = new Map([
   ["images/photo.jpg", { mediaType: "image/jpeg", bytes: jpeg }],
 ]);
 imagesCss.customCss = 'body { background-image: url("images/css-only.png"); }';
+
+// The AZW3 retains a readable catalog. Isolated editable samples avoid one
+// property's layout effects masking another; export each from the packaged app.
+imagesCss.chapters.push({
+  id: "csscheck",
+  source:
+    "# CSS Support Samples\n\n" +
+    cssSupportSamples
+      .map((sample) => `${sample.id}\n\n${sample.css}\n\n${sample.description}`)
+      .join("\n\n"),
+});
+const sampleDir = join(outputDir, "css-support-samples");
+await mkdir(sampleDir, { recursive: true });
+for (const [index, sample] of cssSupportSamples.entries()) {
+  const book = fixtureBook();
+  book.metadata.title = `CSS ${sample.id}`;
+  book.metadata.id = `urn:uuid:550e8400-e29b-41d4-a716-${String(index + 1).padStart(12, "0")}`;
+  book.chapters = [{ id: "csscheck", source: sample.source }];
+  book.resources = new Map([["images/css-only.png", { mediaType: "image/png", bytes: png }]]);
+  book.customCss = sample.css;
+  await writeFile(join(sampleDir, `${sample.id}.edb`), await writeEdb(book, now()));
+}
+await writeFile(
+  join(sampleDir, "manifest.json"),
+  JSON.stringify(
+    cssSupportSamples.map(({ id, css, description }) => ({ id, css, description })),
+    null,
+    2,
+  ),
+);
 
 const longBook = fixtureBook();
 longBook.metadata.title = "AZW3 Synthetic 300 Chapter Book";

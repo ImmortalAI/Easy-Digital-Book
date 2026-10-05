@@ -70,3 +70,38 @@ test -d "$HOME/Library/Caches/ms-playwright" && echo present || echo missing
 Record the actual command output from the release environment. CI installs the
 pinned Java/epubcheck and Calibre versions and runs Chromium; local developer
 tool paths and cached browsers can differ.
+
+## Kindle CSS checker
+
+- [ ] RU / EN / zh-CN: messages in the CSS editor, Styles section and export summary translate without editing the book.
+- [ ] Syntax errors produce one info finding; valid neighboring rules continue to be checked. Fixing/deleting CSS removes stale findings.
+- [ ] Styles expands into individual findings; selecting one opens and focuses the correct CSS range, including from Preview mode.
+- [ ] CSS warnings/info never prevent EPUB or AZW3 export; the original custom CSS remains in the export.
+- [ ] Book replacement (including the same UUID), absent CSS and closing the editor do not transfer diagnostics between books.
+
+`pnpm build:fixture-azw3` adds the **CSS Support Samples** catalog chapter to
+`images-css.azw3` and produces isolated editable projects under
+`css-support-samples/`. Its `manifest.json` names every property, keyword
+value, selector, at-rule and unit in the initial support table. Each project
+has a reference passage, a sample and instructions. Open each `.edb` in the
+packaged app, export AZW3, then compare with a second export with custom CSS
+removed. Capture a photograph and note font size and orientation.
+
+For every sample ID record **device, firmware, OS, app version, date,
+operator, export artifact, CSS, result, comparison photograph and any
+context limitations**. Complete both Paperwhite 3 and Paperwhite 12 columns.
+Neither Calibre preservation nor parser results prove device support.
+Interactive states, list/table/positioning context and charset/namespace
+need additional applicable content before a conclusive device verdict;
+an inapplicable rule or missing external font/stylesheet is inconclusive.
+
+| Sample family              | Paperwhite 3 | Paperwhite 12 |
+| -------------------------- | ------------ | ------------- |
+| `property-*` and `value-*` | [ ]          | [ ]           |
+| `selector-*`               | [ ]          | [ ]           |
+| `at-rule-*`                | [ ]          | [ ]           |
+| `unit-*`                   | [ ]          | [ ]           |
+
+The initial table deliberately keeps all unverified rows **partial**.
+Promote to supported/unsupported only with recorded results for both target
+devices; add the sample ID and evidence path to that row's `source`.

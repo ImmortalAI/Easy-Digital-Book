@@ -33,7 +33,7 @@
 
 ## Решения и карта файлов
 
-Рабочая ветка: `feat/kindle-css-check`, от текущего состояния `feat/azw3-export`. Пользователь запросил смену ветки в существующем checkout; дополнительный worktree не создаётся. Этот план не включает реализацию.
+Рабочая ветка: `feat/kindle-css-check`, от текущего состояния `feat/azw3-export`. Пользователь запросил смену ветки в существующем checkout; дополнительный worktree не создаётся. Реализация авторизована пользователем 2026-10-05; исполнение inline через `superpowers:executing-plans`.
 
 - Create `src/services/css-support/types.ts`: типы таблицы и `CssFinding`.
 - Create `src/services/css-support/kindle.ts`: данные поддержки и источники, без логики.
@@ -49,7 +49,9 @@
 - Modify `src/locales/{ru,en,zh-CN}.json`: сообщения `cssSupport.<code>` и подпись Styles.
 - Modify `package.json`, `pnpm-lock.yaml`: прямые зависимости `@lezer/css`, `css-tree@^3.2.1` и dev dependency `@types/css-tree@^3.2.0`.
 - Create `src/types/css-tree-utils.d.ts`: декларация публичного subpath `css-tree/utils`, переиспользующая типы helpers из `@types/css-tree`.
-- Modify `scripts/build-fixture-azw3.mts`, `docs/release-checklist.md`: CSS-страница и журнал результатов устройств.
+- Create `scripts/css-support-fixtures.ts`, `scripts/__tests__/css-support-fixtures.test.ts`: изолированные device samples.
+- Modify `scripts/build-fixture-azw3.mts`, `src/services/azw3/__tests__/fixture-manifest.json`, `docs/release-checklist.md`: каталог CSS и companion `.edb` с журналом устройств.
+- Modify `oxlint.config.ts`, `vitest.config.ts`: границы чистого сервиса и coverage для css-support.
 
 Не расширять `DiagnosticSeverity` главы: CSS имеет отдельный тип с `info`. Не менять `checkBook()` ради добавления локализуемых CSS findings. Не переписывать механизм CSS URL экспорта в рамках этой задачи.
 
@@ -163,4 +165,4 @@
 
 ## Перед реализацией
 
-План готов для ревью. Рекомендуемый способ выполнения — `superpowers:executing-plans`: задачи последовательно используют одну таблицу и один анализатор. Запуск реализации — отдельный следующий запрос пользователя; в текущей задаче меняются только ветка и этот документ.
+План принят пользователем 2026-10-05. Выполнение — `superpowers:executing-plans`, последовательно с TDD и финальным независимым ревью. Device samples изолированы в отдельных `.edb`, чтобы правила не влияли друг на друга; основной CSS fixture содержит каталог. Результаты устройств не подменяются автоматическими тестами.

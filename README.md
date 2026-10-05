@@ -232,8 +232,8 @@ Planned after v1, in no particular order and with no dates yet:
 
 - [ ] **AZW3 export.** Save a Kindle-native book directly, without
       converting the EPUB in Calibre.
-- [ ] **Kindle CSS check.** Warn about rules in `custom.css` that Kindle
-      ignores or renders differently.
+- [x] **Kindle CSS check.** Advisory syntax and compatibility diagnostics in
+      the CSS editor and export dialog; device verification remains open.
 - [ ] **Language check for English and Russian.** Catch spelling and wording
       mistakes in chapters beyond the system spell checker.
 
