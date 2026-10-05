@@ -1,7 +1,29 @@
+import type { BookMetadata } from "@/types/book";
+
 export interface KindlePosition {
   fid: number;
   offset: number;
   reconstructedOffset: number;
+}
+
+export interface Azw3ResourcePlan {
+  records: Uint8Array[];
+  imageIndices: ReadonlyMap<string, number>;
+  coverIndex: number | null;
+  thumbnailIndex: number | null;
+}
+
+export interface HeaderInput {
+  metadata: BookMetadata;
+  displayTitle: string;
+  exportedAt: Date;
+  textLength: number;
+  textRecordCount: number;
+  recordIndices: ReadonlyMap<string, number>;
+  resourceCount: number;
+  coverIndex: number | null;
+  thumbnailIndex: number | null;
+  flowCount: number;
 }
 export interface TextLayout {
   text: Uint8Array;

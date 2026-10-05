@@ -578,6 +578,69 @@ FLIS/FCIS constants' semantic meanings beyond public evidence remain unknown;
 exact bytes, lengths and their references are confirmed. Whole-file tail dump
 is Task6/7. See `flis`, `fcis`, `eof` vectors.
 
+### Task 6 writer fixture: record zero, resources, and end records
+
+This output uses title `Книга`, author `Я`, language `ru`, UUID
+`12345678-1234-5678-9abc-def012345678`, text length42 and one text record.
+Zero-based record indices are FRAG2, SKEL3, FDST6, FLIS7, FCIS8; NCX,
+resources, cover, thumbnail, GUIDE and DATP are absent. Export time is fixed to
+`2026-10-05T12:34:56.000Z`. Record zero is494 bytes: PalmDOC16 + MOBI264 +
+padded EXTH204 + UTF-8 title10. The dump was compared with an independent
+field/length calculation.
+
+```text
+0000 00 02 00 00 00 00 00 2a 00 01 10 00 00 00 00 00
+0010 4d 4f 42 49 00 00 01 08 00 00 00 02 00 00 fd e9
+0020 12 34 56 78 00 00 00 08 ff ff ff ff ff ff ff ff
+0030 ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+0040 ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+0050 00 00 00 02 00 00 01 e4 00 00 00 0a 00 00 00 19
+0060 00 00 00 00 00 00 00 00 00 00 00 08 ff ff ff ff
+0070 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0080 00 00 00 50 00 00 00 00 00 00 00 00 00 00 00 00
+0090 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00a0 00 00 00 00 ff ff ff ff ff ff ff ff 00 00 00 00
+00b0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00c0 00 00 00 06 00 00 00 01 00 00 00 08 00 00 00 01
+00d0 00 00 00 07 00 00 00 01 00 00 00 00 00 00 00 00
+00e0 ff ff ff ff 00 00 00 00 ff ff ff ff ff ff ff ff
+00f0 00 00 00 01 ff ff ff ff 00 00 00 02 00 00 00 03
+0100 ff ff ff ff ff ff ff ff ff ff ff ff 00 00 00 00
+0110 ff ff ff ff 00 00 00 00 45 58 54 48 00 00 00 cb
+0120 00 00 00 08 00 00 00 64 00 00 00 0a d0 af 00 00
+0130 00 6a 00 00 00 20 32 30 32 36 2d 31 30 2d 30 35
+0140 54 31 32 3a 33 34 3a 35 36 2e 30 30 30 5a 00 00
+0150 00 70 00 00 00 35 75 72 6e 3a 75 75 69 64 3a 31
+0160 32 33 34 35 36 37 38 2d 31 32 33 34 2d 35 36 37
+0170 38 2d 39 61 62 63 2d 64 65 66 30 31 32 33 34 35
+0180 36 37 38 00 00 00 71 00 00 00 2c 31 32 33 34 35
+0190 36 37 38 2d 31 32 33 34 2d 35 36 37 38 2d 39 61
+01a0 62 63 2d 64 65 66 30 31 32 33 34 35 36 37 38 00
+01b0 00 00 7d 00 00 00 0c 00 00 00 00 00 00 01 f5 00
+01c0 00 00 0c 45 42 4f 4b 00 00 01 f7 00 00 00 12 d0
+01d0 9a d0 bd d0 b8 d0 b3 d0 b0 00 00 02 0c 00 00 00
+01e0 0a 72 75 00 d0 9a d0 bd d0 b8 d0 b3 d0 b0
+```
+
+Processed resource records contain raw image bytes. The PNG signature is
+`89504e470d0a1a0a`. The one-based embed references are
+`kindle:embed:0001?mime=image/png`
+(`6b696e646c653a656d6265643a303030313f6d696d653d696d6167652f706e67`) and
+`kindle:embed:0002?mime=image/jpeg`
+(`6b696e646c653a656d6265643a303030323f6d696d653d696d6167652f6a706567`).
+The CSS flow reference `kindle:flow:0001?mime=text/css` is
+`6b696e646c653a666c6f773a303030313f6d696d653d746578742f637373`. Resource
+indices sort by normalized full source path; EXTH cover and thumbnail offsets
+are zero-based from the first resource. Task6 does not generate a thumbnail,
+so EXTH202 is absent and no image ordinal shifts.
+
+The end records are FLIS36 bytes
+`464c4953000000080041000000000000ffffffff000100030000000300000001ffffffff`;
+FCIS52 bytes for42 text bytes
+`46434953000000140000001000000002000000000000002a00000000000000280000000000000028000000080001000100000000`;
+EOF4 bytes `e98e0d0a`. DATP has no record, and record-zero offset256 is
+`ffffffff`.
+
 ## Endnotes, popups and backlinks
 
 Reuse existing chapter/endnote markup. Each reference has a chapter-qualified

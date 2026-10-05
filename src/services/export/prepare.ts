@@ -10,6 +10,7 @@ import { getLabels } from "@/services/epub/labels";
 import { titlePage } from "@/services/epub/title-page";
 import { themeCss } from "@/assets/epub/theme.css";
 import type { BuildDependencies, ExportOptions, PreparedExport } from "./types";
+import { rewriteCssResourceUrls } from "./css-resources";
 
 // Bounded: this map outlives every export, and each entry is a full encoded
 // image. 64 MB keeps repeat exports fast without growing without limit.
@@ -192,14 +193,7 @@ export async function prepareExport(
   if (customCss)
     styles.push({
       path: "custom.css",
-      css: customCss.replace(/url\(["']?([^"')]+)["']?\)/g, (whole, path: string) => {
-        const normalized = path.trim();
-        return allMap.has(normalized)
-          ? `url("${allMap.get(normalized)}")`
-          : normalized.startsWith("images/")
-            ? 'url("data:,")'
-            : whole;
-      }),
+      css: rewriteCssResourceUrls(customCss, (path) => allMap.get(path)),
     });
   return {
     metadata: book.metadata,
