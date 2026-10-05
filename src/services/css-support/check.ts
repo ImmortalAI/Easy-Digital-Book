@@ -1,26 +1,15 @@
-import { parser } from "@lezer/css";
-import { ident, string, url } from "css-tree/utils";
+import type { CssNode, WalkContext } from "css-tree";
+import walk from "css-tree/walker";
+import { ident } from "css-tree/utils";
+import { tokenTypes } from "css-tree/tokenizer";
 import { kindleSupport } from "./kindle";
+import { parseCss, type CssRange } from "./parse";
 import type { CssFinding, KindleSupportTable, Support } from "./types";
 
-type CssNode = ReturnType<typeof parser.parse>["topNode"];
 const identifier = (raw: string) => ident.decode(raw).toLowerCase();
-
-function hasError(node: CssNode): boolean {
-  if (node.type.isError) return true;
-  for (let child = node.firstChild; child; child = child.nextSibling) {
-    if (hasError(child)) return true;
-  }
-  return false;
-}
-function ancestor(node: CssNode, name: string): CssNode | null {
-  for (let parent = node.parent; parent; parent = parent.parent) {
-    if (parent.name === name) return parent;
-  }
-  return null;
-}
+const legacyPseudoElements = new Set(["before", "after", "first-line", "first-letter"]);
 function isBookImage(path: string): boolean {
-  // URI decoding is only for path traversal checks, never CSS escape decoding.
+  // URI decoding is for path traversal checks, never CSS escape decoding.
   let decoded: string;
   try {
     decoded = decodeURIComponent(path);
@@ -35,192 +24,143 @@ function isBookImage(path: string): boolean {
   );
 }
 
-/** Advisory checks only. No DOM, CSS rewriting, cascade evaluation or export gating. */
+/** Advisory analysis. Grammar/recovery/decoding belong to the CSS libraries. */
 export function checkKindleCss(
   css: string,
   table: KindleSupportTable = kindleSupport,
 ): CssFinding[] {
-  const tree = parser.parse(css);
+  const parsed = parseCss(css);
   const findings: CssFinding[] = [];
   const properties = new Map(table.properties.map((row) => [row.property, row]));
   const units = new Map(table.units.map((row) => [row.name, row]));
   const atRules = new Map(table.atRules.map((row) => [row.name, row]));
   const selectors = new Map(table.selectors.map((row) => [`${row.pattern}:${row.name}`, row]));
-  const text = (node: CssNode) => css.slice(node.from, node.to);
-  let syntaxReported = false;
-
-  function add(
-    from: number,
-    to: number,
+  const add = (
+    range: CssRange,
     severity: CssFinding["severity"],
     code: string,
     params: CssFinding["params"] = {},
-  ) {
-    findings.push({ from, to, severity, code, params });
+  ) => findings.push({ ...range, severity, code, params });
+  function support(range: CssRange, value: Support, note: string, params: CssFinding["params"]) {
+    if (value !== "supported")
+      add(
+        range,
+        value === "unsupported" ? "warning" : "info",
+        note.replace(/^cssSupport\./, ""),
+        params,
+      );
   }
-  function syntax(node: CssNode) {
-    if (syntaxReported) return;
-    syntaxReported = true;
-    const from = Math.min(node.from, Math.max(0, css.length - 1));
-    add(from, Math.max(from + 1, node.to), "info", "syntax");
-  }
-  function support(node: CssNode, value: Support, note: string, params: CssFinding["params"]) {
-    if (value === "supported") return;
-    add(
-      node.from,
-      node.to,
-      value === "unsupported" ? "warning" : "info",
-      note.replace(/^cssSupport\./, ""),
-      params,
-    );
-  }
-  function selector(node: CssNode, pattern: string, name: string) {
-    const row = selectors.get(`${pattern}:${name}`);
-    const params = { selector: text(node) };
-    if (row) support(node, row.support, row.note, params);
-    else add(node.from, node.to, "info", "unknownSelector", params);
-  }
-
-  tree.iterate({
-    enter(ref) {
-      const node = ref.node;
-      if (node.type.isError) syntax(node);
-      if (node.name === "Declaration" && !node.getChild(":")?.nextSibling) syntax(node);
-    },
-  });
-  tree.iterate({
-    enter(ref) {
-      const node = ref.node;
-      if (node.type.isError || node.name === "Comment" || node.name === "StringLiteral")
-        return false;
-      if (node.name === "Declaration") {
-        if (hasError(node)) return false;
-        const property = node.getChild("PropertyName") ?? node.getChild("VariableName");
-        if (!property) return;
-        const raw = ident.decode(text(property));
-        if (raw.startsWith("--")) {
-          add(property.from, property.to, "info", "customProperty");
-          return false;
-        }
-        // @font-face contains descriptors, not ordinary CSS properties.
-        const at = ancestor(node, "AtRule");
-        const inFontFace = at?.firstChild && identifier(text(at.firstChild)) === "@font-face";
-        if (!inFontFace) {
-          const name = raw.toLowerCase();
-          const row = properties.get(name);
-          if (!row)
-            add(property.from, property.to, "warning", "unknownProperty", { property: name });
+  if (parsed.syntax) add(parsed.syntax, "info", "syntax");
+  for (const tree of parsed.trees)
+    walk(tree, {
+      enter(this: WalkContext, node: CssNode) {
+        if (!node.loc || node.type === "Raw") return this.skip;
+        const range = { from: node.loc.start.offset, to: node.loc.end.offset };
+        const token = parsed.tokens.get(range.from);
+        if (node.type === "Declaration") {
+          if (this.atrulePrelude) return this.skip;
+          const property = ident.decode(node.property);
+          const propertyRange = {
+            from: range.from,
+            to: token?.end ?? range.from + node.property.length,
+          };
+          if (property.startsWith("--")) {
+            add(propertyRange, "info", "customProperty");
+            return this.skip;
+          }
+          if (this.atrule && identifier(this.atrule.name) === "font-face") return;
+          const name = property.toLowerCase(),
+            row = properties.get(name);
+          if (!row) add(propertyRange, "warning", "unknownProperty", { property: name });
           else {
             let override = false;
-            for (let child = property.nextSibling; child; child = child.nextSibling) {
-              if (child.name !== "ValueName") continue;
-              const value = identifier(text(child));
-              const status = row.values?.[value];
-              if (status !== undefined) {
-                override = true;
-                support(child, status, "cssSupport.value", { property: name, value });
-              }
-            }
-            if (!override) support(property, row.support, row.note, { property: name });
+            if (node.value.type === "Value")
+              node.value.children.forEach((child) => {
+                if (child.type !== "Identifier" || !child.loc) return;
+                const value = identifier(child.name),
+                  status = row.values?.[value];
+                if (status !== undefined) {
+                  override = true;
+                  support(
+                    { from: child.loc.start.offset, to: child.loc.end.offset },
+                    status,
+                    "cssSupport.value",
+                    { property: name, value },
+                  );
+                }
+              });
+            if (!override) support(propertyRange, row.support, row.note, { property: name });
           }
         }
-      }
-      if (node.name === "Unit" && ancestor(node, "Declaration")) {
-        const name = identifier(text(node));
-        const row = units.get(name);
-        if (row) support(node, row.support, row.note, { unit: name });
-        else add(node.from, node.to, "info", "unknownUnit", { unit: name });
-      }
-      if (node.name === "Callee" && identifier(text(node)) === "var") {
-        add(node.from, node.to, "info", "customProperty");
-      }
-      if (node.name === "PseudoClassName" && node.parent && !hasError(node.parent)) {
-        const colon = node.prevSibling;
-        if (colon?.name === ":" || colon?.name === "::") {
-          const args = node.nextSibling?.name === "ArgList" ? node.nextSibling : null;
-          const from = colon.from,
-            to = args?.to ?? node.to;
-          const name = identifier(text(node));
-          // The selector range excludes its preceding tag/class selector.
-          const row = selectors.get(
-            `${colon.name === "::" ? "pseudo-element" : "pseudo-class"}:${name}`,
+        if (node.type === "Dimension" || node.type === "Percentage") {
+          const unit = node.type === "Dimension" ? identifier(node.unit) : "%";
+          const unitRange = { from: range.from + node.value.length, to: range.to };
+          const row = units.get(unit);
+          if (row) support(unitRange, row.support, row.note, { unit });
+          else add(unitRange, "info", "unknownUnit", { unit });
+        }
+        if (node.type === "Function" && identifier(node.name) === "var") {
+          add(
+            { from: range.from, to: (token?.end ?? range.from + node.name.length + 1) - 1 },
+            "info",
+            "customProperty",
           );
-          const params = { selector: css.slice(from, to) };
-          if (row) {
-            if (row.support !== "supported")
-              add(
-                from,
-                to,
-                row.support === "unsupported" ? "warning" : "info",
-                row.note.replace(/^cssSupport\./, ""),
-                params,
-              );
-          } else add(from, to, "info", "unknownSelector", params);
         }
-      }
-      if (node.name === "ChildOp" || node.name === "SiblingOp")
-        selector(node, "combinator", text(node));
-      if (node.name === "DescendantSelector") {
-        const left = node.firstChild,
-          right = left?.nextSibling;
-        if (left && right && !hasError(node)) {
-          const gap = css.slice(left.to, right.from);
-          if (/^\s+$/.test(gap)) {
-            const row = selectors.get("combinator: ");
-            if (row && row.support !== "supported")
-              add(
-                left.to,
-                right.from,
-                row.support === "unsupported" ? "warning" : "info",
-                row.note.replace(/^cssSupport\./, ""),
-                { selector: gap },
-              );
+        if (
+          [
+            "PseudoClassSelector",
+            "PseudoElementSelector",
+            "Combinator",
+            "AttributeSelector",
+          ].includes(node.type)
+        ) {
+          let pattern: string, name: string;
+          if (node.type === "PseudoClassSelector" || node.type === "PseudoElementSelector") {
+            name = identifier(node.name);
+            pattern =
+              node.type === "PseudoElementSelector" || legacyPseudoElements.has(name)
+                ? "pseudo-element"
+                : "pseudo-class";
+          } else if (node.type === "Combinator") {
+            pattern = "combinator";
+            name = node.name;
+          } else {
+            pattern = "attribute";
+            name = "[]";
           }
+          const row = selectors.get(`${pattern}:${name}`),
+            params = { selector: css.slice(range.from, range.to) };
+          if (row) support(range, row.support, row.note, params);
+          else add(range, "info", "unknownSelector", params);
         }
-      }
-      if (node.name === "AttributeSelector" && !hasError(node)) {
-        const start = node.getChild("[");
-        const end = node.getChild("]");
-        if (start && end) {
-          const row = selectors.get("attribute:[]");
-          const params = { selector: css.slice(start.from, end.to) };
-          if (row) {
-            if (row.support !== "supported")
-              add(
-                start.from,
-                end.to,
-                row.support === "unsupported" ? "warning" : "info",
-                row.note.replace(/^cssSupport\./, ""),
-                params,
-              );
-          } else add(start.from, end.to, "info", "unknownSelector", params);
+        if (node.type === "Atrule") {
+          const name = identifier(node.name),
+            atRange = { from: range.from, to: token?.end ?? range.from + node.name.length + 1 };
+          const row = atRules.get(name);
+          if (row) support(atRange, row.support, row.note, { atRule: name });
+          else add(atRange, "info", "unknownAtRule", { atRule: name });
         }
-      }
-      // Each statement's first token owns the @-name, including specialized
-      // Lezer statement nodes (MediaStatement, SupportsStatement, etc.).
-      if (
-        node.parent?.firstChild?.from === node.from &&
-        /^@[\w\\-]/.test(text(node)) &&
-        !node.firstChild
-      ) {
-        const name = identifier(text(node).slice(1));
-        const row = atRules.get(name);
-        if (row) support(node, row.support, row.note, { atRule: name });
-        else add(node.from, node.to, "info", "unknownAtRule", { atRule: name });
-      }
-      if (node.name === "CallLiteral" && !hasError(node)) {
-        const tag = node.getChild("CallTag");
-        if (!tag || identifier(text(tag)) !== "url") return;
-        const value = node.getChild("StringLiteral") ?? node.getChild("ParenthesizedContent");
-        if (!value) return;
-        const path =
-          value.name === "StringLiteral"
-            ? string.decode(text(value))
-            : url.decode(`url(${text(value)})`);
-        if (!isBookImage(path)) add(value.from, value.to, "warning", "externalUrl", { url: path });
-      }
-    },
-  });
+        if (node.type === "Url") {
+          let from = token?.type === tokenTypes.Function ? token.end : range.from + 4;
+          let to = css[range.to - 1] === ")" ? range.to - 1 : range.to;
+          while (
+            parsed.tokens.get(from)?.type === tokenTypes.WhiteSpace ||
+            parsed.tokens.get(from)?.type === tokenTypes.Comment
+          )
+            from = parsed.tokens.get(from)!.end;
+          const argument = parsed.tokens.get(from);
+          if (argument?.type === tokenTypes.String) to = argument.end;
+          else {
+            const raw = css.slice(from, to);
+            const trimmed = raw.trim();
+            from += raw.length - raw.trimStart().length;
+            to = from + trimmed.length;
+          }
+          if (!isBookImage(node.value))
+            add({ from, to }, "warning", "externalUrl", { url: node.value });
+        }
+      },
+    });
   const unique = new Map(
     findings.map((item) => [`${item.from}:${item.to}:${item.code}:${item.severity}`, item]),
   );

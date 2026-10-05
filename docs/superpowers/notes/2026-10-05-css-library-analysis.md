@@ -2,7 +2,7 @@
 
 Дата: 2026-10-05. Контекст: `2026-10-03-kindle-css-checker-design.md`, план `2026-10-05-kindle-css-checker.md`.
 
-## Решение
+## Первоначальное решение (до реализации)
 
 Для текущей спеки использовать Lezer CSS для разбора и добавить `css-tree@^3.2.1` ради публичного `css-tree/utils`: ident/string/url decoding. Это заменяет самописную обработку CSS escapes с небольшим runtime overhead. CodeMirror lint и VueUse debounce остаются как в плане. Полный CSS Tree lexer и набор PostCSS пока не добавлять.
 
@@ -58,3 +58,29 @@ Utils добавили к Lezer 3 288 bytes minified и 1 276 bytes gzip в эт
 Скрипт: `2026-10-05-css-library-audit.mjs` рядом с этим документом. Установить перечисленные версии в отдельный временный каталог; скопировать туда скрипт, запустить из каталога установки с `EDB_REPO` равным пути checkout проекта. Скрипт ничего не меняет в проекте и сборки держит в памяти.
 
 Проверить после реализации: импорт именно `css-tree/utils`, отсутствие parser/lexer/MDN data в добавленном runtime graph, TypeScript resolution декларации subpath, реальные Vite bundle sizes. На Kindle проверяется support table, а не корректность JavaScript parser.
+
+## Пересмотр после финального ревью реализации
+
+Подтверждены реальные ограничения Lezer: missing-colon recovery превращает
+объявления в селекторы и теряет следующую главу правил; escaped dimensions
+разбиваются на несколько узлов; uppercase/escaped URL functions меняют
+форму дерева. Вместо собственного CSS repair принято использовать публичные
+CSS Tree parser/walker/tokenizer для semantic AST, а Lezer — для структурных
+ошибок и фрагментов, восстановленных иначе. CSS Tree тоже может поглотить
+следующие объявления при незакрытой функции, поэтому восстановленные Lezer
+фрагменты повторно разбирает тот же CSS Tree parser. Это библиотечный bridge,
+не самостоятельная грамматика.
+
+Итоговая Vite сборка: JS 1,551.40 KB / 473.94 KB gzip против 1,488.01 KB /
+456.51 KB gzip у первоначальной реализации с utils. Разница около 63.39 KB /
+17.43 KB gzip включает изменение анализатора и UI исправления, поэтому это
+не точная изолированная цена библиотеки. Module graph подтверждает отсутствие
+CSS Tree lexer и MDN data; суммарный pre-minification renderedLength CSS Tree
+modules — 125,493 bytes. Root runtime imports по-прежнему исключены.
+
+Дополнительная нагрузка оправдана воспроизводимыми ошибками корректности.
+Полный lexer общей CSS value grammar, Stylelint и набор PostCSS всё ещё
+не нужны для текущей спеки. Escaped url function names имеют узкую
+нормализацию только на библиотечных Function tokens, сохраняя длину и
+исходные offsets; strings/comments не затрагиваются. CSS input проекта
+не переписывается. Нормативный контекст: [CSS Syntax, consume ident-like token](https://www.w3.org/TR/css-syntax-3/#consume-ident-like-token).

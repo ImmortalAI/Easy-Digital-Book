@@ -4,7 +4,7 @@
 чтобы в будущей сессии можно было продолжить с текущей точки, не
 восстанавливая рассуждения заново.
 
-**Статус (2026-10-05, CSS):** реализован advisory checker синтаксиса и совместимости `custom.css` с Kindle: Lezer + `css-tree/utils`, lint в редакторе, «Стили» в списке проблем и предупреждения экспорта. Непроверенные правила — `partial`; физические проверки Paperwhite 3/12 открыты. План — `docs/superpowers/plans/2026-10-05-kindle-css-checker.md`, отчёт — `docs/superpowers/notes/2026-10-05-css-checker-implementation.md`.
+**Статус (2026-10-05, CSS):** реализован advisory checker синтаксиса и совместимости `custom.css` с Kindle: Lezer + CSS Tree parser/walker/tokenizer, lint в редакторе, «Стили» в списке проблем и предупреждения экспорта. Непроверенные правила — `partial`; физические проверки Paperwhite 3/12 открыты. План — `docs/superpowers/plans/2026-10-05-kindle-css-checker.md`, отчёт — `docs/superpowers/notes/2026-10-05-css-checker-implementation.md`.
 
 **Статус (2026-10-04):** по отзывам пользователя: тёмное превью «старая
 бумага» (только превью, переключатели + Mod+Alt+P, пометка в строке

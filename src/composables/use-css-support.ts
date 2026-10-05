@@ -11,7 +11,7 @@ export function useCssSupport(): void {
   const check = () => diagnostics.setCssFindings(checkKindleCss(project.book?.customCss ?? ""));
   const schedule = useDebounceFn(check, 150);
   const stop = watch(
-    () => [project.bookGeneration, project.book?.customCss] as const,
+    [() => project.bookGeneration, () => project.book?.customCss],
     ([generation, css], previous) => {
       schedule.cancel();
       diagnostics.clearCss();

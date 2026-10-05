@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useCssSupport } from "../use-css-support";
 import { useDiagnosticsStore } from "@/stores/diagnostics";
 import { useProjectStore } from "@/stores/project";
+import { updateMetadata } from "@/services/book/metadata";
 import { createBook } from "@/services/book/create";
 const book = (css: string | null) => ({
   ...createBook({
@@ -72,4 +73,25 @@ describe("book CSS lifecycle", () => {
     diagnostics.clear();
     expect(diagnostics.count).toBe(0);
   });
+});
+
+it("preserves unchanged CSS findings during chapter and metadata edits", async () => {
+  vi.useFakeTimers();
+  setActivePinia(createPinia());
+  const project = useProjectStore();
+  project.setBook(book("p{mystery:x}"));
+  const scope = effectScope();
+  scope.run(useCssSupport);
+  const diagnostics = useDiagnosticsStore();
+  const original = diagnostics.css;
+  project.updateChapterSource("chapter1", "# Changed");
+  await nextTick();
+  expect(diagnostics.css).toBe(original);
+  project.applyMutation(updateMetadata(project.book!, { title: "Changed title" }));
+  await nextTick();
+  expect(diagnostics.css).toBe(original);
+  await vi.advanceTimersByTimeAsync(150);
+  expect(diagnostics.css).toBe(original);
+  scope.stop();
+  vi.useRealTimers();
 });

@@ -123,3 +123,44 @@ describe("checkKindleCss", () => {
   });
   it("has no findings for empty CSS", () => expect(checkKindleCss("")).toEqual([]));
 });
+
+describe("review regressions", () => {
+  it.each([
+    "p { color red; display: grid; } q { mystery: x }",
+    "p { color:red width:2vw; } q { mystery:x }",
+    "p { width:calc(2vw; } q { mystery:x }",
+  ])("recovers declaration contexts without invented selectors: %s", (css) => {
+    const result = findings(css);
+    expect(result.filter((f) => f.code === "syntax")).toHaveLength(1);
+    expect(result.some((f) => f.code === "unknownProperty" && f.token === "mystery")).toBe(true);
+    expect(result.filter((f) => f.code === "unknownSelector")).toEqual([]);
+  });
+  it.each([String.raw`2\76 w`, String.raw`2v\77`])(
+    "checks the full escaped dimension %s",
+    (value) => {
+      const result = findings(`p{width:${value}}`);
+      expect(result).toMatchObject([{ code: "unit", severity: "warning", params: { unit: "vw" } }]);
+      expect(result[0]?.token).toBe(value.slice(1));
+    },
+  );
+  it.each([
+    'URL("https://example.com/a")',
+    "URL(https://example.com/a)",
+    String.raw`u\72 l("https://example.com/a")`,
+    String.raw`u\72 l(https://example.com/a)`,
+  ])("checks equivalent URL function spellings: %s", (call) => {
+    const result = findings(`p{background:${call}}`);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      code: "externalUrl",
+      params: { url: "https://example.com/a" },
+    });
+  });
+  it("recognizes legacy pseudo-elements and permits empty custom properties", () => {
+    expect(findings('p:before{content:"x"}')).toMatchObject([
+      { code: "selector", severity: "warning", token: ":before" },
+    ]);
+    expect(findings("p{--x:;}")).toMatchObject([{ code: "customProperty", severity: "info" }]);
+    expect(findings("p{color:;}").filter((f) => f.code === "syntax")).toHaveLength(1);
+  });
+});

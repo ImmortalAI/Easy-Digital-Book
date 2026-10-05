@@ -74,7 +74,7 @@ Prerequisite: CSS syntax highlighting in the `custom.css` editor (plan
   tree through `@codemirror/lang-css`). It is a plain parser with no DOM or
   CodeMirror view dependency, so it runs inside `services/` and the same
   check runs both in the editor and at export. Add `@lezer/css` as a direct
-  dependency instead of reaching through `lang-css`. CSS escape decoding reuses `ident`, `string`, and `url` from the public `css-tree/utils` subpath, without adding a second parser. Library evaluation: `docs/superpowers/notes/2026-10-05-css-library-analysis.md`.
+  dependency instead of reaching through `lang-css`. Implementation refinement after review: semantic compatibility analysis reuses CSS Tree parser/walker/tokenizer/utils subpaths. Lezer supplements structural syntax errors and recovered fragments. Confirmed Lezer recovery/escaped-token limitations justify the additional parser; no full lexer/MDN dictionaries are bundled. Library evaluation: `docs/superpowers/notes/2026-10-05-css-library-analysis.md`.
 - What it checks:
   - property names (unknown to Kindle → warning);
   - keyword values per property (`position: fixed`, `display: grid`, …);

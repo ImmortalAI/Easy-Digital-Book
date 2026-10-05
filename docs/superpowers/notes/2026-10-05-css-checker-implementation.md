@@ -4,8 +4,8 @@ Branch: `feat/kindle-css-check`. Plan: `../plans/2026-10-05-kindle-css-checker.m
 
 ## Implemented
 
-- Pure Lezer CSS analysis with precise UTF-16 ranges, one syntax finding per document, continued checks of recovered declarations, keyword overrides, units, selectors, at-rules and resource URLs.
-- CSS Tree public utils decode CSS identifiers/strings/URL; CodeMirror owns diagnostics, tooltips and range rendering; VueUse owns debounce.
+- Pure analysis with Lezer structural syntax checks and CSS Tree semantic parsing/walking with precise UTF-16 ranges, one syntax finding per document, continued checks of recovered declarations, keyword overrides, units, selectors, at-rules and resource URLs.
+- CSS Tree public subpaths provide grammar/recovery/tokenization and decode CSS identifiers/strings/URL; CodeMirror owns diagnostics, tooltips and range rendering; VueUse owns debounce.
 - Book-level lifecycle independent of the visible editor, cancellation on replacement/dispose, no changes to project revisions from diagnostics.
 - Warning/info lint, dotted info underline, live translations, Styles expansion and focus navigation including Preview mode.
 - Fresh synchronous export findings for both formats, with no export gating or CSS rewriting.
@@ -37,3 +37,27 @@ automatic unsupported verdicts.
 Paperwhite 3/12 firmware-specific rendering and packaged-app UI/export
 checks on macOS, Windows and Linux remain open in `docs/release-checklist.md`.
 No physical device result was fabricated or inferred from Calibre.
+
+## Final review and fix verification
+
+One independent read-only whole-branch reviewer found five Important
+issues: malformed declaration recovery, escaped dimensions, equivalent URL
+spellings, reparsing unchanged CSS on chapter changes, and unbounded export
+warnings. Legacy pseudo-elements and empty custom property values were
+regraded Important because they produced false diagnostics for valid CSS.
+All were covered in the same regression fix pass; no second review dispatch.
+
+- Regression RED: 10 newly failing unit cases plus a failing real-browser
+  test with export controls below a 900×600 viewport.
+- GREEN: 633 tests / 103 files; `pnpm check` and `pnpm build` passed.
+- Coverage: lines 94.99%, branches 83.86%, functions 94.56%, statements 93.44%.
+- Full Chromium suite: 24 scenarios passed (6.8s).
+- Chromium regression: 90 CSS findings, Export button inside viewport and
+  EPUB successfully saved.
+- CSS Tree parser/walker/tokenizer were enabled after confirmed parser
+  limitations. JS bundle grew about 63 KB minified / 17 KB gzip compared
+  with the initial utils implementation; no CSS Tree lexer/MDN dictionaries.
+  See the updated library analysis for measurement limits.
+- Fresh CSS diagnostics remain unchanged during chapter and metadata edits.
+- Context-sensitive device findings remain inconclusive and physically
+  unverified; there are no deferred code-review minors.

@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
@@ -111,7 +112,10 @@ function requestClose(next: boolean) {
 
 <template>
   <Dialog :open="open" @update:open="requestClose">
-    <DialogContent :show-close-button="false" class="grid gap-4 sm:max-w-md">
+    <DialogContent
+      :show-close-button="false"
+      class="grid max-h-[calc(100dvh-2rem)] gap-4 overflow-y-auto sm:max-w-md"
+    >
       <DialogHeader>
         <DialogTitle>{{ title }}</DialogTitle>
         <DialogDescription>{{ controller.fileName.value }}</DialogDescription>
@@ -122,20 +126,22 @@ function requestClose(next: boolean) {
         variant="destructive"
       >
         <AlertDescription>
-          <ul class="list-disc space-y-1 pl-4">
-            <li
-              v-for="warning in controller.warnings.value"
-              :key="`${warning.code}-${warning.chapterId ?? ''}`"
-            >
-              {{ warning.message }}
-            </li>
-            <li
-              v-for="finding in controller.cssFindings.value"
-              :key="`css-${finding.from}-${finding.to}-${finding.code}`"
-            >
-              {{ t(`cssSupport.${finding.code}`, finding.code, finding.params) }}
-            </li>
-          </ul>
+          <ScrollArea class="[&>[data-slot=scroll-area-viewport]]:max-h-40">
+            <ul class="list-disc space-y-1 pl-4">
+              <li
+                v-for="warning in controller.warnings.value"
+                :key="`${warning.code}-${warning.chapterId ?? ''}`"
+              >
+                {{ warning.message }}
+              </li>
+              <li
+                v-for="finding in controller.cssFindings.value"
+                :key="`css-${finding.from}-${finding.to}-${finding.code}`"
+              >
+                {{ t(`cssSupport.${finding.code}`, finding.code, finding.params) }}
+              </li>
+            </ul>
+          </ScrollArea>
         </AlertDescription>
       </Alert>
 
