@@ -58,9 +58,10 @@ imagesCss.chapters = [
 imagesCss.resources = new Map([
   ["images/cover.png", { mediaType: "image/png", bytes: png }],
   ["images/art/cover.png", { mediaType: "image/png", bytes: png }],
+  ["images/css-only.png", { mediaType: "image/png", bytes: png }],
   ["images/photo.jpg", { mediaType: "image/jpeg", bytes: jpeg }],
 ]);
-imagesCss.customCss = 'body { background-image: url("images/art/cover.png"); }';
+imagesCss.customCss = 'body { background-image: url("images/css-only.png"); }';
 
 const longBook = fixtureBook();
 longBook.metadata.title = "AZW3 Synthetic 300 Chapter Book";

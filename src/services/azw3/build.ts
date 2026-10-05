@@ -102,5 +102,6 @@ export async function buildAzw3(
   );
   check(deps.signal);
   deps.onProgress?.({ stage: "azw3", done: textParts.length, total: textParts.length });
+  check(deps.signal);
   return result;
 }

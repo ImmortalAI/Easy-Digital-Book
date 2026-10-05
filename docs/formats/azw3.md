@@ -700,16 +700,17 @@ Actual assembled record map and first bytes from that fixture:
 | 10        | FDST                       | `46445354 0000000c 00000002 00000000 000009f2 000009f2 00000c3d`           | FDST record 10, flow count 2; HTML `0..2546`, CSS `2546..3133`                |
 | 11–13     | FLIS, FCIS, EOF            | `464c4953…`; `46434953…00000c3d…`; `e98e0d0a`                              | Records 11/12/13, expected 36/52/4-byte lengths                               |
 
-The `images-css.azw3` fixture adds three real resources. `firstResource` is
-record 10; resources 10–12 begin with PNG, PNG and JPEG signatures. Its EXTH
-resource count is 3 and cover offset is 1 because resources sort by normalized
-source path (`images/art/cover.png` precedes `images/cover.png`). Image markup
-uses one-based `kindle:embed:0001..0003`; EXTH 201 remains zero-based. CSS image
-URIs are emitted unquoted, for example
-`url(kindle:embed:0001?mime=image/png)`. Calibre's CSS parser turned the quoted
-form into malformed nested quotes and dropped the background rule; the
-unquoted form round-trips to `url(images/00001.png)` and the referenced image
-exists in the converted EPUB. Generic EPUB CSS serialization is unchanged.
+The `images-css.azw3` fixture adds four real resources. `firstResource` is
+record 10; resources 10–13 begin with PNG, PNG, PNG and JPEG signatures. Its
+EXTH resource count is 4 and cover offset is 1 because resources sort by
+normalized source path (`images/art/cover.png` precedes `images/cover.png`).
+The XHTML uses embeds 0001, 0002 and 0004; embed 0003 is referenced only by
+custom CSS. EXTH 201 remains zero-based. CSS image URIs are emitted unquoted,
+for example `url(kindle:embed:0003?mime=image/png)`. Calibre's CSS parser turned
+the quoted form into malformed nested quotes and dropped the background rule;
+the unquoted form round-trips to `url(images/00003.png)`. The verifier reports
+three inline image references and one CSS image URL, all resolving to existing
+files. Generic EPUB CSS serialization is unchanged.
 
 Calibre 9.15 commands used for independent inspection and reconstruction:
 
@@ -717,6 +718,7 @@ Calibre 9.15 commands used for independent inspection and reconstruction:
 node --import tsx scripts/build-fixture-azw3.mts
 calibre-debug --inspect-mobi images-css.azw3
 ebook-convert multilingual-notes.azw3 multilingual-notes.epub
+python3 scripts/verify-azw3.py <fixture-directory>
 ```
 
 All four generated fixtures (minimal, multilingual notes, images/CSS, and
@@ -726,11 +728,15 @@ fragments, inline images or CSS image targets. The multilingual conversion
 resolved both references to the same `fn-1` target and its backlink to the
 first `fnref-1`. The long fixture reconstructs a 1,039,134-byte text stream
 with 254 PalmDOC records; the HTML flow is `0..1,038,547`, followed by one CSS
-flow. Calibre emitted 304 XHTML/HTML documents on conversion and the audit
-resolved all 606 links and 300 inline image references. This validates the
-current single HTML flow plus fragments on this synthetic fixture; it is not a
-measurement of an alternate multi-HTML-flow encoding or a user-supplied real
-book. No arbitrary chapter-count limit is introduced.
+flow. Calibre emitted 303 XHTML/HTML documents; its audit resolved all 606
+local links and found zero image references in that image-free fixture. Across
+all four fixtures it resolved 628 local links, three inline image references,
+and one CSS-only image URL. `scripts/verify-azw3.py` writes full inspector and
+conversion logs, decompilation files, and exact per-fixture counts under
+`calibre-audit/`. This validates the current single HTML flow plus fragments on
+the synthetic fixture; it is not a measurement of an alternate multi-HTML-flow
+encoding or a user-supplied real book. No arbitrary chapter-count limit is
+introduced.
 
 The thumbnail index remains `NULL`; no thumbnail record is generated. The
 cover resource and EXTH 201 are written when a cover exists. Library cover

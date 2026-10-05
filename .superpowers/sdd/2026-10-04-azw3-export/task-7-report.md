@@ -20,7 +20,11 @@ within 128-entry batches; the PalmDB writer checks/yields while copying each
 and appended record batches. A single XML text node's encoding/serialization,
 whole-document XML validation, final contiguous allocation, and one image
 processing call remain synchronous; cancellation cannot interrupt those
-individual operations.
+individual operations. Index encoding yields while emitting family rows and
+iterating navigation entries, but it synchronously projects all SKEL/FRAG
+rows, collects NCX section rows, and assembles all TBS trailers. These
+whole-collection preparation loops are additional cancellation-latency
+boundaries for unusually large indexes.
 
 The AZW3 resource rewrite emits CSS `kindle:embed` URLs without quotes. A
 Calibre round-trip showed its parser malformed the quoted Kindle URI and
@@ -73,19 +77,21 @@ same note target and the note backlink resolved to the first reference.
 
 One measured run:
 
-| Fixture | AZW3 bytes | Build time |
-| --- | ---: | ---: |
-| Minimal | 2,977 | 5 ms |
-| Multilingual notes | 3,817 | 3 ms |
-| Images and CSS | 6,244 | 3 ms |
-| 300 chapters, 9,000 paragraphs in chapter 1 | 300,641 | 159 ms |
+| Fixture                                     | AZW3 bytes | Build time |
+| ------------------------------------------- | ---------: | ---------: |
+| Minimal                                     |      2,977 |       5 ms |
+| Multilingual notes                          |      3,817 |       4 ms |
+| Images and CSS                              |      6,321 |       2 ms |
+| 300 chapters, 9,000 paragraphs in chapter 1 |    300,641 |     169 ms |
 
-The 300-chapter file contains 1,039,134 uncompressed text bytes and 254
-PalmDOC records. Calibre reconstructed it as 304 HTML/XHTML documents. The
-text is one HTML flow `0..1,038,547`, then one CSS flow; the audit resolved all
-606 local links and 300 inline-image references. Four-fixture process peak RSS
-was 192,208 KiB, including Node startup and fixture construction. These are
-synthetic local measurements, not editor performance promises.
+The current 300-chapter file contains 1,039,134 uncompressed text bytes and
+254 PalmDOC records. Calibre reconstructed it as 303 HTML/XHTML documents.
+The text is one HTML flow `0..1,038,547`, then one CSS flow. The current audit
+reports 606 links and zero images in this image-free long fixture. Across all
+four fixtures it found 628 resolved links, three resolved inline images and
+one resolved CSS image URL. Four-fixture process peak RSS was 223,104 KiB,
+including Node startup and fixture construction. These are synthetic local
+measurements, not editor performance promises.
 
 Commands used for independent validation:
 
@@ -124,6 +130,7 @@ There is no release-readiness claim.
 - `src/services/azw3/__tests__/resources.test.ts`
 - `src/services/export/types.ts`
 - `scripts/build-fixture-azw3.mts`
+- `scripts/verify-azw3.py`
 - `package.json`
 - `docs/formats/azw3.md`
 - `docs/formats/azw3-research.md`
@@ -133,3 +140,58 @@ There is no release-readiness claim.
 `pnpm check` passed: Vue typecheck, Oxlint, Oxfmt check, and 97 Vitest files /
 565 tests. `git diff --check` passed. Vitest emitted its existing happy-dom
 environment performance notice; no test failed.
+
+## Task 7 review fixes — 2026-10-05
+
+Review found that the final caller-controlled progress callback could abort
+after the last signal check, yet still receive resolved bytes. Added the
+post-callback signal check. The regression uses the two final-total `azw3`
+progress events: it aborts from the second (after PalmDB assembly) and asserts
+the promise rejects with `export.cancelled`. Before the fix, the test failed
+because the promise resolved a `Uint8Array`; after the fix it passes.
+
+The image fixture now has a distinct `images/css-only.png` resource referenced
+only by custom CSS. Its fourth resource record is ordinal 0003; the converted
+EPUB stylesheet points to `images/00003.png`, which exists. This separates
+CSS-only evidence from the three inline image references. The earlier report
+incorrectly associated 300 image references with the image-free long fixture;
+the actual audited count is zero for that fixture.
+
+Added `scripts/verify-azw3.py`, a repeatable Calibre inspection, conversion,
+and EPUB resource/link audit. It saves Calibre logs and decompilation output
+under `calibre-audit/` and writes `audit.json`. Exact raw evidence from this
+run:
+
+```text
+Fixture directory: /private/var/folders/c3/d8gygt8s1f11_h7vnw6y0ns80000gn/T/edb-azw3-fixtures-uXrVAU
+Audit JSON:        /private/var/folders/c3/d8gygt8s1f11_h7vnw6y0ns80000gn/T/edb-azw3-fixtures-uXrVAU/calibre-audit/audit.json
+Image inspection: /private/var/folders/c3/d8gygt8s1f11_h7vnw6y0ns80000gn/T/edb-azw3-fixtures-uXrVAU/calibre-audit/images-css/inspect/decompiled_images-css/header.txt
+Image EPUB:       /private/var/folders/c3/d8gygt8s1f11_h7vnw6y0ns80000gn/T/edb-azw3-fixtures-uXrVAU/calibre-audit/images-css/images-css.epub
+Image CSS target: images/00003.png (present in that EPUB)
+minimal:          1 HTML file, 2 local links, 0 inline images, 0 CSS image URLs, 0 unresolved
+multilingual:     5 HTML files, 17 local links, 0 inline images, 0 CSS image URLs, 0 unresolved
+images-css:       2 HTML files, 3 local links, 3 inline images, 1 CSS image URL, 0 unresolved
+long:             303 HTML files, 606 local links, 0 inline images, 0 CSS image URLs, 0 unresolved
+totals:           628 local links, 3 inline image references, 1 CSS image URL; all resolve
+```
+
+The current rerun measured 2,977/5ms minimal, 3,817/4ms multilingual,
+6,321/2ms images/CSS and 300,641/169ms long; process peak RSS was 223,104
+KiB. Those are one synthetic run, including Node startup and fixture
+construction in the process RSS. Calibre's long-file header reports 267
+records, 1,039,134 text bytes, 254 PalmDOC records and 2 FDST flows. Its
+decompiled FDST is saved at
+`/private/var/folders/c3/d8gygt8s1f11_h7vnw6y0ns80000gn/T/edb-azw3-fixtures-uXrVAU/calibre-audit/300-chapter-long/inspect/decompiled_300-chapter-long/fdst.record`.
+
+Fix verification:
+
+```text
+pnpm vitest run src/services/azw3/__tests__/build.test.ts src/services/azw3/__tests__/resources.test.ts
+2 files / 13 tests passed
+python3 scripts/verify-azw3.py /var/folders/c3/d8gygt8s1f11_h7vnw6y0ns80000gn/T/edb-azw3-fixtures-uXrVAU
+4 fixtures inspected/converted; all 628 local links, 3 inline images, and 1 CSS image URL resolved
+pnpm exec vue-tsc --noEmit
+pnpm lint
+pnpm format:check
+All passed.
+```

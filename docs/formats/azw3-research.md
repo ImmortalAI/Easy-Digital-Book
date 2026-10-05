@@ -158,27 +158,30 @@ The reproducible fixture generator is `scripts/build-fixture-azw3.mts`; it
 writes four files to a unique OS temporary directory and embeds no user text.
 Run it with `node --import tsx scripts/build-fixture-azw3.mts`. The images/CSS
 fixture uses real decodable 64×64 JPEG and real 1×1 PNG bytes; Calibre extracted
-all three resource records as PNG/PNG/JPEG. It covers equal image basenames in
-different project paths and a CSS-only image reference.
+all four resource records as PNG/PNG/PNG/JPEG. It covers equal image basenames
+in different project paths and a distinct PNG referenced only by CSS.
 
 One observed generator run:
 
 | Synthetic fixture                                     |     AZW3 size | Build time |
 | ----------------------------------------------------- | ------------: | ---------: |
 | minimal                                               |   2,977 bytes |       5 ms |
-| multilingual notes                                    |   3,817 bytes |       3 ms |
-| images and CSS                                        |   6,244 bytes |       3 ms |
-| 300 chapters, including 9,000 paragraphs in chapter 1 | 300,641 bytes |     159 ms |
+| multilingual notes                                    |   3,817 bytes |       4 ms |
+| images and CSS                                        |   6,321 bytes |       2 ms |
+| 300 chapters, including 9,000 paragraphs in chapter 1 | 300,641 bytes |     169 ms |
 
-The four-fixture Node process peak RSS was 192,208 KiB. Times and memory are
+The four-fixture Node process peak RSS was 223,104 KiB. Times and memory are
 local synthetic measurements, include JS startup/fixture creation in the RSS
 high-water mark, and are not editor performance guarantees. The long stream
 has 1,039,134 uncompressed bytes, 254 PalmDOC text records, one HTML flow and
 one CSS flow. One HTML flow plus fragments reconstructed through Calibre and
-round-tripped into 304 HTML/XHTML files. The converted EPUB audit checked all
-606 local links and 300 inline image references; all linked files/fragments and
-image targets existed. This exercises the selected single-flow design with a
-large chapter and 299 other chapters. A separate multiple-HTML-FDST-flow
+round-tripped into 303 HTML/XHTML files. The reproducible audit reports 606
+resolved local links, 0 inline images, and 0 CSS image URLs for this image-free
+long fixture. Across the four outputs it reports 628 resolved local links;
+the images/CSS EPUB has 3 resolved inline images and 1 resolved CSS image URL.
+That CSS URL points to separate resource `images/00003.png`, which XHTML does
+not reference. This exercises the selected single-flow design with a large
+chapter and 299 other chapters. A separate multiple-HTML-FDST-flow
 encoding was not implemented or benchmarked; the current contract concatenates
 all HTML documents in flow 0. A user-authored real-book file was not supplied,
 so no claim is made about measurements on one.
@@ -189,6 +192,12 @@ All four outputs passed both independent Calibre commands (Calibre 9.15.0):
 calibre-debug --inspect-mobi fixture.azw3
 ebook-convert fixture.azw3 roundtrip.epub
 ```
+
+`python3 scripts/verify-azw3.py <fixture-directory>` repeats inspection and
+conversion, stores complete inspector/converter logs and Calibre decompilation
+directories under `calibre-audit/`, and writes `audit.json` with per-fixture
+XHTML, link, inline-image and CSS-image counts plus unresolved targets. The
+Task 7 report records the output directory used for its audited run.
 
 The ElementTree audit of the multilingual output found two repeated references
 to `notes...#fn-1`; the note linked back to the first `fnref-1`. It also

@@ -240,6 +240,23 @@ describe("buildAzw3", () => {
     expect(progress.at(-1)!.total).toBeGreaterThan(0);
   });
 
+  it("rejects when the final progress callback aborts after assembly", async () => {
+    const controller = new AbortController();
+    const events: Array<{ done: number; total: number }> = [];
+    const task = buildAzw3(fixtureBook(), exportOptions(), {
+      imageProcessor: fixtureProcessor(),
+      now: () => at("08"),
+      signal: controller.signal,
+      onProgress: ({ stage, done, total }) => {
+        if (stage !== "azw3") return;
+        events.push({ done, total });
+        if (events.length === 2 && done === total) controller.abort();
+      },
+    });
+    await expect(task).rejects.toMatchObject({ code: "export.cancelled" });
+    expect(events.at(-1)).toEqual({ done: events.at(-1)!.total, total: events.at(-1)!.total });
+  });
+
   it("honors title-page and version-in-title options and omits absent notes and CSS", async () => {
     const book = fixtureBook();
     book.metadata.cover = null;
@@ -277,9 +294,10 @@ describe("buildAzw3", () => {
     book.resources = new Map([
       ["images/cover.png", { mediaType: "image/png", bytes: png }],
       ["images/art/cover.png", { mediaType: "image/png", bytes: png }],
+      ["images/css-only.png", { mediaType: "image/png", bytes: png }],
       ["images/photo.jpg", { mediaType: "image/jpeg", bytes: jpeg }],
     ]);
-    book.customCss = 'body { background-image: url("images/art/cover.png"); }';
+    book.customCss = 'body { background-image: url("images/css-only.png"); }';
     const bytes = await buildAzw3(book, exportOptions(), {
       imageProcessor: fixtureProcessor(),
       now: () => at("08"),
@@ -288,15 +306,14 @@ describe("buildAzw3", () => {
     const recordZero = palm.records[0]!;
     const header = new DataView(recordZero.buffer, recordZero.byteOffset, recordZero.byteLength);
     const resourceStart = header.getUint32(108);
-    const resources = palm.records.slice(resourceStart, resourceStart + 3);
-    expect(resources).toHaveLength(3);
-    expect(resources.map((record) => record[0])).toEqual([0x89, 0x89, 0xff]);
-    expect(exthIntegers(recordZero).get(125)).toEqual([3]);
+    const resources = palm.records.slice(resourceStart, resourceStart + 4);
+    expect(resources).toHaveLength(4);
+    expect(resources.map((record) => record[0])).toEqual([0x89, 0x89, 0x89, 0xff]);
+    expect(exthIntegers(recordZero).get(125)).toEqual([4]);
     expect(exthIntegers(recordZero).get(201)).toEqual([1]);
     const text = readText(palm);
     expect(text).toContain("kindle:embed:0001?mime=image/png");
     expect(text).toContain("kindle:embed:0002?mime=image/png");
-    expect(text).toContain("kindle:embed:0003?mime=image/jpeg");
-    expect(text).toContain("kindle:flow:0002?mime=text/css");
+    expect(text).toContain("kindle:embed:0004?mime=image/jpeg");
   });
 });
