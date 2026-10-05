@@ -234,6 +234,7 @@ describe("application stores", () => {
       grayscale: false,
       titlePage: true,
       versionInTitle: true,
+      format: "epub",
       lastDir: null,
     });
     settings.exportSettings.imagePreset = "original";
@@ -242,7 +243,33 @@ describe("application stores", () => {
     expect(await services.settings.get("export", null)).toMatchObject({
       imagePreset: "original",
       lastDir: "/tmp",
+      format: "epub",
     });
+  });
+
+  it("defaults missing and invalid export formats to EPUB and round-trips AZW3", async () => {
+    const services = createInMemoryPlatformServices();
+    await services.settings.set("export", { imagePreset: "original" });
+    setActivePinia(createPinia());
+    const missing = useSettingsStore();
+    missing.configure(services.settings);
+    await missing.load();
+    expect(missing.exportSettings.format).toBe("epub");
+
+    await services.settings.set("export", { format: "pdf" });
+    setActivePinia(createPinia());
+    const invalid = useSettingsStore();
+    invalid.configure(services.settings);
+    await invalid.load();
+    expect(invalid.exportSettings.format).toBe("epub");
+
+    invalid.exportSettings.format = "azw3";
+    await invalid.persist();
+    setActivePinia(createPinia());
+    const reloaded = useSettingsStore();
+    reloaded.configure(services.settings);
+    await reloaded.load();
+    expect(reloaded.exportSettings.format).toBe("azw3");
   });
 
   it("persists the theme choice with a system default", async () => {

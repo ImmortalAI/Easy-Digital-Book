@@ -1,8 +1,15 @@
 import type { ExportProgress } from "@/services/export/types";
 import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
 import { checkBook } from "@/services/checks/book-checks";
-import { buildEpub, type BuildEpubDependencies, type ExportOptions } from "@/services/epub/build";
-import { makeEpubFileName } from "@/services/epub/file-name";
+import { buildAzw3 } from "@/services/azw3/build";
+import { buildEpub } from "@/services/epub/build";
+import { makeExportFileName } from "@/services/export/file-name";
+import type {
+  BuildDependencies,
+  ExportBuilder,
+  ExportFormat,
+  ExportOptions,
+} from "@/services/export/types";
 import { BrowserImageProcessor } from "@/services/platform/image-processor";
 import { snapshotBook, type useProjectStore } from "@/stores/project";
 import type { useSettingsStore } from "@/stores/settings";
@@ -22,16 +29,19 @@ export interface ExportControllerOptions {
   settings: ReturnType<typeof useSettingsStore>;
   imageProcessor?: ImageProcessor;
   now?: () => Date;
-  build?: typeof buildEpub;
+  builders?: Partial<Record<ExportFormat, ExportBuilder>>;
 }
 export interface ExportController {
   options: Ref<ExportOptions>;
+  format: Ref<ExportFormat>;
   fileName: ComputedRef<string>;
   warnings: ComputedRef<ReturnType<typeof checkBook>>;
   progress: Ref<ExportProgress | null>;
   exporting: Ref<boolean>;
   error: Ref<AppError | null>;
   lastOutput: Ref<string | null>;
+  exportBook(request?: ExportRequest): Promise<string | null>;
+  /** Temporary compatibility alias for the export dialog, migrated in Task 9. */
   exportEpub(request?: ExportRequest): Promise<string | null>;
   revealOutput(): Promise<void>;
 }
@@ -56,6 +66,7 @@ export function createExportController(options: ExportControllerOptions): Export
     titlePage: settings.exportSettings.titlePage,
     versionInTitle: settings.exportSettings.versionInTitle,
   });
+  const format = ref<ExportFormat>(settings.exportSettings.format);
   const progress = ref<ExportProgress | null>(null);
   const exporting = ref(false);
   const error = ref<AppError | null>(null);
@@ -70,18 +81,19 @@ export function createExportController(options: ExportControllerOptions): Export
           titlePage: value.titlePage,
           versionInTitle: value.versionInTitle,
         });
+        format.value = value.format;
       }
     },
     { deep: true },
   );
   const fileName = computed(() =>
     project.book
-      ? makeEpubFileName(project.book.metadata, exportOptions.value.versionInTitle)
-      : "book.epub",
+      ? makeExportFileName(project.book.metadata, exportOptions.value.versionInTitle, format.value)
+      : `book.${format.value}`,
   );
   const warnings = computed(() => (project.book ? checkBook(snapshotBook(project.book)) : []));
 
-  async function exportEpub(request: ExportRequest = {}): Promise<string | null> {
+  async function exportBook(request: ExportRequest = {}): Promise<string | null> {
     if (!project.book) throw new AppError("export.noProject", "No project is open");
     if (request.signal?.aborted) return null;
     if (exporting.value) return null;
@@ -91,35 +103,51 @@ export function createExportController(options: ExportControllerOptions): Export
     let processor = options.imageProcessor;
     let ownedProcessor = false;
     try {
+      const selectedFormat = format.value;
+      const selectedOptions = { ...exportOptions.value };
+      const snapshot = snapshotBook(project.book);
+      const defaultFileName = makeExportFileName(
+        snapshot.metadata,
+        selectedOptions.versionInTitle,
+        selectedFormat,
+      );
       const target =
         request.path ??
         (await services.dialogs.save({
-          title: request.dialogTitle ?? "Export EPUB",
-          defaultPath: joinPath(settings.exportSettings.lastDir ?? "", fileName.value),
-          filters: [{ name: request.dialogFilterName ?? "EPUB", extensions: ["epub"] }],
+          title: request.dialogTitle ?? `Export ${selectedFormat.toUpperCase()}`,
+          defaultPath: joinPath(settings.exportSettings.lastDir ?? "", defaultFileName),
+          filters: [
+            {
+              name: request.dialogFilterName ?? `${selectedFormat.toUpperCase()} book`,
+              extensions: [selectedFormat],
+            },
+          ],
         }));
       if (!target) return null;
       checkCancelled(request.signal);
-      const snapshot = snapshotBook(project.book);
       if (!processor) {
         processor = new BrowserImageProcessor();
         ownedProcessor = true;
       }
-      const buildDeps: BuildEpubDependencies = {
+      const buildDeps: BuildDependencies = {
         imageProcessor: processor,
         now: options.now ?? (() => new Date()),
         signal: request.signal,
         onProgress: (value) => {
           progress.value = value;
         },
+        yieldControl: () => new Promise((resolve) => setTimeout(resolve, 0)),
       };
-      const bytes = await (options.build ?? buildEpub)(snapshot, exportOptions.value, buildDeps);
+      const builder =
+        options.builders?.[selectedFormat] ?? (selectedFormat === "epub" ? buildEpub : buildAzw3);
+      const bytes = await builder(snapshot, selectedOptions, buildDeps);
       checkCancelled(request.signal);
       await services.files.writeFileAtomic(target, bytes);
       lastOutput.value = target;
       const nextSettings = {
         ...settings.exportSettings,
-        ...exportOptions.value,
+        ...selectedOptions,
+        format: selectedFormat,
         lastDir: directoryOf(target),
       };
       settings.exportSettings = nextSettings;
@@ -133,7 +161,7 @@ export function createExportController(options: ExportControllerOptions): Export
       }
       const appError = appErrorFromUnknown(cause, "export.failed");
       error.value = appError;
-      services.logger.error("EPUB export failed", { code: appError.code, name: appError.name });
+      services.logger.error("Book export failed", { code: appError.code, name: appError.name });
       throw appError;
     } finally {
       if (ownedProcessor) processor?.dispose();
@@ -141,12 +169,14 @@ export function createExportController(options: ExportControllerOptions): Export
     }
   }
 
+  const exportEpub = exportBook;
+
   async function revealOutput(): Promise<void> {
     if (!lastOutput.value) return;
     try {
       await services.opener.reveal(lastOutput.value);
     } catch (revealError) {
-      services.logger.warn("EPUB exported but could not reveal output", {
+      services.logger.warn("Exported book could not reveal output", {
         code: appErrorFromUnknown(revealError, "platform.opener").code,
       });
     }
@@ -154,12 +184,14 @@ export function createExportController(options: ExportControllerOptions): Export
 
   return {
     options: exportOptions,
+    format,
     fileName,
     warnings,
     progress,
     exporting,
     error,
     lastOutput,
+    exportBook,
     exportEpub,
     revealOutput,
   };

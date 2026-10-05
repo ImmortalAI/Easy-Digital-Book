@@ -3,7 +3,9 @@ import { ref } from "vue";
 import type { SettingsRepository } from "@/types/platform";
 import type { SupportedLocale } from "@/plugins/i18n";
 import type { Theme } from "@/composables/use-theme";
+import type { ExportFormat } from "@/services/export/types";
 export interface ExportSettings {
+  format: ExportFormat;
   imagePreset: "kindle-paperwhite" | "original";
   grayscale: boolean;
   titlePage: boolean;
@@ -20,6 +22,7 @@ export interface UpdateSettings {
   lastCheckedAt: number | null;
 }
 const defaultExport: ExportSettings = {
+  format: "epub",
   imagePreset: "kindle-paperwhite",
   grayscale: false,
   titlePage: true,
@@ -42,9 +45,11 @@ export const useSettingsStore = defineStore("settings", () => {
   async function load() {
     confirmDelete.value = (await repository?.get("confirmDelete", true)) ?? true;
     recentFiles.value = ((await repository?.get("recentFiles", [])) ?? []).slice(0, 10);
+    const storedExport = await repository?.get<Partial<ExportSettings>>("export", {});
     exportSettings.value = {
       ...defaultExport,
-      ...(await repository?.get<Partial<ExportSettings>>("export", {})),
+      ...storedExport,
+      format: storedExport?.format === "azw3" ? "azw3" : "epub",
     };
     locale.value = (await repository?.get<SupportedLocale | null>("locale", null)) ?? null;
     theme.value = (await repository?.get<Theme>("theme", "system")) ?? "system";
