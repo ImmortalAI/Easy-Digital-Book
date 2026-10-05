@@ -6,7 +6,12 @@ import zh from "@/locales/zh-CN.json";
 
 describe("Kindle support table", () => {
   it("names sources and locale keys for every row", () => {
-    for (const rows of Object.values(kindleSupport))
+    for (const rows of [
+      kindleSupport.properties,
+      kindleSupport.selectors,
+      kindleSupport.atRules,
+      kindleSupport.units,
+    ])
       for (const row of rows) {
         expect(row.source.trim()).not.toBe("");
         expect(row.note).toMatch(/^cssSupport\./);
@@ -19,7 +24,12 @@ describe("Kindle support table", () => {
       }
   });
   it("keeps all unverified rows and value overrides partial", () => {
-    for (const rows of Object.values(kindleSupport))
+    for (const rows of [
+      kindleSupport.properties,
+      kindleSupport.selectors,
+      kindleSupport.atRules,
+      kindleSupport.units,
+    ])
       for (const row of rows) {
         expect(row.support).toBe("partial");
         if ("values" in row)
@@ -27,7 +37,12 @@ describe("Kindle support table", () => {
       }
   });
   it("has unique rule identities and covers the four selector patterns", () => {
-    for (const rows of Object.values(kindleSupport)) {
+    for (const rows of [
+      kindleSupport.properties,
+      kindleSupport.selectors,
+      kindleSupport.atRules,
+      kindleSupport.units,
+    ]) {
       const keys = rows.map((row) =>
         "property" in row ? row.property : `${"pattern" in row ? row.pattern : ""}:${row.name}`,
       );
