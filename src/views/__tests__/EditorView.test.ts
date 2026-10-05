@@ -384,3 +384,26 @@ describe("EditorView Task 13 integration", () => {
     wrapper.unmount();
   });
 });
+
+it("opens CSS at a warning range from preview mode", async () => {
+  setActivePinia(createPinia());
+  const book = bookWithTwoChapters();
+  book.customCss = "p { mystery: x; }";
+  useProjectStore().setBook(book);
+  const layout = useLayoutStore();
+  layout.center = { kind: "chapter", id: "chapter1" };
+  layout.mode = "preview";
+  const wrapper = mount(EditorView, { attachTo: document.body });
+  wrapper
+    .findComponent({ name: "WarningsPopover" })
+    .vm.$emit("select", { kind: "css", from: 4, to: 11 });
+  await nextTick();
+  await nextTick();
+  expect(layout.center).toEqual({ kind: "css" });
+  expect(layout.mode).toBe("split");
+  const view = CodeMirrorView.findFromDOM(wrapper.get(".cm-editor").element as HTMLElement)!;
+  expect(view.state.selection.main.from).toBe(4);
+  expect(view.state.selection.main.to).toBe(11);
+  expect(view.hasFocus).toBe(true);
+  wrapper.unmount();
+});

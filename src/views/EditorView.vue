@@ -6,7 +6,7 @@ import { useResolvedTheme } from "@/composables/use-theme";
 import { projectFilesKey } from "@/composables/use-project-files";
 import { useLayoutStore, type CenterView, type LayoutMode } from "@/stores/layout";
 import { useProjectStore } from "@/stores/project";
-import type { DiagnosticPosition } from "@/types/diagnostics";
+import type { DiagnosticPosition, WarningSelection } from "@/types/diagnostics";
 import AppToolbar from "@/components/layout/AppToolbar.vue";
 import FileMenu from "@/components/layout/FileMenu.vue";
 import ContentHeader from "@/components/layout/ContentHeader.vue";
@@ -57,6 +57,7 @@ const sourceEditor = ref<{
   focusRange: (range: { from: number; to: number }) => void;
   syncSource: (source: string, cursor: number) => void;
 } | null>(null);
+const cssEditor = ref<{ focusRange(range: { from: number; to: number }): void } | null>(null);
 const pendingFocusPosition = ref<DiagnosticPosition | null>(null);
 const focusRequest = ref(0);
 const pendingFocusRange = ref<{ from: number; to: number } | null>(null);
@@ -211,7 +212,19 @@ function selectActivity(view: "explorer" | "search" | "settings") {
   persistLayout();
 }
 
-async function selectWarning(item: { chapterId?: string; position?: DiagnosticPosition }) {
+async function selectWarning(item: WarningSelection) {
+  if ("kind" in item && item.kind === "css") {
+    if (!project.book?.customCss) return;
+    layout.center = { kind: "css" };
+    if (layout.mode === "preview") {
+      layout.mode = "split";
+      persistLayout();
+    }
+    await nextTick();
+    cssEditor.value?.focusRange(item);
+    return;
+  }
+  if ("kind" in item) return;
   const chapterId = item.chapterId ?? selectedChapterId.value;
   if (!chapterId || !hasChapter(chapterId)) return;
   layout.center = { kind: "chapter", id: chapterId };
@@ -377,7 +390,7 @@ onMounted(findSourceScroller);
               :focus-request="focusRequest"
               :import-image="importImageAt"
             />
-            <CssEditor v-else-if="layout.center.kind === 'css'" />
+            <CssEditor ref="cssEditor" v-else-if="layout.center.kind === 'css'" />
             <div v-else class="grid flex-1 place-items-center text-muted-foreground">
               {{ t("editor.chooseChapter", "Select a chapter") }}
             </div>

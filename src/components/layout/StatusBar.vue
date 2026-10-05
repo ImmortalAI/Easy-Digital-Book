@@ -5,6 +5,8 @@ import { IconPalette } from "@tabler/icons-vue";
 import { Button } from "@/components/ui/button";
 import WarningsPopover from "@/components/editor/WarningsPopover.vue";
 
+import type { WarningSelection } from "@/types/diagnostics";
+
 export type SaveState = "saved" | "unsaved" | "saving";
 
 const props = defineProps<{
@@ -17,7 +19,7 @@ const props = defineProps<{
   previewStyled?: boolean;
 }>();
 const emit = defineEmits<{
-  selectWarning: [item: { chapterId?: string; position?: { line: number; column: number } }];
+  selectWarning: [item: WarningSelection];
   showOriginalPreview: [];
 }>();
 const { t } = useSafeI18n();
