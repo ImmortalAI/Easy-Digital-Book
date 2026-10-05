@@ -153,15 +153,22 @@ class MemoryRecovery implements RecoveryStore {
 }
 
 export interface InMemoryPlatformOptions {
-  dialogPaths?: { project?: string; epub?: string };
+  dialogPaths?: { project?: string; epub?: string; azw3?: string };
   confirm?: boolean;
+}
+
+export interface InMemoryPlatformTestApi {
+  files: Map<string, Uint8Array>;
+  settings: Map<string, unknown>;
+  cancelNextSave(): void;
 }
 
 export function createInMemoryPlatformServices(
   options: InMemoryPlatformOptions = {},
-): PlatformServices {
+): PlatformServices & { test: InMemoryPlatformTestApi } {
   const files = new MemoryFiles();
   const settings = new MemorySettings();
+  let cancelNextSave = false;
   const logger = { debug() {}, info() {}, warn() {}, error() {} };
   const pendingOpenPaths: string[] = [];
   const openListeners = new Set<() => void>();
@@ -187,10 +194,14 @@ export function createInMemoryPlatformServices(
         return options.dialogPaths?.project ?? null;
       },
       async save(dialogOptions) {
-        const isEpub = dialogOptions?.filters?.some((filter) => filter.extensions.includes("epub"));
-        return isEpub
-          ? (options.dialogPaths?.epub ?? null)
-          : (options.dialogPaths?.project ?? null);
+        if (cancelNextSave) {
+          cancelNextSave = false;
+          return null;
+        }
+        const extensions = dialogOptions?.filters?.flatMap((filter) => filter.extensions) ?? [];
+        if (extensions.includes("azw3")) return options.dialogPaths?.azw3 ?? null;
+        if (extensions.includes("epub")) return options.dialogPaths?.epub ?? null;
+        return options.dialogPaths?.project ?? null;
       },
       async confirm() {
         return options.confirm ?? false;
@@ -203,6 +214,13 @@ export function createInMemoryPlatformServices(
     opener: { async reveal() {}, async open() {} },
     updates: noUpdates,
     window,
+    test: {
+      files: files.data,
+      settings: settings.data,
+      cancelNextSave() {
+        cancelNextSave = true;
+      },
+    },
   };
 }
 

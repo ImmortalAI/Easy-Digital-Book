@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { buildAzw3 } from "../src/services/azw3/build";
@@ -10,7 +10,11 @@ import {
   png,
 } from "../src/services/azw3/__tests__/fixtures";
 
-const outputDir = await mkdtemp(join(tmpdir(), "edb-azw3-fixtures-"));
+const configuredOutputDir = process.env.EDB_AZW3_FIXTURE_DIR;
+const outputDir = configuredOutputDir
+  ? resolve(configuredOutputDir)
+  : await mkdtemp(join(tmpdir(), "edb-azw3-fixtures-"));
+if (configuredOutputDir) await rm(outputDir, { recursive: true, force: true });
 await mkdir(outputDir, { recursive: true });
 const now = () => new Date("2026-01-02T03:04:05.000Z");
 const writeBook = async (name: string, book: ReturnType<typeof fixtureBook>) => {

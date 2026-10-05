@@ -4,11 +4,10 @@
 
 # Easy Digital Book
 
-### Write your novel. Get a Kindle-ready EPUB.
+### Write your novel. Export EPUB or Kindle AZW3.
 
 A calm, focused desktop editor that turns chapters of fiction into clean,
-valid EPUB 3 books for Kindle Paperwhite — no Calibre round-trips, no Sigil
-spelunking.
+valid EPUB 3 or AZW3/KF8 books for Kindle Paperwhite — no Sigil spelunking.
 
 [![Latest release](https://img.shields.io/github/v/release/ImmortalAI/easy-digital-book?style=for-the-badge&logo=github&label=Release&color=3b4252)](https://github.com/ImmortalAI/easy-digital-book/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/ImmortalAI/easy-digital-book/total?style=for-the-badge&logo=github&label=Downloads&color=3b4252)](https://github.com/ImmortalAI/easy-digital-book/releases)
@@ -18,6 +17,7 @@ spelunking.
 ![Windows](https://img.shields.io/badge/Windows-10%2B-0078D4?style=flat-square&logo=windows&logoColor=white)
 ![Linux](https://img.shields.io/badge/Linux-AppImage%20·%20deb%20·%20rpm-FCC624?style=flat-square&logo=linux&logoColor=black)
 ![EPUB 3](https://img.shields.io/badge/EPUB-3-8A2BE2?style=flat-square)
+![AZW3](https://img.shields.io/badge/Kindle-AZW3%2FKF8-8A2BE2?style=flat-square)
 ![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&logo=tauri&logoColor=white)
 ![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue?style=flat-square)](LICENSE)
@@ -71,8 +71,8 @@ spelunking.
     </td>
     <td width="33%" valign="top">
       <h3>📖 Kindle-ready export</h3>
-      Valid EPUB 3 with a title page, table of contents, endnotes, series
-      metadata, and images resized for the Paperwhite screen.
+      Export EPUB 3 or AZW3/KF8 with a title page, table of contents, endnotes,
+      series metadata, and images resized for the Paperwhite screen.
     </td>
   </tr>
   <tr>
@@ -124,15 +124,16 @@ spelunking.
 ```mermaid
 flowchart LR
     A["✍️ Write chapters<br/>in NovLang"] --> B["👁️ Check the<br/>live preview"]
-    B --> C["📦 Export<br/>EPUB 3"]
-    C --> D["📲 Send to Kindle<br/>or copy over USB"]
+    B --> C["📦 Export<br/>EPUB 3 or AZW3/KF8"]
+    C --> D["📲 Send EPUB to Kindle<br/>or copy AZW3 over USB"]
 ```
 
 1. **Create a book** and write each chapter in NovLang, a tiny Markdown-like
    markup made for fiction.
 2. **Fill in the metadata** — title, authors, series, cover.
-3. **Export** an `.epub` and put it on your Kindle with
-   [Send to Kindle](https://www.amazon.com/sendtokindle) or a USB cable.
+3. **Export** an `.epub` for
+   [Send to Kindle](https://www.amazon.com/sendtokindle), or an `.azw3` file
+   to copy directly to a compatible Kindle over USB.
 
 > [!TIP]
 > Want to look around first? Open the sample book
@@ -249,7 +250,9 @@ Ideas and votes are welcome in
 [novlang-js](https://www.npmjs.com/package/novlang-js)
 
 The EPUB builder is validated with
-[epubcheck](https://github.com/w3c/epubcheck) in CI on every change.
+[epubcheck](https://github.com/w3c/epubcheck) in CI. AZW3 fixtures are read
+back by pinned Calibre 9.15.0 in a separate CI job. Physical Kindle checks
+remain part of the release checklist.
 
 ## 🤝 Contributing
 

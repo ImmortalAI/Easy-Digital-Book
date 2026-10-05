@@ -1,0 +1,56 @@
+{
+  "minimal": {
+    "chapters": [{ "title": "Minimal", "markers": ["No notes, cover, or custom CSS."] }],
+    "nav": ["Minimal"],
+    "notes": [],
+    "cover": null,
+    "css_markers": [],
+    "image_markers": [],
+    "inline_image_count": 0,
+    "css_image_count": 0
+  },
+  "multilingual-notes": {
+    "chapters": [
+      { "title": "第一章", "markers": ["Русский текст", "再次"] },
+      { "title": "Chapter Two", "markers": ["Repeated IDs stay chapter local"] }
+    ],
+    "nav": ["第一章", "Chapter Two"],
+    "notes": [
+      { "marker": "注释 中文 😀", "references": 2 },
+      { "marker": "Second note", "references": 1 }
+    ],
+    "cover": null,
+    "css_markers": [],
+    "image_markers": [],
+    "inline_image_count": 0,
+    "css_image_count": 0
+  },
+  "images-css": {
+    "chapters": [{ "title": "Images", "markers": [] }],
+    "nav": ["Images"],
+    "notes": [],
+    "cover": {
+      "sha256": "431ced6916a2a21a156e38701afe55bbd7f88969fbbfc56d7fe099d47f265460"
+    },
+    "css_markers": ["background-image"],
+    "image_markers": ["cover", "art", "photo"],
+    "inline_image_count": 3,
+    "css_image_count": 1
+  },
+  "300-chapter-long": {
+    "chapter_title_prefix": "Chapter ",
+    "chapter_count": 300,
+    "chapter_markers": {
+      "1": ["Paragraph 1: a repeated synthetic passage for layout and memory measurement."],
+      "300": ["A short synthetic chapter used to measure book assembly."]
+    },
+    "nav_title_prefix": "Chapter ",
+    "nav_count": 300,
+    "notes": [],
+    "cover": null,
+    "css_markers": [],
+    "image_markers": [],
+    "inline_image_count": 0,
+    "css_image_count": 0
+  }
+}

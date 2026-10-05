@@ -14,13 +14,21 @@ import { installGlobalErrorHandlers } from "@/services/platform/global-errors";
 import packageJson from "../package.json";
 
 const supportedLocales: SupportedLocale[] = ["ru", "en", "zh-CN"];
-const runtimeServices =
+const e2eServices =
   import.meta.env.MODE === "e2e"
     ? createInMemoryPlatformServices({
-        dialogPaths: { project: "/memory/book.edb", epub: "/memory/book.epub" },
+        dialogPaths: {
+          project: "/memory/book.edb",
+          epub: "/memory/book.epub",
+          azw3: "/memory/book.azw3",
+        },
         confirm: true,
       })
-    : platformServices;
+    : null;
+const runtimeServices = e2eServices ?? platformServices;
+if (e2eServices) {
+  (window as Window & { edbE2e?: unknown }).edbE2e = e2eServices.test;
+}
 setRuntimePlatformServices(runtimeServices);
 
 function browserLocale(): SupportedLocale {

@@ -1,9 +1,16 @@
 # AZW3 (KF8) export — specification
 
 - **Date:** 2026-10-03
-- **Status:** implementation planned 2026-10-04; KF8 research gate completed.
-  Approved plan: `docs/superpowers/plans/2026-10-04-azw3-export.md`.
-  Device verification remains an open release gate.
+- **Status:** implementation and automated interoperability checks completed
+  2026-10-05; KF8 research gate completed. Four generated fixtures pass the
+  semantic verifier using Calibre 9.15.0, and the AZW3 export E2E verifies the
+  selected format, saved PalmDB bytes, remembered choice, and cancellation.
+  Direct export from packaged macOS/Windows/Linux builds and physical-device
+  checks on Paperwhite 3 and Paperwhite 12 remain mandatory open release gates.
+  Representative real-book and multiple-flow comparisons also remain research
+  gates; synthetic fixture passes do not resolve those results.
+  Plan and task report: `docs/superpowers/plans/2026-10-04-azw3-export.md` and
+  `.superpowers/sdd/2026-10-04-azw3-export/task-10-report.md`.
 - **Source:** user feedback session 2026-10-03
   (`docs/superpowers/notes/2026-10-03-issues.md`, items 2, 2a, 2b)
 - **Base spec:** `docs/superpowers/specs/2026-09-15-easy-digital-book-design.md`

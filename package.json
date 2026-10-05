@@ -19,6 +19,8 @@
     "check": "vue-tsc --noEmit && pnpm lint && pnpm format:check && pnpm test",
     "build:fixture-epubs": "tsx scripts/build-fixture-epubs.mts",
     "build:fixture-azw3": "node --import tsx scripts/build-fixture-azw3.mts",
+    "test:verify-azw3": "python3 scripts/test_verify_azw3.py",
+    "verify:azw3": "EDB_AZW3_FIXTURE_DIR=.artifacts/azw3-fixtures pnpm build:fixture-azw3 && python3 scripts/verify-azw3.py .artifacts/azw3-fixtures",
     "sync:cargo-version": "tsx scripts/sync-cargo-version.mts",
     "verify:release-tag": "tsx scripts/verify-release-tag.mts"
   },
