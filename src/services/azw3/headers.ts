@@ -238,7 +238,9 @@ export function buildRecordZero(input: HeaderInput): Uint8Array {
   writeUint32BE(bytes, 228, 0);
   writeUint32BE(bytes, 232, NULL);
   writeUint32BE(bytes, 236, NULL);
-  writeUint32BE(bytes, 240, input.recordIndices.has("ncx") ? 3 : 1);
+  // Every text record has overlap and TBS trailers, including an empty TBS
+  // when navigation is absent. Readers strip trailers using these flags.
+  writeUint32BE(bytes, 240, 3);
   writeUint32BE(bytes, 244, roleIndex(input.recordIndices, "ncx"));
   writeUint32BE(bytes, 248, roleIndex(input.recordIndices, "frag", true));
   writeUint32BE(bytes, 252, roleIndex(input.recordIndices, "skel", true));

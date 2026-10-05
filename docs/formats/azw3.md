@@ -99,7 +99,7 @@ The MOBI portion is **264 bytes**, beginning at 16 and ending at 280.
 | 216                | 8        | Zero reserved bytes                                                  |
 | 224, 228           | 4 each   | SRCS index NULL; count 0                                             |
 | 232, 236           | 4 each   | Reserved NULL                                                        |
-| 240                | 4        | Extra-data flags = 3 (overlap + TBS); 1 only when no NCX/TBS         |
+| 240                | 4        | Extra-data flags = 3 (overlap + TBS), including absent NCX           |
 | 244, 248, 252      | 4 each   | NCX, FRAG, SKEL **meta record** numbers; absent NCX NULL             |
 | 256, 260           | 4 each   | DATP index NULL; optional GUIDE meta index or NULL                   |
 | 264, 268, 272, 276 | 4 each   | Reserved: NULL, 0, NULL, 0                                           |

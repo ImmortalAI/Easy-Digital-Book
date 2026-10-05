@@ -42,19 +42,25 @@ function decompressPalmDoc(bytes: Uint8Array): Uint8Array {
 }
 
 function readText(palm: ReturnType<typeof readPalmDb>): string {
-  const count = new DataView(palm.records[0]!.buffer).getUint16(8);
+  const header = new DataView(palm.records[0]!.buffer);
+  const count = header.getUint16(8);
+  const flags = header.getUint32(240);
   const pieces: Uint8Array[] = [];
   for (const record of palm.records.slice(1, 1 + count)) {
-    const trailer = decodeBackwardVwi(record, record.length);
-    const compressedWithOverlap = record.subarray(0, trailer.start);
-    const overlapCount = compressedWithOverlap.at(-1)!;
+    let end = record.length;
+    for (let bit = 1; bit < 32; bit++) {
+      if (flags & (1 << bit)) end -= decodeBackwardVwi(record, end).value;
+    }
+    const compressedWithOverlap = record.subarray(0, end);
+    const overlapSize = flags & 1 ? (compressedWithOverlap.at(-1)! & 3) + 1 : 0;
     const compressed = compressedWithOverlap.subarray(
       0,
-      compressedWithOverlap.length - overlapCount - 1,
+      compressedWithOverlap.length - overlapSize,
     );
     pieces.push(decompressPalmDoc(compressed));
   }
   const length = pieces.reduce((sum, part) => sum + part.length, 0);
+  expect(length).toBe(header.getUint32(4));
   const joined = new Uint8Array(length);
   let offset = 0;
   for (const part of pieces) {
@@ -87,6 +93,29 @@ function exthIntegers(recordZero: Uint8Array): Map<number, number[]> {
 }
 
 describe("buildAzw3", () => {
+  it.each(["Кириллица 😀 ", "中文 😀 "])(
+    "preserves UTF-8 title-page text across records without NCX: %s",
+    async (phrase) => {
+      const book = fixtureBook();
+      book.chapters = [];
+      book.metadata.description = phrase.repeat(1600);
+      const palm = readPalmDb(
+        await buildAzw3(
+          book,
+          { ...exportOptions(), titlePage: true },
+          {
+            imageProcessor: fixtureProcessor(),
+            now: () => at("08"),
+          },
+        ),
+      );
+      const header = new DataView(palm.records[0]!.buffer);
+      expect(header.getUint32(244)).toBe(0xffffffff);
+      expect(header.getUint16(8)).toBeGreaterThan(1);
+      expect(readText(palm)).toContain(book.metadata.description);
+    },
+  );
+
   it("builds a deterministic PalmDB with resolved endnote links and stable timestamps", async () => {
     const book = fixtureBook();
     const before = structuredClone(book);
