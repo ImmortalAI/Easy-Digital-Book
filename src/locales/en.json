@@ -60,7 +60,8 @@
     "count": "{count} warning | {count} warnings",
     "currentChapter": "Current chapter",
     "book": "Book",
-    "none": "No warnings"
+    "none": "No warnings",
+    "styles": "Styles ({count})"
   },
   "files": {
     "openTitle": "Open project",
@@ -285,5 +286,20 @@
     "dimImages": "Dim images",
     "styledNotice": "Styled preview — not how the book will look",
     "showOriginal": "Show the original look"
+  },
+  "cssSupport": {
+    "property": "Kindle support for “{property}” is not verified on both target Paperwhites.",
+    "value": "Kindle support for “{property}: {value}” is limited or unverified.",
+    "selector": "Kindle support for selector “{selector}” is limited or unverified.",
+    "atRule": "Kindle support for @{atRule} depends on the format and firmware.",
+    "unit": "Unit “{unit}” may render differently on Kindle; support is unverified.",
+    "fontFace": "Fonts are not exported by this app; @font-face may have no effect.",
+    "unknownProperty": "Property “{property}” is not in the Kindle support table.",
+    "unknownSelector": "Selector “{selector}” is not in the Kindle support table.",
+    "unknownUnit": "Unit “{unit}” is not in the Kindle support table.",
+    "unknownAtRule": "At-rule @{atRule} is not in the Kindle support table.",
+    "syntax": "CSS syntax error. Other valid rules are still checked.",
+    "externalUrl": "Resource “{url}” is outside images/ and is not included in the book.",
+    "customProperty": "CSS variables are not verified on both target Paperwhites."
   }
 }

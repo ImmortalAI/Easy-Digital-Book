@@ -60,7 +60,8 @@
     "count": "{count} 个警告",
     "currentChapter": "当前章节",
     "book": "书籍",
-    "none": "没有警告"
+    "none": "没有警告",
+    "styles": "样式（{count}）"
   },
   "files": {
     "openTitle": "打开项目",
@@ -285,5 +286,20 @@
     "dimImages": "调暗图片",
     "styledNotice": "预览已套用样式——与成书外观不同",
     "showOriginal": "显示原始外观"
+  },
+  "cssSupport": {
+    "property": "属性“{property}”尚未在两款目标 Paperwhite 上验证。",
+    "value": "Kindle 对“{property}: {value}”的支持有限或尚未验证。",
+    "selector": "Kindle 对选择器“{selector}”的支持有限或尚未验证。",
+    "atRule": "Kindle 对 @{atRule} 的支持取决于格式和固件。",
+    "unit": "单位“{unit}”在 Kindle 上可能显示不同；支持尚未验证。",
+    "fontFace": "本应用不导出字体；@font-face 可能无效。",
+    "unknownProperty": "Kindle 支持表中没有属性“{property}”。",
+    "unknownSelector": "Kindle 支持表中没有选择器“{selector}”。",
+    "unknownUnit": "Kindle 支持表中没有单位“{unit}”。",
+    "unknownAtRule": "Kindle 支持表中没有规则 @{atRule}。",
+    "syntax": "CSS 语法错误。仍会检查其他有效规则。",
+    "externalUrl": "资源“{url}”位于 images/ 之外，不会包含在书中。",
+    "customProperty": "CSS 变量尚未在两款目标 Paperwhite 上验证。"
   }
 }
