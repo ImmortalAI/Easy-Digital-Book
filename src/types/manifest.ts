@@ -1,7 +1,7 @@
 import type { BookMetadata, Chapter } from "./book";
 import { array, literal, number, object, string, unknown, type InferOutput } from "valibot";
 
-export const CURRENT_EDB_FORMAT_VERSION = 1;
+export const CURRENT_EDB_FORMAT_VERSION = 2;
 export const ManifestSchema = object({
   format: literal("easy-digital-book"),
   formatVersion: number(),

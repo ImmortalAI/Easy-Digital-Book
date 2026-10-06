@@ -1,3 +1,6 @@
+import type { SpellLanguage } from "./spelling";
+import type { Book } from "./book";
+
 export type ImagePlan = {
   width: number;
   height: number;
@@ -20,7 +23,6 @@ export interface ImageProcessor {
   process(input: ImageProcessInput, signal?: AbortSignal): Promise<ProcessedImage>;
   dispose(): void;
 }
-import type { Book } from "./book";
 
 export interface FileInfo {
   mtime: number | null;
@@ -72,6 +74,12 @@ export interface UpdateInfo {
 export interface Updates {
   check(): Promise<UpdateInfo | false>;
 }
+export interface SpellChecker {
+  /** The misspelled subset of `words`, checked against the base dictionary only. */
+  check(lang: SpellLanguage, words: string[]): Promise<string[]>;
+  /** Up to five suggestions for one word. */
+  suggest(lang: SpellLanguage, word: string): Promise<string[]>;
+}
 export interface RecoverySessionSummary {
   bookId: string;
   originalPath: string | null;
@@ -113,5 +121,6 @@ export interface PlatformServices {
   opener: Opener;
   updates: Updates;
   window: WindowServices;
+  spell: SpellChecker;
 }
 export type InMemoryPlatformServices = PlatformServices;

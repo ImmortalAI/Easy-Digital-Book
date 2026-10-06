@@ -13,3 +13,7 @@ export interface AppWarning {
   message: string;
   chapterId?: string;
 }
+
+export type WarningSelection =
+  | { chapterId?: string; position?: DiagnosticPosition }
+  | { kind: "css"; from: number; to: number };

@@ -1,7 +1,16 @@
 # AZW3 (KF8) export — specification
 
 - **Date:** 2026-10-03
-- **Status:** roadmap, after v1. Not scheduled. No implementation plan yet.
+- **Status:** implementation and automated interoperability checks completed
+  2026-10-05; KF8 research gate completed. Four generated fixtures pass the
+  semantic verifier using Calibre 9.15.0, and the AZW3 export E2E verifies the
+  selected format, saved PalmDB bytes, remembered choice, and cancellation.
+  Direct export from packaged macOS/Windows/Linux builds and physical-device
+  checks on Paperwhite 3 and Paperwhite 12 remain mandatory open release gates.
+  Representative real-book and multiple-flow comparisons also remain research
+  gates; synthetic fixture passes do not resolve those results.
+  Plan and task report: `docs/superpowers/plans/2026-10-04-azw3-export.md` and
+  `.superpowers/sdd/2026-10-04-azw3-export/task-10-report.md`.
 - **Source:** user feedback session 2026-10-03
   (`docs/superpowers/notes/2026-10-03-issues.md`, items 2, 2a, 2b)
 - **Base spec:** `docs/superpowers/specs/2026-09-15-easy-digital-book-design.md`
@@ -38,10 +47,10 @@ primary format; AZW3 is a second export target.
 The KF8 format is poorly documented. Calibre has a complete open-source
 writer, and we use it **only as a reference for the file structure**.
 
-- **The project licence is not GPL.** Calibre is GPL v3. We read its code to
-  learn the format; we do not translate it. A line-by-line Python → TS
-  translation would be a derivative work. The facts of a file format are
-  not.
+- **The project is GPL-3.0-or-later.** `LICENSE`, `package.json` and
+  `src-tauri/Cargo.toml` already declare it. Preserve this license. Calibre
+  is a test-only reference: read format facts, then implement independently
+  from our format description; do not translate its Python into TypeScript.
 - Work order:
   1. Study Calibre and public format descriptions (the MobileRead wiki on
      MOBI, KF8, EXTH and PalmDOC). Write our own format description in
@@ -50,9 +59,12 @@ writer, and we use it **only as a reference for the file structure**.
   2. Implement the writer from `docs/formats/azw3.md` with our own
      architecture. Calibre's code is not open in the editor while the
      writer is written.
-- The project still needs a licence file (none exists today: no `LICENSE`,
-  no `license` in `package.json` or `Cargo.toml`). Choose and add it before
-  this work starts. This is independent of AZW3.
+- The verified reference is **Calibre 9.15.0**. Binary contracts, literal
+  vectors, tool commands and dependency decisions are recorded in
+  `docs/formats/azw3.md`, `docs/formats/azw3-research.md` and
+  `src/services/azw3/__tests__/vectors.json`. No suitable browser-runtime
+  JS/TS KF8 writer was demonstrated; retain the independent writer and
+  reuse the installed XML/image/export infrastructure.
 
 ### Reference locations in Calibre's source
 
@@ -85,12 +97,17 @@ writer, and we use it **only as a reference for the file structure**.
   INDX/TAGX/IDXT structures;
 - resources: images (JPEG/PNG/GIF), cover and thumbnail records,
   CSS as flow records (`kindle:flow:…`), fonts are out of scope;
-- the end-of-file records (FLIS, FCIS, DATP, EOF);
+- the end-of-file records (FLIS, FCIS, EOF); DATP is explicitly omitted
+  for this PalmDOC profile, with a NULL header pointer, as in the verified
+  reference;
 - how footnotes must look to get Kindle popups: a `noteref` link and a
   target that begins with a link back to the reference.
 
-Each section ends with a worked example: a hex dump of that structure from
-a fixture book built by our own code.
+Task 1 supplies independently calculated primitive hex vectors. Complete
+fixture dumps from our writer are deliverables of Tasks 3–7, after the writer
+exists. SKEL/FRAG/NCX are INDX record families; positions use UTF-8 bytes.
+Flat chapter TOC navigation includes TBS trailers; CSS occupies FDST flows.
+See the format description for exact coordinate systems and supported limits.
 
 ## 5. Architecture
 
@@ -110,7 +127,9 @@ a fixture book built by our own code.
   `deps` shape as `buildEpub`: `imageProcessor`, `now`, `onProgress`,
   `signal`).
 - Deterministic output: the same book and options produce the same bytes,
-  except for the build date in EXTH.
+  except for the build date in EXTH. PalmDB dates come from book.created,
+  and the MOBI UID/ASIN come from the existing UUID; never generate random
+  identifiers during export. Fixed `now` gives completely identical bytes.
 
 ## 6. UI
 
@@ -141,9 +160,16 @@ a fixture book built by our own code.
 - The Kindle CSS checker
   (`docs/superpowers/specs/2026-10-03-kindle-css-checker-design.md`) uses
   what this work learns about which CSS survives KF8.
-- The endnotes rework (plan
-  `docs/superpowers/plans/2026-10-03-user-feedback-fixes.md`, tasks 1–4)
-  must land first: AZW3 inherits its footnote markup.
+- The endnotes prerequisite is already present. On 2026-10-04, focused
+  `epub/{footnotes,notes,chapter}` tests passed: 3 files, 16 tests. Reuse
+  this markup rather than reimplementing those earlier tasks. Preserve
+  `epub:type` namespaces and rewrite both note/reference directions.
+- Local Calibre 9.15.0 accepts `calibre-debug --inspect-mobi`. For KF8-only
+  files it creates `decompiled_<stem>/` under the command working directory,
+  with `header.txt`, `chunks.record`, `skel.record`, `ncx.record`, `flows/`
+  and `files/` directly inside; the harness must inspect those artifacts.
+  Exit zero alone is insufficient. Popup behavior and library-cover display
+  remain manual gates on both target Paperwhites; no device is available yet.
 
 ## 9. Open questions
 

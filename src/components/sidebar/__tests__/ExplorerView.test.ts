@@ -110,6 +110,18 @@ describe("ExplorerView boundaries", () => {
     expect(useLayoutStore().center).toEqual({ kind: "images" });
   });
 
+  it("opens the dictionary from the Book section", async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    useProjectStore().setBook(twoChapterBook());
+    render(ExplorerView, { global: { plugins: [pinia] } });
+
+    const dictionary = screen.getByRole("treeitem", { name: /dictionary/i });
+    await userEvent.click(dictionary);
+    expect(useLayoutStore().center).toEqual({ kind: "dictionary" });
+    expect(dictionary).toHaveAttribute("aria-selected", "true");
+  });
+
   it("offers the chapter actions from a right click", async () => {
     const pinia = createPinia();
     setActivePinia(pinia);

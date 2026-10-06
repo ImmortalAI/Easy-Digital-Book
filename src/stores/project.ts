@@ -23,6 +23,7 @@ export function snapshotBook(book: Book): Book {
       ]),
     ),
     customCss: book.customCss,
+    dictionary: [...book.dictionary],
   };
 }
 export interface SetBookOptions {

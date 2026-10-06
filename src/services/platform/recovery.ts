@@ -1,4 +1,5 @@
 import { openDB } from "idb";
+import { normalizeDictionary } from "@/services/book/dictionary";
 import type { Book, Resource } from "@/types/book";
 import type {
   Logger,
@@ -11,6 +12,7 @@ interface SessionRow extends RecoverySessionSummary {
   metadata: Book["metadata"];
   chapterOrder: string[];
   customCss: string | null;
+  dictionary?: string[];
 }
 interface ChapterRow {
   bookId: string;
@@ -67,6 +69,7 @@ export function createRecoveryStore(logger?: Logger): RecoveryStore {
         metadata: book.metadata,
         chapterOrder: book.chapters.map(({ id }) => id),
         customCss: book.customCss,
+        dictionary: book.dictionary,
       });
       for (const id of delta.removedChapters)
         await tx.objectStore("chapters").delete([book.metadata.id, id]);
@@ -135,6 +138,9 @@ export function createRecoveryStore(logger?: Logger): RecoveryStore {
           chapters,
           resources,
           customCss: session.customCss,
+          dictionary: Array.isArray(session.dictionary)
+            ? normalizeDictionary(session.dictionary)
+            : [],
           originalPath: session.originalPath,
         } satisfies RecoveredBook;
       } catch {

@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
@@ -36,10 +37,20 @@ const { t } = useSafeI18n();
 const abortController = ref<AbortController | null>(null);
 const success = ref(false);
 const hasVersion = computed(() => Boolean(props.project?.book?.metadata.version));
+const formatLabel = computed(() => props.controller.format.value.toUpperCase());
+const title = computed(() =>
+  t("export.title", `Export ${formatLabel.value}`, { format: formatLabel.value }),
+);
+const filterName = computed(() =>
+  t("export.filterName", `${formatLabel.value} book`, { format: formatLabel.value }),
+);
+const savedMessage = computed(() =>
+  t("export.saved", `${formatLabel.value} saved`, { format: formatLabel.value }),
+);
 /** Prefer a message for the specific failure, falling back to the generic one. */
 const errorMessage = computed(() => {
   const error = props.controller.error.value;
-  const generic = t("errors.export.failed", "Could not export EPUB");
+  const generic = t("errors.export.failed", "Could not export book");
   return error ? t(`errors.${error.code}`, generic, error.params) : generic;
 });
 const progressPercent = computed(() => {
@@ -61,16 +72,24 @@ watch(open, (value) => {
   }
 });
 
+watch(
+  () => props.controller.format.value,
+  () => {
+    success.value = false;
+    props.controller.lastOutput.value = null;
+  },
+);
+
 async function exportBook() {
   if (props.controller.exporting.value) return;
   success.value = false;
   const controller = new AbortController();
   abortController.value = controller;
   try {
-    const target = await props.controller.exportEpub({
+    const target = await props.controller.exportBook({
       signal: controller.signal,
-      dialogTitle: t("export.title", "Export EPUB"),
-      dialogFilterName: t("export.filterName", "EPUB book"),
+      dialogTitle: title.value,
+      dialogFilterName: filterName.value,
     });
     success.value = Boolean(target);
   } catch {
@@ -93,28 +112,58 @@ function requestClose(next: boolean) {
 
 <template>
   <Dialog :open="open" @update:open="requestClose">
-    <DialogContent :show-close-button="false" class="grid gap-4 sm:max-w-md">
+    <DialogContent
+      :show-close-button="false"
+      class="grid max-h-[calc(100dvh-2rem)] gap-4 overflow-y-auto sm:max-w-md"
+    >
       <DialogHeader>
-        <DialogTitle>{{ t("export.title", "Export EPUB") }}</DialogTitle>
+        <DialogTitle>{{ title }}</DialogTitle>
         <DialogDescription>{{ controller.fileName.value }}</DialogDescription>
       </DialogHeader>
 
-      <Alert v-if="controller.warnings.value.length" variant="destructive">
+      <Alert
+        v-if="controller.warnings.value.length || controller.cssFindings.value.length"
+        variant="destructive"
+      >
         <AlertDescription>
-          <ul class="list-disc space-y-1 pl-4">
-            <li
-              v-for="warning in controller.warnings.value"
-              :key="`${warning.code}-${warning.chapterId ?? ''}`"
-            >
-              {{ warning.message }}
-            </li>
-          </ul>
+          <ScrollArea class="[&>[data-slot=scroll-area-viewport]]:max-h-40">
+            <ul class="list-disc space-y-1 pl-4">
+              <li
+                v-for="warning in controller.warnings.value"
+                :key="`${warning.code}-${warning.chapterId ?? ''}`"
+              >
+                {{ warning.message }}
+              </li>
+              <li
+                v-for="finding in controller.cssFindings.value"
+                :key="`css-${finding.from}-${finding.to}-${finding.code}`"
+              >
+                {{ t(`cssSupport.${finding.code}`, finding.code, finding.params) }}
+              </li>
+            </ul>
+          </ScrollArea>
         </AlertDescription>
       </Alert>
 
       <Field>
+        <Label for="export-format">{{ t("export.format", "Format") }}</Label>
+        <Select v-model="controller.format.value" :disabled="controller.exporting.value">
+          <SelectTrigger id="export-format" class="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="epub">EPUB</SelectItem>
+            <SelectItem value="azw3">AZW3</SelectItem>
+          </SelectContent>
+        </Select>
+      </Field>
+
+      <Field>
         <Label for="export-preset">{{ t("export.preset", "Image preset") }}</Label>
-        <Select v-model="controller.options.value.imagePreset">
+        <Select
+          v-model="controller.options.value.imagePreset"
+          :disabled="controller.exporting.value"
+        >
           <SelectTrigger id="export-preset" class="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -128,18 +177,26 @@ function requestClose(next: boolean) {
       </Field>
 
       <div class="flex items-center gap-2">
-        <Checkbox id="export-grayscale" v-model="controller.options.value.grayscale" />
+        <Checkbox
+          id="export-grayscale"
+          v-model="controller.options.value.grayscale"
+          :disabled="controller.exporting.value"
+        />
         <Label for="export-grayscale">{{ t("export.grayscale", "Grayscale") }}</Label>
       </div>
       <div class="flex items-center gap-2">
-        <Checkbox id="export-title-page" v-model="controller.options.value.titlePage" />
+        <Checkbox
+          id="export-title-page"
+          v-model="controller.options.value.titlePage"
+          :disabled="controller.exporting.value"
+        />
         <Label for="export-title-page">{{ t("export.titlePage", "Add title page") }}</Label>
       </div>
       <div class="flex items-center gap-2">
         <Checkbox
           id="export-version"
           v-model="controller.options.value.versionInTitle"
-          :disabled="!hasVersion"
+          :disabled="!hasVersion || controller.exporting.value"
         />
         <Label for="export-version">{{ t("export.versionInTitle", "Add version to title") }}</Label>
       </div>
@@ -152,6 +209,9 @@ function requestClose(next: boolean) {
           <span v-else-if="controller.progress.value.stage === 'chapters'">
             {{ t("export.progressChapters", "Chapters {done}/{total}", controller.progress.value) }}
           </span>
+          <span v-else-if="controller.progress.value.stage === 'azw3'">
+            {{ t("export.progressAzw3", "Creating AZW3…") }}
+          </span>
           <span v-else>{{ t("export.progressZip", "Creating EPUB…") }}</span>
         </p>
         <Progress :model-value="progressPercent" />
@@ -162,7 +222,7 @@ function requestClose(next: boolean) {
       </Alert>
 
       <p v-if="success" class="text-primary text-sm" role="status">
-        {{ t("export.saved", "EPUB saved") }}
+        {{ savedMessage }}
         <Button type="button" variant="link" class="h-auto p-0" @click="controller.revealOutput()">
           {{ t("export.showInFolder", "Show in folder") }}
         </Button>

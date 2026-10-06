@@ -8,7 +8,7 @@ export async function archive(files: Record<string, string | Uint8Array>): Promi
 
 export const validBook = {
   format: "easy-digital-book",
-  formatVersion: 1,
+  formatVersion: 2,
   book: {
     id: "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
     title: "Book",

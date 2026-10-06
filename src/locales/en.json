@@ -60,7 +60,8 @@
     "count": "{count} warning | {count} warnings",
     "currentChapter": "Current chapter",
     "book": "Book",
-    "none": "No warnings"
+    "none": "No warnings",
+    "styles": "Styles ({count})"
   },
   "files": {
     "openTitle": "Open project",
@@ -127,7 +128,8 @@
     "styles": "Styles",
     "chapters": "Chapters",
     "newChapter": "New chapter",
-    "images": "Images"
+    "images": "Images",
+    "dictionary": "Dictionary"
   },
   "gallery": {
     "selected": "Selected: {count}",
@@ -197,7 +199,8 @@
     "discard": "Don't save"
   },
   "export": {
-    "title": "Export EPUB",
+    "format": "Format",
+    "title": "Export {format}",
     "preset": "Image preset",
     "kindle": "Kindle Paperwhite",
     "original": "Without changes",
@@ -207,10 +210,11 @@
     "action": "Export…",
     "progressImages": "Images {done}/{total}",
     "progressChapters": "Chapters {done}/{total}",
+    "progressAzw3": "Creating AZW3…",
     "progressZip": "Creating EPUB…",
-    "saved": "EPUB saved",
+    "saved": "{format} saved",
     "showInFolder": "Show in folder",
-    "filterName": "EPUB book"
+    "filterName": "{format} book"
   },
   "settings": {
     "title": "Settings",
@@ -233,7 +237,12 @@
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",
-    "themeSystem": "System"
+    "themeSystem": "System",
+    "spelling": "Check spelling",
+    "spellingLanguages": "Spelling languages",
+    "spellingRussian": "Russian",
+    "spellingEnglish": "English",
+    "spellingCredits": "Dictionaries: LibreOffice ru_RU (© Alexander I. Lebedev, BSD licence) and SCOWL en_US (© Kevin Atkinson and others)."
   },
   "errors": {
     "title": "An unexpected error occurred",
@@ -248,7 +257,10 @@
     "export": {
       "cancelled": "Export cancelled",
       "noProject": "No project is open",
-      "failed": "Could not export EPUB",
+      "failed": "Could not export book",
+      "azw3Limit": "The book exceeds an AZW3 format limit",
+      "azw3Link": "Could not build AZW3 links",
+      "azw3Resource": "Could not include a book resource in AZW3",
       "invalidXhtml": "Chapter {chapter} “{title}” produced invalid XHTML"
     }
   },
@@ -280,5 +292,45 @@
     "dimImages": "Dim images",
     "styledNotice": "Styled preview — not how the book will look",
     "showOriginal": "Show the original look"
+  },
+  "cssSupport": {
+    "property": "Kindle support for “{property}” is not verified on both target Paperwhites.",
+    "value": "Kindle support for “{property}: {value}” is limited or unverified.",
+    "selector": "Kindle support for selector “{selector}” is limited or unverified.",
+    "atRule": "Kindle support for @{atRule} depends on the format and firmware.",
+    "unit": "Unit “{unit}” may render differently on Kindle; support is unverified.",
+    "fontFace": "Fonts are not exported by this app; @font-face may have no effect.",
+    "unknownProperty": "Property “{property}” is not in the Kindle support table.",
+    "unknownSelector": "Selector “{selector}” is not in the Kindle support table.",
+    "unknownUnit": "Unit “{unit}” is not in the Kindle support table.",
+    "unknownAtRule": "At-rule @{atRule} is not in the Kindle support table.",
+    "syntax": "CSS syntax error. Other valid rules are still checked.",
+    "externalUrl": "Resource “{url}” is outside images/ and is not included in the book.",
+    "customProperty": "CSS variables are not verified on both target Paperwhites."
+  },
+  "spelling": {
+    "badge": "{count} spelling issue | {count} spelling issues",
+    "checking": "Checking spelling…",
+    "unavailable": "Spell checking is unavailable",
+    "unavailableHint": "The dictionaries could not be loaded. Details are in the log.",
+    "openLogs": "Log folder",
+    "none": "No spelling issues",
+    "chapterGroup": "Chapter {number} · {title} — {count}",
+    "occurrences": "×{count}",
+    "addToDictionary": "Add to book dictionary",
+    "ignore": "Ignore",
+    "noSuggestions": "No suggestions",
+    "loadingSuggestions": "Looking for suggestions…",
+    "menuLabel": "Spelling: {word}"
+  },
+  "dictionary": {
+    "title": "Book dictionary",
+    "filter": "Filter words",
+    "newWord": "New word",
+    "add": "Add word",
+    "remove": "Remove {word}",
+    "empty": "The book dictionary is empty",
+    "noMatches": "No matching words",
+    "invalid": "Enter one word without spaces"
   }
 }

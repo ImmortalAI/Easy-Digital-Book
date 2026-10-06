@@ -1,0 +1,60 @@
+{
+  "device": "Kindle Paperwhite 3",
+  "firmware": "5.16.2.1.1",
+  "format": "AZW3/KF8",
+  "original_csv_sha256": "78cd6ebd4074883900e0effa493b09e7352e309773421a20ca8b86ed54f39a59",
+  "first_csv_sha256": "0907e22587fab82595ce9d7fc7daa0fe08c2b8866cda7724d8de3ed9e4d3c629",
+  "source_files": {
+    "2026-10-06-paperwhite-3-css-retest.csv": {
+      "source": ".artifacts/css-paperwhite-3-retest/css_more_results.csv",
+      "sha256": "78cd6ebd4074883900e0effa493b09e7352e309773421a20ca8b86ed54f39a59",
+      "saved_sha256": "78cd6ebd4074883900e0effa493b09e7352e309773421a20ca8b86ed54f39a59",
+      "byte_identical": true
+    },
+    "2026-10-06-paperwhite-3-css-retest-manifest.json": {
+      "source": ".artifacts/css-paperwhite-3-retest/manifest.json",
+      "sha256": "7a1feb255afe9244fa5d3281cf217517219d72a0bb0a718c642822981e0c3bcc",
+      "saved_sha256": "1fdb567408d4a847fdd1dc4f1ecfeb08257b171da720989f6ddac5c5c002135e",
+      "byte_identical": false,
+      "json_semantically_identical": true
+    },
+    "2026-10-06-paperwhite-3-css-first-manifest.json": {
+      "source": ".artifacts/css-paperwhite-3/manifest.json",
+      "sha256": "0e4ab2dfe339cccf0ea41dcf3e69235192e7f5245402fe0f8df122fe43e7687c",
+      "saved_sha256": "bc2d1ea96afa2c62b621dedb6caf543d11620501b1a05e5e9ee201f9b71f6175",
+      "byte_identical": false,
+      "json_semantically_identical": true
+    }
+  },
+  "first_pass": {
+    "rows": 142,
+    "matched_fields": ["number", "id", "css"],
+    "results": {
+      "ДА": 99,
+      "НЕОПРЕДЕЛЁН": 13,
+      "НЕТ": 26,
+      "ЧАСТИЧНО": 4
+    }
+  },
+  "retest": {
+    "rows": 57,
+    "unique_ids": 57,
+    "matched_fields": ["number", "id", "css", "previous", "expected"],
+    "firmware_values": ["5.16.2.1.1"],
+    "results_by_condition": {
+      "Результат": {},
+      "Шрифт 3 вертикально": {
+        "ДА": 26,
+        "НЕТ": 24,
+        "НЕОПРЕДЕЛЁН": 7
+      },
+      "Шрифт 6 вертикально": {
+        "НЕОПРЕДЕЛЁН": 1
+      },
+      "Шрифт 3 горизонтально": {},
+      "Шрифт 6 горизонтально": {}
+    }
+  },
+  "interpretation": "Counts describe raw observations, not universal support statuses. PW12 unmeasured.",
+  "archive_representation": "CSV preserved byte-for-byte; JSON manifests formatted with Oxfmt, retaining every field and value."
+}

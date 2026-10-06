@@ -2,6 +2,13 @@
 
 All notable changes to Easy Digital Book are documented here.
 
+## [Unreleased]
+
+### Added
+
+- Advisory CSS syntax and Kindle compatibility checks in custom.css, with editor diagnostics, a Styles section linking to findings, and export warnings in RU, EN and zh-CN. Export remains available with all findings.
+- Isolated CSS device-test projects covering the support table. Unverified rules remain informational until tested on both target Paperwhites.
+
 ## [1.1.1] — 2026-10-04
 
 ### Fixed

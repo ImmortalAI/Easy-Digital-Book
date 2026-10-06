@@ -30,6 +30,8 @@ export interface Book {
   chapters: Chapter[];
   resources: Map<string, Resource>;
   customCss: string | null;
+  /** Book spelling dictionary: sorted, unique; empty means no file. */
+  dictionary: string[];
 }
 export interface BookMutation {
   book: Book;

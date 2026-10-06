@@ -60,7 +60,8 @@
     "count": "{count} 个警告",
     "currentChapter": "当前章节",
     "book": "书籍",
-    "none": "没有警告"
+    "none": "没有警告",
+    "styles": "样式（{count}）"
   },
   "files": {
     "openTitle": "打开项目",
@@ -127,7 +128,8 @@
     "styles": "样式",
     "chapters": "章节",
     "newChapter": "新建章节",
-    "images": "图片"
+    "images": "图片",
+    "dictionary": "词典"
   },
   "gallery": {
     "selected": "已选择：{count}",
@@ -197,7 +199,8 @@
     "discard": "不保存"
   },
   "export": {
-    "title": "导出 EPUB",
+    "format": "格式",
+    "title": "导出 {format}",
     "preset": "图片预设",
     "kindle": "Kindle Paperwhite",
     "original": "不做更改",
@@ -207,10 +210,11 @@
     "action": "导出…",
     "progressImages": "图片 {done}/{total}",
     "progressChapters": "章节 {done}/{total}",
+    "progressAzw3": "正在生成 AZW3…",
     "progressZip": "正在创建 EPUB…",
-    "saved": "EPUB 已保存",
+    "saved": "{format} 已保存",
     "showInFolder": "在文件夹中显示",
-    "filterName": "EPUB 书籍"
+    "filterName": "{format} 书籍"
   },
   "settings": {
     "title": "设置",
@@ -233,7 +237,12 @@
     "theme": "主题",
     "themeLight": "浅色",
     "themeDark": "深色",
-    "themeSystem": "跟随系统"
+    "themeSystem": "跟随系统",
+    "spelling": "检查拼写",
+    "spellingLanguages": "拼写检查语言",
+    "spellingRussian": "Русский（俄语）",
+    "spellingEnglish": "English（英语）",
+    "spellingCredits": "词典：LibreOffice ru_RU（© Alexander I. Lebedev，BSD 许可）和 SCOWL en_US（© Kevin Atkinson 等）。"
   },
   "errors": {
     "title": "发生了意外错误",
@@ -248,7 +257,10 @@
     "export": {
       "cancelled": "导出已取消",
       "noProject": "没有打开项目",
-      "failed": "无法导出 EPUB",
+      "failed": "无法导出书籍",
+      "azw3Limit": "书籍超出 AZW3 格式限制",
+      "azw3Link": "无法创建 AZW3 链接",
+      "azw3Resource": "无法将书籍资源加入 AZW3",
       "invalidXhtml": "第 {chapter} 章《{title}》生成了无效的 XHTML"
     }
   },
@@ -280,5 +292,45 @@
     "dimImages": "调暗图片",
     "styledNotice": "预览已套用样式——与成书外观不同",
     "showOriginal": "显示原始外观"
+  },
+  "cssSupport": {
+    "property": "属性“{property}”尚未在两款目标 Paperwhite 上验证。",
+    "value": "Kindle 对“{property}: {value}”的支持有限或尚未验证。",
+    "selector": "Kindle 对选择器“{selector}”的支持有限或尚未验证。",
+    "atRule": "Kindle 对 @{atRule} 的支持取决于格式和固件。",
+    "unit": "单位“{unit}”在 Kindle 上可能显示不同；支持尚未验证。",
+    "fontFace": "本应用不导出字体；@font-face 可能无效。",
+    "unknownProperty": "Kindle 支持表中没有属性“{property}”。",
+    "unknownSelector": "Kindle 支持表中没有选择器“{selector}”。",
+    "unknownUnit": "Kindle 支持表中没有单位“{unit}”。",
+    "unknownAtRule": "Kindle 支持表中没有规则 @{atRule}。",
+    "syntax": "CSS 语法错误。仍会检查其他有效规则。",
+    "externalUrl": "资源“{url}”位于 images/ 之外，不会包含在书中。",
+    "customProperty": "CSS 变量尚未在两款目标 Paperwhite 上验证。"
+  },
+  "spelling": {
+    "badge": "{count} 个拼写问题",
+    "checking": "正在检查拼写…",
+    "unavailable": "拼写检查不可用",
+    "unavailableHint": "无法加载词典。详细信息见日志。",
+    "openLogs": "日志文件夹",
+    "none": "没有拼写问题",
+    "chapterGroup": "第 {number} 章 · {title} — {count}",
+    "occurrences": "×{count}",
+    "addToDictionary": "添加到本书词典",
+    "ignore": "忽略",
+    "noSuggestions": "没有建议",
+    "loadingSuggestions": "正在查找建议…",
+    "menuLabel": "拼写：{word}"
+  },
+  "dictionary": {
+    "title": "本书词典",
+    "filter": "筛选词语",
+    "newWord": "新词",
+    "add": "添加词语",
+    "remove": "删除 {word}",
+    "empty": "本书词典为空",
+    "noMatches": "没有匹配的词语",
+    "invalid": "请输入一个不含空格的词"
   }
 }

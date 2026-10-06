@@ -1,7 +1,7 @@
 # Spell checker (Russian and English) — specification
 
 - **Date:** 2026-10-04
-- **Status:** roadmap, after v1. Not scheduled. No implementation plan yet.
+- **Status:** implemented (plan 2026-10-06)
 - **Source:** brainstorming session 2026-10-04 (roadmap item "language check
   for English and Russian", README → Roadmap, AGENTS.md → Roadmap)
 - **Base spec:** `docs/superpowers/specs/2026-09-15-easy-digital-book-design.md`

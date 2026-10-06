@@ -58,6 +58,56 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
 
+  azw3-interoperability:
+    runs-on: ubuntu-latest
+    env:
+      CALIBRE_DIR: .tools/calibre
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/cache@v6
+        with:
+          path: .tools/calibre
+          key: calibre-9.15.0-linux-x86_64
+      - name: Install Calibre system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libegl1 libfontconfig1 libgl1 libnss3 libopengl0 libsm6 \
+            libx11-xcb1 libxcb-cursor0 libxcb-icccm4 libxcb-image0 \
+            libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0 \
+            libxcb-xkb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 \
+            libxi6 libxkbcommon-x11-0 libxrandr2 libxrender1
+      - name: Install pinned Calibre 9.15.0
+        run: |
+          if [[ ! -x "$CALIBRE_DIR/ebook-convert" || ! -x "$CALIBRE_DIR/calibre-debug" ]]; then
+            rm -rf "$CALIBRE_DIR"
+            mkdir -p "$CALIBRE_DIR"
+            curl --fail --silent --show-error --location \
+              https://download.calibre-ebook.com/9.15.0/calibre-9.15.0-x86_64.txz \
+              --output /tmp/calibre-9.15.0-x86_64.txz
+            tar -xJf /tmp/calibre-9.15.0-x86_64.txz -C "$CALIBRE_DIR"
+            "$CALIBRE_DIR/calibre_postinstall"
+          fi
+          "$CALIBRE_DIR/ebook-convert" --version
+          "$CALIBRE_DIR/calibre-debug" --version
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:verify-azw3
+      - run: pnpm verify:azw3
+      - uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: azw3-interoperability-${{ github.run_id }}
+          path: .artifacts/azw3-fixtures
+          if-no-files-found: warn
+          retention-days: 7
+
   rust:
     strategy:
       fail-fast: false

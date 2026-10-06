@@ -33,6 +33,7 @@ type ExplorerNode =
   | { id: "metadata"; kind: "metadata" }
   | { id: "css"; kind: "css" }
   | { id: "images"; kind: "images" }
+  | { id: "dictionary"; kind: "dictionary" }
   | { id: string; kind: "chapter"; chapter: Chapter; index: number };
 const labelPrefix = useId();
 const expanded = ref<string[]>(["section:book", "section:chapters"]);
@@ -85,6 +86,7 @@ const nodes = computed<ExplorerNode[]>(() => {
         { id: "metadata", kind: "metadata" },
         { id: "css", kind: "css" },
         { id: "images", kind: "images" },
+        { id: "dictionary", kind: "dictionary" },
       ],
     },
     {
@@ -107,6 +109,7 @@ const selectedNode = computed(() => {
   const center = layout.center;
   if (center.kind === "chapter") return { id: `chapter:${center.id}` };
   if (center.kind === "images" || center.kind === "image") return { id: "images" };
+  if (center.kind === "dictionary") return { id: "dictionary" };
   if (center.kind === "metadata" || center.kind === "css") return { id: center.kind };
   return undefined;
 });
@@ -130,6 +133,10 @@ function selectLeaf(event: Event, kind: "metadata" | "css") {
 function selectImages(event: Event) {
   event.preventDefault();
   layout.center = { kind: "images" };
+}
+function selectDictionary(event: Event) {
+  event.preventDefault();
+  layout.center = { kind: "dictionary" };
 }
 function selectChapter(id: string) {
   layout.center = { kind: "chapter", id };
@@ -276,6 +283,16 @@ function selectSection(event: CustomEvent<{ originalEvent: Event }>, key: string
         >
           <span class="min-w-0 flex-1 truncate">{{ t("explorer.images", "Images") }}</span>
           <Badge variant="secondary">{{ book.resources.size }}</Badge>
+        </TreeItem>
+        <TreeItem
+          v-else-if="item.value.kind === 'dictionary'"
+          v-bind="item.bind"
+          @select="selectDictionary"
+        >
+          <span class="min-w-0 flex-1 truncate">{{ t("explorer.dictionary", "Dictionary") }}</span>
+          <Badge v-if="book.dictionary.length > 0" variant="secondary">{{
+            book.dictionary.length
+          }}</Badge>
         </TreeItem>
         <TreeItem
           v-else-if="item.value.kind === 'metadata' || item.value.kind === 'css'"

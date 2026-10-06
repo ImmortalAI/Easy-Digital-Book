@@ -13,6 +13,7 @@ import type { ExportSettings, useSettingsStore } from "@/stores/settings";
 import type { SupportedLocale } from "@/plugins/i18n";
 import type { SettingsActions } from "@/composables/use-settings-actions";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLegend, FieldSeparator, FieldSet } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
@@ -47,6 +48,10 @@ const imageSwitches = [
 const bookSwitches = [
   { field: "titlePage", key: "export.titlePage", fallback: "Add title page" },
   { field: "versionInTitle", key: "export.versionInTitle", fallback: "Add version to title" },
+] as const;
+const spellingLanguages = [
+  { value: "ru", key: "settings.spellingRussian", fallback: "Russian" },
+  { value: "en", key: "settings.spellingEnglish", fallback: "English" },
 ] as const;
 type ExportSwitch = (typeof imageSwitches)[number] | (typeof bookSwitches)[number];
 
@@ -181,6 +186,44 @@ const openLogs = () => props.actions.openLogs();
                   @update:model-value="changeConfirmDelete"
                 />
               </Field>
+              <Field orientation="horizontal">
+                <Label for="settings-spelling" class="flex-auto">
+                  {{ t("settings.spelling", "Check spelling") }}
+                </Label>
+                <Switch
+                  id="settings-spelling"
+                  :model-value="settings.spelling.enabled"
+                  @update:model-value="(value: boolean) => settings.setSpelling({ enabled: value })"
+                />
+              </Field>
+              <FieldSet>
+                <FieldLegend variant="label">{{
+                  t("settings.spellingLanguages", "Spelling languages")
+                }}</FieldLegend>
+                <Field
+                  v-for="language in spellingLanguages"
+                  :key="language.value"
+                  orientation="horizontal"
+                >
+                  <Checkbox
+                    :id="`settings-spelling-${language.value}`"
+                    :model-value="settings.spelling.languages[language.value]"
+                    :disabled="!settings.spelling.enabled"
+                    @update:model-value="
+                      (value) =>
+                        settings.setSpelling({ languages: { [language.value]: value === true } })
+                    "
+                  />
+                  <Label :for="`settings-spelling-${language.value}`">{{
+                    t(language.key, language.fallback)
+                  }}</Label>
+                </Field>
+              </FieldSet>
+              <p class="text-xs text-muted-foreground">
+                {{
+                  t("settings.spellingCredits", "Dictionaries: LibreOffice ru_RU and SCOWL en_US.")
+                }}
+              </p>
             </FieldGroup>
           </CardContent>
         </Card>

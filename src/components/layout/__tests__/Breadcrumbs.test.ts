@@ -79,4 +79,16 @@ describe("Breadcrumbs", () => {
     await userEvent.click(screen.getByRole("button", { name: /images/i }));
     expect(layout.center).toEqual({ kind: "images" });
   });
+
+  it("shows Book › Dictionary", () => {
+    useLayoutStore().center = { kind: "dictionary" };
+    renderBreadcrumbs();
+
+    const trail = screen.getByRole("navigation", { name: "Breadcrumbs" });
+    expect(
+      within(trail)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent?.trim()),
+    ).toEqual(["Book", "Dictionary"]);
+  });
 });

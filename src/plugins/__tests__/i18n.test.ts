@@ -39,6 +39,31 @@ it("contains the localized keys required by the final editor shell", () => {
       "files.recoverTitle",
       "files.recoverMessage",
       "files.saveFailed",
+      "export.format",
+      "export.title",
+      "export.saved",
+      "export.progressAzw3",
+      "export.filterName",
+      "errors.export.failed",
+      "errors.export.azw3Limit",
+      "errors.export.azw3Link",
+      "errors.export.azw3Resource",
     ]),
   );
+});
+
+it("keeps interpolation parameters aligned for format-aware export messages", () => {
+  const interpolations = (value: string) =>
+    [...value.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]);
+  for (const key of ["export.title", "export.saved", "export.filterName"]) {
+    const value = (locale: typeof en) =>
+      key
+        .split(".")
+        .reduce<unknown>(
+          (current, segment) => (current as Record<string, unknown>)[segment],
+          locale,
+        );
+    expect(interpolations(value(ru) as string)).toEqual(interpolations(value(en) as string));
+    expect(interpolations(value(zhCN) as string)).toEqual(interpolations(value(en) as string));
+  }
 });
