@@ -4,6 +4,7 @@ import { useSafeI18n } from "@/composables/use-safe-i18n";
 import { IconPalette } from "@tabler/icons-vue";
 import { Button } from "@/components/ui/button";
 import WarningsPopover from "@/components/editor/WarningsPopover.vue";
+import SpellingPopover from "@/components/spelling/SpellingPopover.vue";
 
 import type { WarningSelection } from "@/types/diagnostics";
 
@@ -20,6 +21,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   selectWarning: [item: WarningSelection];
+  selectSpelling: [item: { chapterId: string; from: number; to: number }];
   showOriginalPreview: [];
 }>();
 const { t } = useSafeI18n();
@@ -53,6 +55,7 @@ const countsLabel = computed(() => {
   >
     <div class="flex min-w-0 items-center gap-2">
       <WarningsPopover :chapter-id="chapterId" @select="emit('selectWarning', $event)" />
+      <SpellingPopover @select="emit('selectSpelling', $event)" />
       <Button
         v-if="previewStyled"
         variant="ghost"

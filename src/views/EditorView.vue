@@ -413,6 +413,7 @@ onMounted(findSourceScroller);
       :chapter-id="selectedChapterId || previewChapterId"
       :preview-styled="previewStyled"
       @select-warning="selectWarning"
+      @select-spelling="(item) => selectSearchResult(item.chapterId, item.from, item.to)"
       @show-original-preview="settings.setPreview({ paperStyle: false })"
     />
     <ExportDialog

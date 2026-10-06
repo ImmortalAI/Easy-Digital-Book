@@ -407,3 +407,22 @@ it("opens CSS at a warning range from preview mode", async () => {
   expect(view.hasFocus).toBe(true);
   wrapper.unmount();
 });
+
+it("opens the chapter and selects the word when a spelling issue is picked", async () => {
+  const book = bookWithTwoChapters();
+  book.chapters[1]!.source = "# Second chapter\nпревет";
+  useProjectStore().setBook(book);
+  const layout = useLayoutStore();
+  layout.center = { kind: "chapter", id: "chapter1" };
+  const wrapper = mount(EditorView, { attachTo: document.body });
+  wrapper
+    .findComponent({ name: "SpellingPopover" })
+    .vm.$emit("select", { chapterId: "chapter2", from: 17, to: 23 });
+  await nextTick();
+  await nextTick();
+  expect(layout.center).toEqual({ kind: "chapter", id: "chapter2" });
+  const view = CodeMirrorView.findFromDOM(wrapper.get(".cm-editor").element as HTMLElement)!;
+  expect(view.state.selection.main.from).toBe(17);
+  expect(view.state.selection.main.to).toBe(23);
+  wrapper.unmount();
+});
