@@ -70,8 +70,23 @@ describe("SettingsView", () => {
     expect(actions.persist).toHaveBeenCalled();
   });
 
+  it("toggles spelling and its languages", async () => {
+    const settings = useSettingsStore();
+    render(SettingsView, { props: { settings, actions: createActions() } });
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("switch", { name: "Check spelling" }));
+    expect(settings.spelling.enabled).toBe(false);
+    expect(screen.getByRole("checkbox", { name: "English" })).toBeDisabled();
+    await user.click(screen.getByRole("switch", { name: "Check spelling" }));
+    await user.click(screen.getByRole("checkbox", { name: "English" }));
+    expect(settings.spelling.languages.en).toBe(false);
+    expect(screen.getByText(/LibreOffice/)).toBeInTheDocument();
+  });
+
   it("persists export and deletion switches", async () => {
     const settings = useSettingsStore();
+    settings.exportSettings.format = "azw3";
     const actions = createActions();
     render(SettingsView, { props: { settings, actions } });
     const user = userEvent.setup();
@@ -84,6 +99,7 @@ describe("SettingsView", () => {
     expect(settings.exportSettings.grayscale).toBe(true);
     expect(settings.confirmDelete).toBe(false);
     expect(settings.exportSettings.imagePreset).toBe("original");
+    expect(settings.exportSettings.format).toBe("azw3");
     expect(actions.persist).toHaveBeenCalledTimes(3);
   });
 

@@ -14,6 +14,12 @@ import { chapterParseResults, resetChapterParseResults } from "@/composables/use
 import { EditorView } from "@codemirror/view";
 import { createI18nPlugin } from "@/plugins/i18n";
 import { useSettingsStore } from "@/stores/settings";
+import { useSpellingStore } from "@/stores/spelling";
+import { nextTick } from "vue";
+import { screen } from "@testing-library/vue";
+import userEvent from "@testing-library/user-event";
+import { undo } from "@codemirror/commands";
+import { createInMemoryPlatformServices, setRuntimePlatformServices } from "@/services/platform";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 
 function deferredImageFile(name: string) {
@@ -50,6 +56,7 @@ describe("SourceEditor lifecycle", () => {
     setActivePinia(createPinia());
     resetChapterEditors();
     resetChapterParseResults();
+    setRuntimePlatformServices(createInMemoryPlatformServices({ spellWords: ["привет", "мир"] }));
     useProjectStore().setBook(makeBook());
     vi.useFakeTimers();
   });
@@ -110,6 +117,83 @@ describe("SourceEditor lifecycle", () => {
       "chapter two edited",
     ]);
     expect(chapterEditorStates.get("chapter1")?.doc.toString()).toBe("chapter one edited");
+    wrapper.unmount();
+  });
+
+  async function mountMisspelled() {
+    const project = useProjectStore();
+    project.book!.chapters[0]!.source = "мир превет";
+    const wrapper = mount(SourceEditor, {
+      props: { chapterId: "chapter1" },
+      attachTo: document.body,
+    });
+    useSpellingStore().setChapter("chapter1", "мир превет", [
+      { word: "превет", lang: "ru", from: 4, to: 10 },
+    ]);
+    await nextTick();
+    const view = EditorView.findFromDOM(wrapper.find(".cm-editor").element as HTMLElement)!;
+    return { wrapper, view, project };
+  }
+
+  it("opens the menu on a misspelling with Mod+. and replaces in one undoable step", async () => {
+    vi.useRealTimers();
+    const { wrapper, view, project } = await mountMisspelled();
+    view.dispatch({ selection: { anchor: 6 } });
+    view.contentDOM.dispatchEvent(
+      new KeyboardEvent("keydown", { key: ".", ctrlKey: true, bubbles: true }),
+    );
+    await userEvent.click(await screen.findByRole("menuitem", { name: "привет" }));
+    expect(view.state.doc.toString()).toBe("мир привет");
+    expect(project.book!.chapters[0]!.source).toBe("мир привет");
+    undo(view);
+    expect(view.state.doc.toString()).toBe("мир превет");
+    wrapper.unmount();
+  });
+
+  it("adds a word to the book dictionary from the menu", async () => {
+    vi.useRealTimers();
+    const { wrapper, project } = await mountMisspelled();
+    const target = wrapper.find(".cm-misspelled").element as HTMLElement;
+    target.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, clientX: 1, clientY: 1 }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Add to book dictionary" }));
+    expect(project.book!.dictionary).toEqual(["превет"]);
+    wrapper.unmount();
+  });
+
+  it("keeps the default context menu outside misspelled words", async () => {
+    vi.useRealTimers();
+    const { wrapper, view } = await mountMisspelled();
+    // happy-dom has no layout, so pin the clicked position to the word "мир".
+    vi.spyOn(view, "posAtCoords").mockReturnValue(1);
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    view.contentDOM.querySelector(".cm-line")!.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("does not open the spelling menu for a right-click outside the underline", async () => {
+    vi.useRealTimers();
+    const { wrapper, view } = await mountMisspelled();
+    // Pin the hit-test position to the misspelled word while the target is a plain line.
+    vi.spyOn(view, "posAtCoords").mockReturnValue(6);
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    view.contentDOM.querySelector(".cm-line")!.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+    expect(screen.queryByRole("menuitem")).toBeNull();
+    wrapper.unmount();
+  });
+
+  it("turns off WebView spellcheck and shows store misspellings for the current text only", async () => {
+    const wrapper = mount(SourceEditor, { props: { chapterId: "chapter1" } });
+    const source = useProjectStore().book!.chapters[0]!.source;
+    expect(wrapper.find(".cm-content").attributes("spellcheck")).toBe("false");
+    const spelling = useSpellingStore();
+    spelling.setChapter("chapter1", "old text", [{ word: "old", lang: "en", from: 0, to: 3 }]);
+    await nextTick();
+    expect(wrapper.find(".cm-misspelled").exists()).toBe(false);
+    spelling.setChapter("chapter1", source, [{ word: "Chapter", lang: "en", from: 2, to: 9 }]);
+    await nextTick();
+    expect(wrapper.find(".cm-misspelled").text()).toBe("Chapter");
     wrapper.unmount();
   });
 

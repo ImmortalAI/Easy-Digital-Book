@@ -10,14 +10,23 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+import type { WarningSelection } from "@/types/diagnostics";
+
 const props = defineProps<{ chapterId?: string }>();
 const emit = defineEmits<{
-  select: [item: { chapterId?: string; position?: { line: number; column: number } }];
+  select: [item: WarningSelection];
 }>();
 const diagnostics = useDiagnosticsStore();
 const project = useProjectStore();
 const { t } = useSafeI18n();
 const open = ref(false);
+const stylesOpen = ref(false);
+const cssItems = computed(() =>
+  diagnostics.css.map((item) => ({
+    ...item,
+    message: t(`cssSupport.${item.code}`, item.code, item.params),
+  })),
+);
 const chapterItems = computed(() =>
   props.chapterId ? (diagnostics.parse.get(props.chapterId) ?? []) : [],
 );
@@ -38,7 +47,7 @@ const bookItems = computed(() => {
 const parseCount = computed(() =>
   [...diagnostics.parse.values()].reduce((total, items) => total + items.length, 0),
 );
-const count = computed(() => parseCount.value + bookItems.value.length);
+const count = computed(() => parseCount.value + bookItems.value.length + cssItems.value.length);
 // A number as the params argument selects the plural form and fills `{count}`.
 const countLabel = computed(() => t("warnings.count", `${count.value} warnings`, count.value));
 
@@ -51,7 +60,7 @@ const groups = computed(() => [
   { key: "book", title: t("warnings.book", "Book"), items: bookItems.value },
 ]);
 
-function select(item: { chapterId?: string; position?: { line: number; column: number } }) {
+function select(item: WarningSelection) {
   emit("select", item);
   open.value = false;
 }
@@ -86,7 +95,35 @@ function select(item: { chapterId?: string; position?: { line: number; column: n
             >
               {{ item.message }}
             </Button>
-            <p v-if="group.items.length === 0" class="text-xs text-muted-foreground">
+            <template v-if="group.key === 'book' && cssItems.length">
+              <Button
+                variant="ghost"
+                size="sm"
+                class="justify-start px-1 text-xs"
+                :aria-expanded="stylesOpen"
+                @click="stylesOpen = !stylesOpen"
+              >
+                {{
+                  t("warnings.styles", `Styles (${cssItems.length})`, { count: cssItems.length })
+                }}
+              </Button>
+              <div v-if="stylesOpen" class="flex flex-col gap-1 pl-2">
+                <Button
+                  v-for="item in cssItems"
+                  :key="`${item.from}-${item.to}-${item.code}`"
+                  variant="ghost"
+                  size="sm"
+                  class="h-auto justify-start whitespace-normal px-1 py-1 text-left text-xs font-normal"
+                  @click="select({ kind: 'css', from: item.from, to: item.to })"
+                >
+                  {{ item.message }}
+                </Button>
+              </div>
+            </template>
+            <p
+              v-if="group.items.length === 0 && !(group.key === 'book' && cssItems.length)"
+              class="text-xs text-muted-foreground"
+            >
               {{ t("warnings.none", "No warnings") }}
             </p>
           </section>

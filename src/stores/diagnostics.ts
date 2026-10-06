@@ -1,13 +1,16 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import type { AppWarning, Diagnostic } from "@/types/diagnostics";
+import type { CssFinding } from "@/services/css-support/types";
 export const useDiagnosticsStore = defineStore("diagnostics", () => {
   const parse = ref(new Map<string, Diagnostic[]>()),
     book = ref<AppWarning[]>([]),
-    read = ref<AppWarning[]>([]);
+    read = ref<AppWarning[]>([]),
+    css = ref<CssFinding[]>([]);
   const all = computed(() => [
     ...book.value,
     ...read.value,
+    ...css.value,
     ...[...parse.value.entries()].flatMap(([chapterId, items]) =>
       items.map((item) => ({ ...item, chapterId })),
     ),
@@ -32,12 +35,22 @@ export const useDiagnosticsStore = defineStore("diagnostics", () => {
   function setReadWarnings(value: AppWarning[]) {
     read.value = value;
   }
+  function setCssFindings(value: CssFinding[]) {
+    css.value = value;
+  }
+  function clearCss() {
+    css.value = [];
+  }
   function clear() {
+    clearCss();
     parse.value = new Map();
     book.value = [];
     read.value = [];
   }
   return {
+    css,
+    setCssFindings,
+    clearCss,
     parse,
     diagnostics: parse,
     book,

@@ -27,9 +27,12 @@ export function parseManifest(value: unknown): {
   }
   if (envelope.output.formatVersion > CURRENT_EDB_FORMAT_VERSION)
     throw new AppError("edb.tooNew", "Project format is newer than this application");
-  const migrated = envelope.output.formatVersion < CURRENT_EDB_FORMAT_VERSION;
+  const needsMigration = envelope.output.formatVersion < CURRENT_EDB_FORMAT_VERSION;
+  // The 1 -> 2 step only adds an optional dictionary file, so a version 1 file
+  // is not considered changed by it; only older (data-changing) steps count.
+  const migrated = envelope.output.formatVersion < 1;
   return {
-    manifest: migrated
+    manifest: needsMigration
       ? migrateManifest(envelope.output, envelope.output.formatVersion)
       : envelope.output,
     migrated,

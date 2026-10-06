@@ -26,6 +26,7 @@ function book(
     chapters: chapters.map((source, i) => ({ id: `chapter${i}`, source })),
     resources: new Map(paths.map((p) => [p, res])),
     customCss: css,
+    dictionary: [],
   };
 }
 

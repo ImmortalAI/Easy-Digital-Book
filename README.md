@@ -4,11 +4,10 @@
 
 # Easy Digital Book
 
-### Write your novel. Get a Kindle-ready EPUB.
+### Write your novel. Export EPUB or Kindle AZW3.
 
 A calm, focused desktop editor that turns chapters of fiction into clean,
-valid EPUB 3 books for Kindle Paperwhite — no Calibre round-trips, no Sigil
-spelunking.
+valid EPUB 3 or AZW3/KF8 books for Kindle Paperwhite — no Sigil spelunking.
 
 [![Latest release](https://img.shields.io/github/v/release/ImmortalAI/easy-digital-book?style=for-the-badge&logo=github&label=Release&color=3b4252)](https://github.com/ImmortalAI/easy-digital-book/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/ImmortalAI/easy-digital-book/total?style=for-the-badge&logo=github&label=Downloads&color=3b4252)](https://github.com/ImmortalAI/easy-digital-book/releases)
@@ -18,6 +17,7 @@ spelunking.
 ![Windows](https://img.shields.io/badge/Windows-10%2B-0078D4?style=flat-square&logo=windows&logoColor=white)
 ![Linux](https://img.shields.io/badge/Linux-AppImage%20·%20deb%20·%20rpm-FCC624?style=flat-square&logo=linux&logoColor=black)
 ![EPUB 3](https://img.shields.io/badge/EPUB-3-8A2BE2?style=flat-square)
+![AZW3](https://img.shields.io/badge/Kindle-AZW3%2FKF8-8A2BE2?style=flat-square)
 ![Tauri 2](https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&logo=tauri&logoColor=white)
 ![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue?style=flat-square)](LICENSE)
@@ -44,8 +44,9 @@ spelunking.
   <tr>
     <td width="33%" valign="top">
       <h3>✍️ Distraction-free writing</h3>
-      A proportional-font editor with soft wrap, spell checking in the book's
-      language, and separate undo history for every chapter.
+      A proportional-font editor with soft wrap, Russian and English spell
+      checking with a per-book dictionary, and separate undo history for
+      every chapter.
     </td>
     <td width="33%" valign="top">
       <h3>👁️ Live book preview</h3>
@@ -71,8 +72,8 @@ spelunking.
     </td>
     <td width="33%" valign="top">
       <h3>📖 Kindle-ready export</h3>
-      Valid EPUB 3 with a title page, table of contents, endnotes, series
-      metadata, and images resized for the Paperwhite screen.
+      Export EPUB 3 or AZW3/KF8 with a title page, table of contents, endnotes,
+      series metadata, and images resized for the Paperwhite screen.
     </td>
   </tr>
   <tr>
@@ -124,15 +125,16 @@ spelunking.
 ```mermaid
 flowchart LR
     A["✍️ Write chapters<br/>in NovLang"] --> B["👁️ Check the<br/>live preview"]
-    B --> C["📦 Export<br/>EPUB 3"]
-    C --> D["📲 Send to Kindle<br/>or copy over USB"]
+    B --> C["📦 Export<br/>EPUB 3 or AZW3/KF8"]
+    C --> D["📲 Send EPUB to Kindle<br/>or copy AZW3 over USB"]
 ```
 
 1. **Create a book** and write each chapter in NovLang, a tiny Markdown-like
    markup made for fiction.
 2. **Fill in the metadata** — title, authors, series, cover.
-3. **Export** an `.epub` and put it on your Kindle with
-   [Send to Kindle](https://www.amazon.com/sendtokindle) or a USB cable.
+3. **Export** an `.epub` for
+   [Send to Kindle](https://www.amazon.com/sendtokindle), or an `.azw3` file
+   to copy directly to a compatible Kindle over USB.
 
 > [!TIP]
 > Want to look around first? Open the sample book
@@ -217,6 +219,7 @@ Grab the latest build for your system from
 | Show or hide the sidebar      | Mod+\\                              |
 | Explorer / Search the book    | Mod+Shift+E / Mod+Shift+F           |
 | Find & replace in the chapter | Mod+F                               |
+| Spelling suggestions          | Mod+.                               |
 | Preview: paper style on / off | Mod+Alt+P                           |
 | Replace all in the book       | Mod+Alt+Enter                       |
 | Move the selected chapter     | Alt+↑ / Alt+↓                       |
@@ -231,10 +234,10 @@ Planned after v1, in no particular order and with no dates yet:
 
 - [ ] **AZW3 export.** Save a Kindle-native book directly, without
       converting the EPUB in Calibre.
-- [ ] **Kindle CSS check.** Warn about rules in `custom.css` that Kindle
-      ignores or renders differently.
-- [ ] **Language check for English and Russian.** Catch spelling and wording
-      mistakes in chapters beyond the system spell checker.
+- [x] **Kindle CSS check.** Advisory syntax and compatibility diagnostics in
+      the CSS editor and export dialog; device verification remains open.
+- [x] **Spell check for English and Russian.** Offline spelling check with
+      suggestions and a per-book dictionary; wording checks remain open.
 
 Ideas and votes are welcome in
 [Issues](https://github.com/ImmortalAI/easy-digital-book/issues).
@@ -249,7 +252,9 @@ Ideas and votes are welcome in
 [novlang-js](https://www.npmjs.com/package/novlang-js)
 
 The EPUB builder is validated with
-[epubcheck](https://github.com/w3c/epubcheck) in CI on every change.
+[epubcheck](https://github.com/w3c/epubcheck) in CI. AZW3 fixtures are read
+back by pinned Calibre 9.15.0 in a separate CI job. Physical Kindle checks
+remain part of the release checklist.
 
 ## 🤝 Contributing
 
@@ -263,6 +268,11 @@ Easy Digital Book is free software, released under the
 [GNU General Public License v3.0 or later](LICENSE). You may use, study, change
 and share it; if you distribute a modified version, you must share its source
 code under the same license.
+
+Spell checking uses the [`spellbook`](https://github.com/helix-editor/spellbook)
+engine (MPL-2.0) and bundled Hunspell dictionaries: Russian (BSD-style) and
+English (SCOWL). Sources and licences are listed in
+[`src-tauri/resources/dictionaries/README.md`](src-tauri/resources/dictionaries/README.md).
 
 <div align="center">
 <br />

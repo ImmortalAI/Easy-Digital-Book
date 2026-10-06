@@ -50,5 +50,6 @@ export function createBook({ locale, now, newUuid, newChapterId, newId }: Create
     chapters: [{ id: chapterId, source: `# ${heading}` }],
     resources: new Map(),
     customCss: null,
+    dictionary: [],
   };
 }

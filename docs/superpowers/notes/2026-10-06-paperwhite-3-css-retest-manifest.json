@@ -1,0 +1,572 @@
+[
+  {
+    "number": 1,
+    "id": "display-block",
+    "previous": "26",
+    "css": ".sample .probe {display:block;}",
+    "setup": ".probe {display:inline;} .probe,.tail {border:0.1em solid black;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div>ДО <span class=\"probe\">ТЕСТОВЫЙ SPAN</span> ПОСЛЕ</div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div>ДО <span class=\"probe\">ТЕСТОВЫЙ SPAN</span> ПОСЛЕ</div></div>",
+    "expected": "Контроль: ДО, SPAN, ПОСЛЕ идут в одной строке, если хватает ширины. Тест: SPAN занимает отдельную строку, ПОСЛЕ начинается ниже.",
+    "context": "Короткий span выбран вместо уже блочного div."
+  },
+  {
+    "number": 2,
+    "id": "display-flex",
+    "previous": "27–30",
+    "css": ".sample .probe {display:flex;flex-direction:row;}",
+    "setup": ".probe {display:block;width:12em;} .tile {display:block;width:auto;} .tile {border:0.12em solid black;background:#ddd;padding:0.25em;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"probe\"><span class=\"tile\">A</span><span class=\"tile\">B</span></div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"probe\"><span class=\"tile\">A</span><span class=\"tile\">B</span></div></div>",
+    "expected": "Контроль: A над B. Тест: A и B рядом, в двух колонках.",
+    "context": "Две карточки явно block в контроле. Для inline-варианта этот тест доказывает работу раскладки, но не поведение контейнера в строке."
+  },
+  {
+    "number": 3,
+    "id": "display-inline-flex",
+    "previous": "27–30",
+    "css": ".sample .probe {display:inline-flex;flex-direction:row;}",
+    "setup": ".probe {display:block;width:12em;} .tile {display:block;width:auto;} .tile {border:0.12em solid black;background:#ddd;padding:0.25em;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"probe\"><span class=\"tile\">A</span><span class=\"tile\">B</span></div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"probe\"><span class=\"tile\">A</span><span class=\"tile\">B</span></div></div>",
+    "expected": "Контроль: A над B. Тест: A и B рядом, в двух колонках.",
+    "context": "Две карточки явно block в контроле. Для inline-варианта этот тест доказывает работу раскладки, но не поведение контейнера в строке."
+  },
+  {
+    "number": 4,
+    "id": "display-grid",
+    "previous": "27–30",
+    "css": ".sample .probe {display:grid;grid-template-columns:1fr 1fr;}",
+    "setup": ".probe {display:block;width:12em;} .tile {display:block;width:auto;} .tile {border:0.12em solid black;background:#ddd;padding:0.25em;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"probe\"><span class=\"tile\">A</span><span class=\"tile\">B</span></div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"probe\"><span class=\"tile\">A</span><span class=\"tile\">B</span></div></div>",
+    "expected": "Контроль: A над B. Тест: A и B рядом, в двух колонках.",
+    "context": "Две карточки явно block в контроле. Для inline-варианта этот тест доказывает работу раскладки, но не поведение контейнера в строке."
+  },
+  {
+    "number": 5,
+    "id": "display-inline-grid",
+    "previous": "27–30",
+    "css": ".sample .probe {display:inline-grid;grid-template-columns:1fr 1fr;}",
+    "setup": ".probe {display:block;width:12em;} .tile {display:block;width:auto;} .tile {border:0.12em solid black;background:#ddd;padding:0.25em;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"probe\"><span class=\"tile\">A</span><span class=\"tile\">B</span></div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"probe\"><span class=\"tile\">A</span><span class=\"tile\">B</span></div></div>",
+    "expected": "Контроль: A над B. Тест: A и B рядом, в двух колонках.",
+    "context": "Две карточки явно block в контроле. Для inline-варианта этот тест доказывает работу раскладки, но не поведение контейнера в строке."
+  },
+  {
+    "number": 6,
+    "id": "inline-flex-outer-flow",
+    "previous": "28, 30",
+    "css": ".sample .probe {display:inline-flex;}",
+    "setup": ".probe {display:block;width:7em;} .tile {border:0.12em solid black;background:#ddd;padding:0.25em;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div>ДО <span class=\"probe\"><span class=\"tile\">A</span><span class=\"tile\">B</span></span> ПОСЛЕ</div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div>ДО <span class=\"probe\"><span class=\"tile\">A</span><span class=\"tile\">B</span></span> ПОСЛЕ</div></div>",
+    "expected": "Контроль: контейнер отделён от ДО/ПОСЛЕ. Тест: контейнер размещается внутри строки, если хватает ширины.",
+    "context": "Если ДО/контейнер/ПОСЛЕ не помещаются, повторите в горизонтальной ориентации или меньшим шрифтом; иначе НЕОПРЕДЕЛЁН."
+  },
+  {
+    "number": 7,
+    "id": "inline-grid-outer-flow",
+    "previous": "28, 30",
+    "css": ".sample .probe {display:inline-grid;grid-template-columns:1fr 1fr;}",
+    "setup": ".probe {display:block;width:7em;} .tile {border:0.12em solid black;background:#ddd;padding:0.25em;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div>ДО <span class=\"probe\"><span class=\"tile\">A</span><span class=\"tile\">B</span></span> ПОСЛЕ</div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div>ДО <span class=\"probe\"><span class=\"tile\">A</span><span class=\"tile\">B</span></span> ПОСЛЕ</div></div>",
+    "expected": "Контроль: контейнер отделён от ДО/ПОСЛЕ. Тест: контейнер размещается внутри строки, если хватает ширины.",
+    "context": "Если ДО/контейнер/ПОСЛЕ не помещаются, повторите в горизонтальной ориентации или меньшим шрифтом; иначе НЕОПРЕДЕЛЁН."
+  },
+  {
+    "number": 8,
+    "id": "word-wrap",
+    "previous": "76",
+    "css": ".sample .probe {word-wrap:break-word;}",
+    "setup": ".probe {width:8em;white-space:normal;word-wrap:normal;overflow-wrap:normal;word-break:normal;hyphens:none;border:0.1em solid black;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ</p></div>",
+    "expected": "Контроль: непрерывное слово выходит за узкую рамку. Тест: слово переносится внутри рамки.",
+    "context": "Если оба блока переносят слово, Kindle переопределяет исходный normal: запишите НЕОПРЕДЕЛЁН, а не ДА. Дополнительные normal-свойства задают одинаковый контроль в обоих блоках."
+  },
+  {
+    "number": 9,
+    "id": "hyphens-manual",
+    "previous": "142",
+    "css": ".sample .probe {hyphens:manual;}",
+    "setup": ".probe {width:9em;white-space:normal;word-wrap:normal;word-break:normal;hyphens:none;border:0.1em solid black;text-align:left;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\" lang=\"ru\" xml:lang=\"ru\">необыкно­венный перепрогра­ммирование достопри­мечательность необыкновенный перепрограммирование достопримечательность</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\" lang=\"ru\" xml:lang=\"ru\">необыкно­венный перепрогра­ммирование достопри­мечательность необыкновенный перепрограммирование достопримечательность</p></div>",
+    "expected": "В тесте слова разделяются с дефисом в местах мягких переносов; контроль без дефисов.",
+    "context": "Ширина и язык одинаковы в обоих блоках. Если контроль уже переносит слова с дефисом или слово не пересекло правый край, НЕОПРЕДЕЛЁН. auto зависит от словаря прошивки."
+  },
+  {
+    "number": 10,
+    "id": "hyphens-auto",
+    "previous": "142",
+    "css": ".sample .probe {hyphens:auto;}",
+    "setup": ".probe {width:9em;white-space:normal;word-wrap:normal;word-break:normal;hyphens:none;border:0.1em solid black;text-align:left;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\" lang=\"ru\" xml:lang=\"ru\">необыкновенный перепрограммирование достопримечательность необыкновенный перепрограммирование достопримечательность</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\" lang=\"ru\" xml:lang=\"ru\">необыкновенный перепрограммирование достопримечательность необыкновенный перепрограммирование достопримечательность</p></div>",
+    "expected": "В тесте появляются словарные переносы с дефисами; контроль без них.",
+    "context": "Ширина и язык одинаковы в обоих блоках. Если контроль уже переносит слова с дефисом или слово не пересекло правый край, НЕОПРЕДЕЛЁН. auto зависит от словаря прошивки."
+  },
+  {
+    "number": 11,
+    "id": "first-child-paragraph",
+    "previous": "83",
+    "css": ".sample p.item:first-child {border:0.25em solid black;}",
+    "setup": ".item {border:0.05em solid #aaa;padding:0.3em;} .icon {width:2em;height:2em;border:none;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"family\"><p class=\"item\">P1 — первый абзац</p><p class=\"item\">P2 — второй абзац</p></div><div class=\"single\"><p class=\"item\">P3 — единственный абзац с картинкой <img class=\"icon\" src=\"../images/checker.jpg\" alt=\"значок\" /></p></div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"family\"><p class=\"item\">P1 — первый абзац</p><p class=\"item\">P2 — второй абзац</p></div><div class=\"single\"><p class=\"item\">P3 — единственный абзац с картинкой <img class=\"icon\" src=\"../images/checker.jpg\" alt=\"значок\" /></p></div></div>",
+    "expected": "Тест: толстая рамка у P1 и P3. P2 остаётся с тонкой рамкой. У картинки отдельной толстой рамки быть не должно.",
+    "context": ""
+  },
+  {
+    "number": 12,
+    "id": "only-child-paragraph",
+    "previous": "85",
+    "css": ".sample p.item:only-child {border:0.25em solid black;}",
+    "setup": ".item {border:0.05em solid #aaa;padding:0.3em;} .icon {width:2em;height:2em;border:none;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"family\"><p class=\"item\">P1 — первый абзац</p><p class=\"item\">P2 — второй абзац</p></div><div class=\"single\"><p class=\"item\">P3 — единственный абзац с картинкой <img class=\"icon\" src=\"../images/checker.jpg\" alt=\"значок\" /></p></div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"family\"><p class=\"item\">P1 — первый абзац</p><p class=\"item\">P2 — второй абзац</p></div><div class=\"single\"><p class=\"item\">P3 — единственный абзац с картинкой <img class=\"icon\" src=\"../images/checker.jpg\" alt=\"значок\" /></p></div></div>",
+    "expected": "Тест: толстая рамка только у P3. P1 и P2 с тонкими рамками. Картинка не получает собственную толстую рамку.",
+    "context": ""
+  },
+  {
+    "number": 13,
+    "id": "only-child-image",
+    "previous": "85",
+    "css": ".sample img.icon:only-child {border:0.25em solid black;}",
+    "setup": ".icon {width:2em;height:2em;border:0.05em solid #aaa;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div><img class=\"icon\" src=\"../images/checker.jpg\" alt=\"ОДНА\" /></div><div><img class=\"icon\" src=\"../images/checker.jpg\" alt=\"ПАРА A\" /><img class=\"icon\" src=\"../images/checker.jpg\" alt=\"ПАРА B\" /></div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div><img class=\"icon\" src=\"../images/checker.jpg\" alt=\"ОДНА\" /></div><div><img class=\"icon\" src=\"../images/checker.jpg\" alt=\"ПАРА A\" /><img class=\"icon\" src=\"../images/checker.jpg\" alt=\"ПАРА B\" /></div></div>",
+    "expected": "Тест: толстая рамка у единственной картинки. Две картинки в парном контейнере сохраняют тонкую рамку.",
+    "context": "Это отдельная проверка img:only-child, а не вложенной картинки у p:only-child."
+  },
+  {
+    "number": 14,
+    "id": "first-line",
+    "previous": "99",
+    "css": ".sample .probe::first-line {font-weight:bold;color:#777;font-style:italic;}",
+    "setup": ".probe {width:12em;line-height:1.4;font-weight:normal;font-style:normal;color:black;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: только первая отображаемая строка жирная/курсивная/серая. Остальные строки обычные. Контроль весь обычный.",
+    "context": "Рамка исключена из индикаторов. В узком блоке обязательно должно быть несколько строк. Отметьте, какие из трёх эффектов видны."
+  },
+  {
+    "number": 15,
+    "id": "background-size",
+    "previous": "7",
+    "css": ".sample .probe {background-size:4em 4em;}",
+    "setup": ".probe {background-image:url(\"../images/checker.jpg\");background-repeat:no-repeat;background-position:left top;background-size:1em 1em;height:5em;width:10em;border:0.1em solid black;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"probe\"></div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"probe\"></div></div>",
+    "expected": "Тестовый рисунок имеет стороны в 4 раза больше контрольного: 4em против 1em. Повторите размером шрифта 3 и 6.",
+    "context": "Пустые одинаковые рамки убирают наложение текста на изображение."
+  },
+  {
+    "number": 16,
+    "id": "background-attachment",
+    "previous": "2",
+    "css": ".sample .probe {background-attachment:fixed;}",
+    "setup": ".probe {background-image:url(\"../images/checker.jpg\");background-repeat:no-repeat;background-position:left top;background-size:3em 3em;background-attachment:scroll;height:5em;border:0.1em solid black;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"probe\">Фон scroll / fixed</div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"probe\">Фон scroll / fixed</div></div>",
+    "expected": "Запишите, присутствует ли рисунок в обоих блоках и где он расположен.",
+    "context": "Если рисунок исчезает только у fixed — зафиксируйте это как эффект/ограничение fixed. Постраничное чтение без прокрутки не доказывает привязку фона к экрану: этот аспект остаётся НЕОПРЕДЕЛЁН."
+  },
+  {
+    "number": 17,
+    "id": "bottom-relative",
+    "previous": "19",
+    "css": ".sample .probe {bottom:2em;}",
+    "setup": ".stage {border:0.1em solid black;height:6em;padding-top:3em;} .probe {position:relative;bottom:0;margin:0;padding:0;border:0.1em solid black;background:#ddd;} .anchor {border-top:0.2em solid black;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"stage\"><div class=\"anchor\">ОПОРНАЯ ЛИНИЯ</div><div class=\"probe\">ОДИН ЭЛЕМЕНТ</div></div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"stage\"><div class=\"anchor\">ОПОРНАЯ ЛИНИЯ</div><div class=\"probe\">ОДИН ЭЛЕМЕНТ</div></div></div>",
+    "expected": "Контроль: элемент под опорной линией. Тест: один элемент поднялся на 2em относительно линии.",
+    "context": "Одинаковые рамки, одна опорная линия и один короткий элемент вместо нескольких абзацев."
+  },
+  {
+    "number": 18,
+    "id": "fixed-single",
+    "previous": "63",
+    "css": ".sample .probe {position:fixed;bottom:1em;left:1em;}",
+    "setup": ".probe {position:static;border:0.2em solid black;background:white;color:black;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"probe\">FIXED — ОДНА ПЛАШКА</div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"probe\">FIXED — ОДНА ПЛАШКА</div></div><p>Строка-проверка 1. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Строка-проверка 2. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Строка-проверка 3. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Строка-проверка 4. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Строка-проверка 5. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Строка-проверка 6. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Строка-проверка 7. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Строка-проверка 8. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Строка-проверка 9. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Строка-проверка 10. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Строка-проверка 11. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Строка-проверка 12. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Строка-проверка 13. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Строка-проверка 14. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p>",
+    "expected": "Контроль остаётся в потоке. Тестовая единственная плашка у нижнего края; перелистайте несколько страниц и запишите, остаётся ли она там.",
+    "context": "Больше нет трёх элементов с одинаковыми координатами. Возможное перекрытие одной плашкой текста тоже запишите."
+  },
+  {
+    "number": 19,
+    "id": "sticky-state",
+    "previous": "64",
+    "css": ".sample .probe {position:sticky;top:0;}",
+    "setup": ".probe {position:static;border:0.2em solid black;background:white;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"probe\">STICKY — ОДНА ПЛАШКА</div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"probe\">STICKY — ОДНА ПЛАШКА</div></div><p>Продолжение 1: Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Продолжение 2: Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Продолжение 3: Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Продолжение 4: Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Продолжение 5: Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Продолжение 6: Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Продолжение 7: Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Продолжение 8: Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Продолжение 9: Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Продолжение 10: Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Продолжение 11: Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p><p>Продолжение 12: Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p>",
+    "expected": "Проверьте положение плашки при перелистывании/прокрутке.",
+    "context": "Если доступно только постраничное чтение без движения блока через верхний край, запишите НЕОПРЕДЕЛЁН. Обычное положение плашки не доказывает отсутствие sticky."
+  },
+  {
+    "number": 20,
+    "id": "height-short",
+    "previous": "38",
+    "css": ".sample .probe {height:4em;}",
+    "setup": ".probe {height:auto;border:0.15em solid black;line-height:1.2;padding:0;margin:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"probe\">ОДНА КОРОТКАЯ СТРОКА</div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"probe\">ОДНА КОРОТКАЯ СТРОКА</div></div>",
+    "expected": "Контроль: рамка высотой короткой строки. Тест: рамка высотой 4em, с заметным свободным местом.",
+    "context": "Изолированная проверка высоты, без длинного текста и переполнения."
+  },
+  {
+    "number": 21,
+    "id": "height-overflow-visible",
+    "previous": "38, 51",
+    "css": ".sample .probe {height:2em;}",
+    "setup": ".probe {height:auto;overflow:visible;border:0.15em solid black;line-height:1.2;padding:0;margin:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"probe\">LINE 1<br />LINE 2<br />LINE 3<br />LINE 4<br />LINE 5</div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"probe\">LINE 1<br />LINE 2<br />LINE 3<br />LINE 4<br />LINE 5</div></div><p>МАРКЕР ПОСЛЕ БЛОКА</p>",
+    "expected": "Тест: рамка 2em, нижние строки продолжаются за рамкой. Контроль: рамка охватывает все строки.",
+    "context": "overflow одинаков в обоих блоках; меняется только height. Если место у границы страницы влияет на результат, повторите меньшим шрифтом."
+  },
+  {
+    "number": 22,
+    "id": "height-overflow-hidden",
+    "previous": "38, 51",
+    "css": ".sample .probe {height:2em;}",
+    "setup": ".probe {height:auto;overflow:hidden;border:0.15em solid black;line-height:1.2;padding:0;margin:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"probe\">LINE 1<br />LINE 2<br />LINE 3<br />LINE 4<br />LINE 5</div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"probe\">LINE 1<br />LINE 2<br />LINE 3<br />LINE 4<br />LINE 5</div></div><p>МАРКЕР ПОСЛЕ БЛОКА</p>",
+    "expected": "Тест: рамка 2em, нижние строки обрезаны. Контроль: все пять строк.",
+    "context": "overflow одинаков в обоих блоках; меняется только height. Если место у границы страницы влияет на результат, повторите меньшим шрифтом."
+  },
+  {
+    "number": 23,
+    "id": "media-all",
+    "previous": "105",
+    "css": "@media all {.sample .probe {font-weight:bold;text-decoration:underline;}}",
+    "setup": ".probe {font-weight:normal;text-decoration:none;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">MEDIA QUERY — жирный и подчёркнутый текст</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">MEDIA QUERY — жирный и подчёркнутый текст</p></div>",
+    "expected": "Если условие принято, тест жирный и подчёркнутый, контроль обычный.",
+    "context": "Проверяется только условие all. Отрицательный результат не распространяется на другие media conditions."
+  },
+  {
+    "number": 24,
+    "id": "media-screen",
+    "previous": "105",
+    "css": "@media screen {.sample .probe {font-weight:bold;text-decoration:underline;}}",
+    "setup": ".probe {font-weight:normal;text-decoration:none;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">MEDIA QUERY — жирный и подчёркнутый текст</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">MEDIA QUERY — жирный и подчёркнутый текст</p></div>",
+    "expected": "Если условие принято, тест жирный и подчёркнутый, контроль обычный.",
+    "context": "Проверяется только условие screen. Отрицательный результат не распространяется на другие media conditions."
+  },
+  {
+    "number": 25,
+    "id": "media-min-width",
+    "previous": "105",
+    "css": "@media (min-width:1px) {.sample .probe {font-weight:bold;text-decoration:underline;}}",
+    "setup": ".probe {font-weight:normal;text-decoration:none;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">MEDIA QUERY — жирный и подчёркнутый текст</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">MEDIA QUERY — жирный и подчёркнутый текст</p></div>",
+    "expected": "Если условие принято, тест жирный и подчёркнутый, контроль обычный.",
+    "context": "Проверяется только условие (min-width:1px). Отрицательный результат не распространяется на другие media conditions."
+  },
+  {
+    "number": 26,
+    "id": "media-amzn-kf8",
+    "previous": "105",
+    "css": "@media amzn-kf8 {.sample .probe {font-weight:bold;text-decoration:underline;}}",
+    "setup": ".probe {font-weight:normal;text-decoration:none;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">MEDIA QUERY — жирный и подчёркнутый текст</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">MEDIA QUERY — жирный и подчёркнутый текст</p></div>",
+    "expected": "Если условие принято, тест жирный и подчёркнутый, контроль обычный.",
+    "context": "Проверяется только условие amzn-kf8. Отрицательный результат не распространяется на другие media conditions."
+  },
+  {
+    "number": 27,
+    "id": "media-direct-positive-control",
+    "previous": "105",
+    "css": ".sample .probe {font-weight:bold;text-decoration:underline;}",
+    "setup": ".probe {font-weight:normal;text-decoration:none;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">ПРЯМОЕ ПРАВИЛО, БЕЗ MEDIA</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">ПРЯМОЕ ПРАВИЛО, БЕЗ MEDIA</p></div>",
+    "expected": "Тест жирный и подчёркнутый.",
+    "context": "Если этот положительный контроль не отличается, результаты media-тестов НЕОПРЕДЕЛЁН: проблема в индикаторе, а не обязательно в @media."
+  },
+  {
+    "number": 28,
+    "id": "supports-with-positive-control",
+    "previous": "106",
+    "css": "@supports (display:block) {.sample .conditional {text-decoration:underline;font-weight:bold;}} .sample .direct {text-decoration:underline;font-weight:bold;}",
+    "setup": ".conditional,.direct {font-weight:normal;text-decoration:none;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"direct\">ПРЯМОЕ ПРАВИЛО</p><p class=\"conditional\">ПРАВИЛО В SUPPORTS</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"direct\">ПРЯМОЕ ПРАВИЛО</p><p class=\"conditional\">ПРАВИЛО В SUPPORTS</p></div>",
+    "expected": "Тест: прямой индикатор должен стать жирным/подчёркнутым. Если условие @supports принято, таким станет и условный индикатор.",
+    "context": "Если прямой индикатор не изменился, НЕОПРЕДЕЛЁН. Этот тест проверяет @supports (display:block)."
+  },
+  {
+    "number": 29,
+    "id": "page-break-after",
+    "previous": "140",
+    "css": ".sample .one {page-break-after:always;}",
+    "setup": ".one,.two {margin:0;padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"one\">МЕТКА A — ДО РАЗРЫВА</div><div class=\"two\">МЕТКА B — ПОСЛЕ РАЗРЫВА</div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"one\">МЕТКА A — ДО РАЗРЫВА</div><div class=\"two\">МЕТКА B — ПОСЛЕ РАЗРЫВА</div></div>",
+    "expected": "Контроль: A и B рядом по вертикали. Тест: B начинается на следующей странице после A.",
+    "context": "Один короткий div вместо длинных абзацев. Учитывайте только разрыв между тестовыми A/B, а не переход между главами."
+  },
+  {
+    "number": 30,
+    "id": "break-after",
+    "previous": "140",
+    "css": ".sample .one {break-after:page;}",
+    "setup": ".one,.two {margin:0;padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><div class=\"one\">МЕТКА A — ДО РАЗРЫВА</div><div class=\"two\">МЕТКА B — ПОСЛЕ РАЗРЫВА</div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><div class=\"one\">МЕТКА A — ДО РАЗРЫВА</div><div class=\"two\">МЕТКА B — ПОСЛЕ РАЗРЫВА</div></div>",
+    "expected": "Контроль: A и B рядом по вертикали. Тест: B начинается на следующей странице после A.",
+    "context": "Один короткий div вместо длинных абзацев. Учитывайте только разрыв между тестовыми A/B, а не переход между главами."
+  },
+  {
+    "number": 31,
+    "id": "page-break-inside",
+    "previous": "141",
+    "css": ".sample .probe {page-break-inside:avoid;}",
+    "setup": ".probe {page-break-inside:auto;border:0.12em solid black;} .filler {margin:0;padding:0;line-height:1.2;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p>Попытка 1</p><p class=\"filler\">Подводящая строка 1.1</p><p class=\"filler\">Подводящая строка 1.2</p><p class=\"filler\">Подводящая строка 1.3</p><p class=\"filler\">Подводящая строка 1.4</p><div class=\"probe\"><div>BOX 1 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 1 — END</div></div><p>Попытка 2</p><p class=\"filler\">Подводящая строка 2.1</p><p class=\"filler\">Подводящая строка 2.2</p><p class=\"filler\">Подводящая строка 2.3</p><p class=\"filler\">Подводящая строка 2.4</p><p class=\"filler\">Подводящая строка 2.5</p><p class=\"filler\">Подводящая строка 2.6</p><p class=\"filler\">Подводящая строка 2.7</p><div class=\"probe\"><div>BOX 2 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 2 — END</div></div><p>Попытка 3</p><p class=\"filler\">Подводящая строка 3.1</p><p class=\"filler\">Подводящая строка 3.2</p><p class=\"filler\">Подводящая строка 3.3</p><p class=\"filler\">Подводящая строка 3.4</p><p class=\"filler\">Подводящая строка 3.5</p><p class=\"filler\">Подводящая строка 3.6</p><p class=\"filler\">Подводящая строка 3.7</p><p class=\"filler\">Подводящая строка 3.8</p><p class=\"filler\">Подводящая строка 3.9</p><p class=\"filler\">Подводящая строка 3.10</p><div class=\"probe\"><div>BOX 3 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 3 — END</div></div><p>Попытка 4</p><p class=\"filler\">Подводящая строка 4.1</p><p class=\"filler\">Подводящая строка 4.2</p><p class=\"filler\">Подводящая строка 4.3</p><p class=\"filler\">Подводящая строка 4.4</p><p class=\"filler\">Подводящая строка 4.5</p><p class=\"filler\">Подводящая строка 4.6</p><p class=\"filler\">Подводящая строка 4.7</p><p class=\"filler\">Подводящая строка 4.8</p><p class=\"filler\">Подводящая строка 4.9</p><p class=\"filler\">Подводящая строка 4.10</p><p class=\"filler\">Подводящая строка 4.11</p><p class=\"filler\">Подводящая строка 4.12</p><p class=\"filler\">Подводящая строка 4.13</p><div class=\"probe\"><div>BOX 4 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 4 — END</div></div><p>Попытка 5</p><p class=\"filler\">Подводящая строка 5.1</p><p class=\"filler\">Подводящая строка 5.2</p><p class=\"filler\">Подводящая строка 5.3</p><p class=\"filler\">Подводящая строка 5.4</p><p class=\"filler\">Подводящая строка 5.5</p><p class=\"filler\">Подводящая строка 5.6</p><p class=\"filler\">Подводящая строка 5.7</p><p class=\"filler\">Подводящая строка 5.8</p><p class=\"filler\">Подводящая строка 5.9</p><p class=\"filler\">Подводящая строка 5.10</p><p class=\"filler\">Подводящая строка 5.11</p><p class=\"filler\">Подводящая строка 5.12</p><p class=\"filler\">Подводящая строка 5.13</p><p class=\"filler\">Подводящая строка 5.14</p><p class=\"filler\">Подводящая строка 5.15</p><p class=\"filler\">Подводящая строка 5.16</p><div class=\"probe\"><div>BOX 5 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 5 — END</div></div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p>Попытка 1</p><p class=\"filler\">Подводящая строка 1.1</p><p class=\"filler\">Подводящая строка 1.2</p><p class=\"filler\">Подводящая строка 1.3</p><p class=\"filler\">Подводящая строка 1.4</p><div class=\"probe\"><div>BOX 1 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 1 — END</div></div><p>Попытка 2</p><p class=\"filler\">Подводящая строка 2.1</p><p class=\"filler\">Подводящая строка 2.2</p><p class=\"filler\">Подводящая строка 2.3</p><p class=\"filler\">Подводящая строка 2.4</p><p class=\"filler\">Подводящая строка 2.5</p><p class=\"filler\">Подводящая строка 2.6</p><p class=\"filler\">Подводящая строка 2.7</p><div class=\"probe\"><div>BOX 2 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 2 — END</div></div><p>Попытка 3</p><p class=\"filler\">Подводящая строка 3.1</p><p class=\"filler\">Подводящая строка 3.2</p><p class=\"filler\">Подводящая строка 3.3</p><p class=\"filler\">Подводящая строка 3.4</p><p class=\"filler\">Подводящая строка 3.5</p><p class=\"filler\">Подводящая строка 3.6</p><p class=\"filler\">Подводящая строка 3.7</p><p class=\"filler\">Подводящая строка 3.8</p><p class=\"filler\">Подводящая строка 3.9</p><p class=\"filler\">Подводящая строка 3.10</p><div class=\"probe\"><div>BOX 3 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 3 — END</div></div><p>Попытка 4</p><p class=\"filler\">Подводящая строка 4.1</p><p class=\"filler\">Подводящая строка 4.2</p><p class=\"filler\">Подводящая строка 4.3</p><p class=\"filler\">Подводящая строка 4.4</p><p class=\"filler\">Подводящая строка 4.5</p><p class=\"filler\">Подводящая строка 4.6</p><p class=\"filler\">Подводящая строка 4.7</p><p class=\"filler\">Подводящая строка 4.8</p><p class=\"filler\">Подводящая строка 4.9</p><p class=\"filler\">Подводящая строка 4.10</p><p class=\"filler\">Подводящая строка 4.11</p><p class=\"filler\">Подводящая строка 4.12</p><p class=\"filler\">Подводящая строка 4.13</p><div class=\"probe\"><div>BOX 4 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 4 — END</div></div><p>Попытка 5</p><p class=\"filler\">Подводящая строка 5.1</p><p class=\"filler\">Подводящая строка 5.2</p><p class=\"filler\">Подводящая строка 5.3</p><p class=\"filler\">Подводящая строка 5.4</p><p class=\"filler\">Подводящая строка 5.5</p><p class=\"filler\">Подводящая строка 5.6</p><p class=\"filler\">Подводящая строка 5.7</p><p class=\"filler\">Подводящая строка 5.8</p><p class=\"filler\">Подводящая строка 5.9</p><p class=\"filler\">Подводящая строка 5.10</p><p class=\"filler\">Подводящая строка 5.11</p><p class=\"filler\">Подводящая строка 5.12</p><p class=\"filler\">Подводящая строка 5.13</p><p class=\"filler\">Подводящая строка 5.14</p><p class=\"filler\">Подводящая строка 5.15</p><p class=\"filler\">Подводящая строка 5.16</p><div class=\"probe\"><div>BOX 5 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 5 — END</div></div></div>",
+    "expected": "Найдите разорванный контрольный BOX (START и END на разных страницах). В тесте BOX должен переноситься целиком, когда ему не хватает места.",
+    "context": "Если ни один контрольный BOX не разорван, результат НЕОПРЕДЕЛЁН. Повторите шрифтом 3 и 6. Если BOX выше целой страницы, результат тоже НЕОПРЕДЕЛЁН. Не сравнивайте номера страниц контроля и теста: сравнивайте целостность рамок."
+  },
+  {
+    "number": 32,
+    "id": "break-inside",
+    "previous": "141",
+    "css": ".sample .probe {break-inside:avoid;}",
+    "setup": ".probe {break-inside:auto;border:0.12em solid black;} .filler {margin:0;padding:0;line-height:1.2;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p>Попытка 1</p><p class=\"filler\">Подводящая строка 1.1</p><p class=\"filler\">Подводящая строка 1.2</p><p class=\"filler\">Подводящая строка 1.3</p><p class=\"filler\">Подводящая строка 1.4</p><div class=\"probe\"><div>BOX 1 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 1 — END</div></div><p>Попытка 2</p><p class=\"filler\">Подводящая строка 2.1</p><p class=\"filler\">Подводящая строка 2.2</p><p class=\"filler\">Подводящая строка 2.3</p><p class=\"filler\">Подводящая строка 2.4</p><p class=\"filler\">Подводящая строка 2.5</p><p class=\"filler\">Подводящая строка 2.6</p><p class=\"filler\">Подводящая строка 2.7</p><div class=\"probe\"><div>BOX 2 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 2 — END</div></div><p>Попытка 3</p><p class=\"filler\">Подводящая строка 3.1</p><p class=\"filler\">Подводящая строка 3.2</p><p class=\"filler\">Подводящая строка 3.3</p><p class=\"filler\">Подводящая строка 3.4</p><p class=\"filler\">Подводящая строка 3.5</p><p class=\"filler\">Подводящая строка 3.6</p><p class=\"filler\">Подводящая строка 3.7</p><p class=\"filler\">Подводящая строка 3.8</p><p class=\"filler\">Подводящая строка 3.9</p><p class=\"filler\">Подводящая строка 3.10</p><div class=\"probe\"><div>BOX 3 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 3 — END</div></div><p>Попытка 4</p><p class=\"filler\">Подводящая строка 4.1</p><p class=\"filler\">Подводящая строка 4.2</p><p class=\"filler\">Подводящая строка 4.3</p><p class=\"filler\">Подводящая строка 4.4</p><p class=\"filler\">Подводящая строка 4.5</p><p class=\"filler\">Подводящая строка 4.6</p><p class=\"filler\">Подводящая строка 4.7</p><p class=\"filler\">Подводящая строка 4.8</p><p class=\"filler\">Подводящая строка 4.9</p><p class=\"filler\">Подводящая строка 4.10</p><p class=\"filler\">Подводящая строка 4.11</p><p class=\"filler\">Подводящая строка 4.12</p><p class=\"filler\">Подводящая строка 4.13</p><div class=\"probe\"><div>BOX 4 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 4 — END</div></div><p>Попытка 5</p><p class=\"filler\">Подводящая строка 5.1</p><p class=\"filler\">Подводящая строка 5.2</p><p class=\"filler\">Подводящая строка 5.3</p><p class=\"filler\">Подводящая строка 5.4</p><p class=\"filler\">Подводящая строка 5.5</p><p class=\"filler\">Подводящая строка 5.6</p><p class=\"filler\">Подводящая строка 5.7</p><p class=\"filler\">Подводящая строка 5.8</p><p class=\"filler\">Подводящая строка 5.9</p><p class=\"filler\">Подводящая строка 5.10</p><p class=\"filler\">Подводящая строка 5.11</p><p class=\"filler\">Подводящая строка 5.12</p><p class=\"filler\">Подводящая строка 5.13</p><p class=\"filler\">Подводящая строка 5.14</p><p class=\"filler\">Подводящая строка 5.15</p><p class=\"filler\">Подводящая строка 5.16</p><div class=\"probe\"><div>BOX 5 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 5 — END</div></div></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p>Попытка 1</p><p class=\"filler\">Подводящая строка 1.1</p><p class=\"filler\">Подводящая строка 1.2</p><p class=\"filler\">Подводящая строка 1.3</p><p class=\"filler\">Подводящая строка 1.4</p><div class=\"probe\"><div>BOX 1 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 1 — END</div></div><p>Попытка 2</p><p class=\"filler\">Подводящая строка 2.1</p><p class=\"filler\">Подводящая строка 2.2</p><p class=\"filler\">Подводящая строка 2.3</p><p class=\"filler\">Подводящая строка 2.4</p><p class=\"filler\">Подводящая строка 2.5</p><p class=\"filler\">Подводящая строка 2.6</p><p class=\"filler\">Подводящая строка 2.7</p><div class=\"probe\"><div>BOX 2 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 2 — END</div></div><p>Попытка 3</p><p class=\"filler\">Подводящая строка 3.1</p><p class=\"filler\">Подводящая строка 3.2</p><p class=\"filler\">Подводящая строка 3.3</p><p class=\"filler\">Подводящая строка 3.4</p><p class=\"filler\">Подводящая строка 3.5</p><p class=\"filler\">Подводящая строка 3.6</p><p class=\"filler\">Подводящая строка 3.7</p><p class=\"filler\">Подводящая строка 3.8</p><p class=\"filler\">Подводящая строка 3.9</p><p class=\"filler\">Подводящая строка 3.10</p><div class=\"probe\"><div>BOX 3 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 3 — END</div></div><p>Попытка 4</p><p class=\"filler\">Подводящая строка 4.1</p><p class=\"filler\">Подводящая строка 4.2</p><p class=\"filler\">Подводящая строка 4.3</p><p class=\"filler\">Подводящая строка 4.4</p><p class=\"filler\">Подводящая строка 4.5</p><p class=\"filler\">Подводящая строка 4.6</p><p class=\"filler\">Подводящая строка 4.7</p><p class=\"filler\">Подводящая строка 4.8</p><p class=\"filler\">Подводящая строка 4.9</p><p class=\"filler\">Подводящая строка 4.10</p><p class=\"filler\">Подводящая строка 4.11</p><p class=\"filler\">Подводящая строка 4.12</p><p class=\"filler\">Подводящая строка 4.13</p><div class=\"probe\"><div>BOX 4 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 4 — END</div></div><p>Попытка 5</p><p class=\"filler\">Подводящая строка 5.1</p><p class=\"filler\">Подводящая строка 5.2</p><p class=\"filler\">Подводящая строка 5.3</p><p class=\"filler\">Подводящая строка 5.4</p><p class=\"filler\">Подводящая строка 5.5</p><p class=\"filler\">Подводящая строка 5.6</p><p class=\"filler\">Подводящая строка 5.7</p><p class=\"filler\">Подводящая строка 5.8</p><p class=\"filler\">Подводящая строка 5.9</p><p class=\"filler\">Подводящая строка 5.10</p><p class=\"filler\">Подводящая строка 5.11</p><p class=\"filler\">Подводящая строка 5.12</p><p class=\"filler\">Подводящая строка 5.13</p><p class=\"filler\">Подводящая строка 5.14</p><p class=\"filler\">Подводящая строка 5.15</p><p class=\"filler\">Подводящая строка 5.16</p><div class=\"probe\"><div>BOX 5 — START</div><div>Строка 2</div><div>Строка 3</div><div>Строка 4</div><div>BOX 5 — END</div></div></div>",
+    "expected": "Найдите разорванный контрольный BOX (START и END на разных страницах). В тесте BOX должен переноситься целиком, когда ему не хватает места.",
+    "context": "Если ни один контрольный BOX не разорван, результат НЕОПРЕДЕЛЁН. Повторите шрифтом 3 и 6. Если BOX выше целой страницы, результат тоже НЕОПРЕДЕЛЁН. Не сравнивайте номера страниц контроля и теста: сравнивайте целостность рамок."
+  },
+  {
+    "number": 33,
+    "id": "visited-color",
+    "previous": "82",
+    "css": ".sample a:link {color:black;} .sample a:visited {color:#aaa;}",
+    "setup": "a {text-decoration:underline;color:black;}",
+    "html": "<p><a href=\"#targetA\">ССЫЛКА A — нажмите и вернитесь</a></p><div class=\"sample\"><p><a href=\"#targetA\">A — тот же посещаемый адрес</a></p><p><a href=\"#targetB\">B — другой адрес, не нажимайте до сравнения</a></p></div><p id=\"targetA\">ЦЕЛЬ A</p><p id=\"targetB\">ЦЕЛЬ B</p>",
+    "expected": "После посещения A и возврата A должна стать светлее B, если Kindle учитывает visited для внутренних адресов.",
+    "context": "Если обе ссылки уже посещены или история не сохраняется/не различает якоря, НЕОПРЕДЕЛЁН. Используется только цвет, а не рамка/подчёркивание visited."
+  },
+  {
+    "number": 34,
+    "id": "link-state-hover",
+    "previous": "78–80",
+    "css": ".sample a:hover {color:#aaa;background:black;}",
+    "setup": "a {color:black;background:white;}",
+    "html": "<div class=\"sample\"><p><a href=\"#stateTarget\">ССЫЛКА — коснитесь/удерживайте</a></p></div><p id=\"stateTarget\">ЦЕЛЬ ССЫЛКИ</p>",
+    "expected": "В состоянии hover ссылка светлая на чёрном фоне.",
+    "context": "Нужен доступный способ войти в hover. Если такого состояния/наблюдения нет, НЕОПРЕДЕЛЁН. Переход по ссылке сам по себе не подтверждает CSS-состояние."
+  },
+  {
+    "number": 35,
+    "id": "link-state-active",
+    "previous": "78–80",
+    "css": ".sample a:active {color:#aaa;background:black;}",
+    "setup": "a {color:black;background:white;}",
+    "html": "<div class=\"sample\"><p><a href=\"#stateTarget\">ССЫЛКА — коснитесь/удерживайте</a></p></div><p id=\"stateTarget\">ЦЕЛЬ ССЫЛКИ</p>",
+    "expected": "В состоянии active ссылка светлая на чёрном фоне.",
+    "context": "Нужен доступный способ войти в active. Если такого состояния/наблюдения нет, НЕОПРЕДЕЛЁН. Переход по ссылке сам по себе не подтверждает CSS-состояние."
+  },
+  {
+    "number": 36,
+    "id": "link-state-focus",
+    "previous": "78–80",
+    "css": ".sample a:focus {color:#aaa;background:black;}",
+    "setup": "a {color:black;background:white;}",
+    "html": "<div class=\"sample\"><p><a href=\"#stateTarget\">ССЫЛКА — коснитесь/удерживайте</a></p></div><p id=\"stateTarget\">ЦЕЛЬ ССЫЛКИ</p>",
+    "expected": "В состоянии focus ссылка светлая на чёрном фоне.",
+    "context": "Нужен доступный способ войти в focus. Если такого состояния/наблюдения нет, НЕОПРЕДЕЛЁН. Переход по ссылке сам по себе не подтверждает CSS-состояние."
+  },
+  {
+    "number": 37,
+    "id": "unit-em",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:3em;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 3em, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Запишите, как меняется отступ со шрифтом. Положительный сдвиг без повторного измерения не подтверждает масштабирование."
+  },
+  {
+    "number": 38,
+    "id": "unit-rem",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:3rem;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 3rem, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Запишите, как меняется отступ со шрифтом. Положительный сдвиг без повторного измерения не подтверждает масштабирование."
+  },
+  {
+    "number": 39,
+    "id": "unit-ex",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:6ex;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 6ex, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Запишите, как меняется отступ со шрифтом. Положительный сдвиг без повторного измерения не подтверждает масштабирование."
+  },
+  {
+    "number": 40,
+    "id": "unit-ch",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:6ch;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 6ch, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Запишите, как меняется отступ со шрифтом. Положительный сдвиг без повторного измерения не подтверждает масштабирование."
+  },
+  {
+    "number": 41,
+    "id": "unit-px",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:36px;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 36px, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Проверяется видимый отступ, не физическая точность в миллиметрах."
+  },
+  {
+    "number": 42,
+    "id": "unit-pt",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:27pt;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 27pt, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Проверяется видимый отступ, не физическая точность в миллиметрах."
+  },
+  {
+    "number": 43,
+    "id": "unit-pc",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:3pc;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 3pc, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Проверяется видимый отступ, не физическая точность в миллиметрах."
+  },
+  {
+    "number": 44,
+    "id": "unit-cm",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:1cm;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 1cm, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Проверяется видимый отступ, не физическая точность в миллиметрах."
+  },
+  {
+    "number": 45,
+    "id": "unit-mm",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:10mm;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 10mm, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Проверяется видимый отступ, не физическая точность в миллиметрах."
+  },
+  {
+    "number": 46,
+    "id": "unit-in",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:0.5in;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 0.5in, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Проверяется видимый отступ, не физическая точность в миллиметрах."
+  },
+  {
+    "number": 47,
+    "id": "unit-percent",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:20%;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 20%, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Процент зависит от ширины блока; сравните одинаковые блоки в двух ориентациях."
+  },
+  {
+    "number": 48,
+    "id": "unit-vw",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:20vw;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 20vw, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Viewport-единица: запишите эффект и зависимость от ориентации; отсутствие эффекта фиксируйте отдельно от пропущенного повторного измерения."
+  },
+  {
+    "number": 49,
+    "id": "unit-vh",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:10vh;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 10vh, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Viewport-единица: запишите эффект и зависимость от ориентации; отсутствие эффекта фиксируйте отдельно от пропущенного повторного измерения."
+  },
+  {
+    "number": 50,
+    "id": "unit-vmin",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:20vmin;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 20vmin, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Viewport-единица: запишите эффект и зависимость от ориентации; отсутствие эффекта фиксируйте отдельно от пропущенного повторного измерения."
+  },
+  {
+    "number": 51,
+    "id": "unit-vmax",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:10vmax;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 10vmax, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Viewport-единица: запишите эффект и зависимость от ориентации; отсутствие эффекта фиксируйте отдельно от пропущенного повторного измерения."
+  },
+  {
+    "number": 52,
+    "id": "unit-dvw",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:20dvw;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 20dvw, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Viewport-единица: запишите эффект и зависимость от ориентации; отсутствие эффекта фиксируйте отдельно от пропущенного повторного измерения."
+  },
+  {
+    "number": 53,
+    "id": "unit-dvh",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:10dvh;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 10dvh, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Viewport-единица: запишите эффект и зависимость от ориентации; отсутствие эффекта фиксируйте отдельно от пропущенного повторного измерения."
+  },
+  {
+    "number": 54,
+    "id": "unit-svw",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:20svw;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 20svw, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Viewport-единица: запишите эффект и зависимость от ориентации; отсутствие эффекта фиксируйте отдельно от пропущенного повторного измерения."
+  },
+  {
+    "number": 55,
+    "id": "unit-svh",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:10svh;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 10svh, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Viewport-единица: запишите эффект и зависимость от ориентации; отсутствие эффекта фиксируйте отдельно от пропущенного повторного измерения."
+  },
+  {
+    "number": 56,
+    "id": "unit-lvw",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:20lvw;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 20lvw, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Viewport-единица: запишите эффект и зависимость от ориентации; отсутствие эффекта фиксируйте отдельно от пропущенного повторного измерения."
+  },
+  {
+    "number": 57,
+    "id": "unit-lvh",
+    "previous": "114–134",
+    "css": ".sample .probe {text-indent:10lvh;}",
+    "setup": ".probe {text-indent:0;margin:0;padding:0;} .control,.sample {padding:0;}",
+    "html": "<p class=\"label\">КОНТРОЛЬ</p><div class=\"control\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div><p class=\"label\">ТЕСТ</p><div class=\"sample\"><p class=\"probe\">START — Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog. Проверяем оформление текста. Съешь ещё этих мягких французских булок. The quick brown fox jumps over the lazy dog.</p></div>",
+    "expected": "Тест: первая строка с отступом 10lvh, контроль без отступа. Сравните шрифт 3/6 и вертикальную/горизонтальную ориентацию.",
+    "context": "Viewport-единица: запишите эффект и зависимость от ориентации; отсутствие эффекта фиксируйте отдельно от пропущенного повторного измерения."
+  }
+]

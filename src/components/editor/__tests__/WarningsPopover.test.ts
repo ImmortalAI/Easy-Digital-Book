@@ -64,3 +64,25 @@ describe("WarningsPopover", () => {
     expect(await screen.findAllByText("No warnings")).toHaveLength(2);
   });
 });
+
+it("counts Styles findings once, expands them and emits a CSS range", async () => {
+  setActivePinia(createPinia());
+  useDiagnosticsStore().setCssFindings([
+    {
+      from: 4,
+      to: 11,
+      code: "unknownProperty",
+      severity: "warning",
+      params: { property: "mystery" },
+    },
+    { from: 20, to: 25, code: "property", severity: "info", params: { property: "color" } },
+  ]);
+  const { emitted } = renderPopover();
+  await userEvent.click(screen.getByRole("button", { name: "2 warnings" }));
+  await userEvent.click(screen.getByRole("button", { name: "Styles (2)" }));
+  await userEvent.click(
+    screen.getByRole("button", { name: "Property “mystery” is not in the Kindle support table." }),
+  );
+  expect(emitted().select).toEqual([[{ kind: "css", from: 4, to: 11 }]]);
+  cleanup();
+});

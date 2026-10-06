@@ -1,8 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/vue";
 import userEvent from "@testing-library/user-event";
-import { computed, ref } from "vue";
+import { computed, ref, nextTick } from "vue";
 import { createPinia, setActivePinia } from "pinia";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createI18nPlugin } from "@/plugins/i18n";
 import ExportDialog from "@/components/export/ExportDialog.vue";
 import { useProjectStore } from "@/stores/project";
 import type { ExportController } from "@/composables/use-export";
@@ -23,6 +24,28 @@ function bookMetadata(version: string | null) {
   };
 }
 
+function makeController(format: "epub" | "azw3" = "epub") {
+  const selectedFormat = ref(format);
+  return {
+    options: ref({
+      imagePreset: "kindle-paperwhite",
+      grayscale: false,
+      titlePage: true,
+      versionInTitle: false,
+    }),
+    format: selectedFormat,
+    fileName: computed(() => `Novel.${selectedFormat.value}`),
+    warnings: ref([]),
+    cssFindings: ref([]),
+    progress: ref(null),
+    exporting: ref(false),
+    error: ref(null),
+    lastOutput: ref(null),
+    exportBook: vi.fn<ExportController["exportBook"]>().mockResolvedValue("Novel.epub"),
+    revealOutput: vi.fn<ExportController["revealOutput"]>(),
+  } as unknown as ExportController;
+}
+
 describe("ExportDialog", () => {
   beforeEach(() => setActivePinia(createPinia()));
   // Dialog teleports its content to document.body and this file renders it
@@ -37,23 +60,10 @@ describe("ExportDialog", () => {
       chapters: [{ id: "chapter1", source: "# Chapter" }],
       resources: new Map(),
       customCss: null,
+      dictionary: [],
     });
-    const controller = {
-      options: ref({
-        imagePreset: "kindle-paperwhite",
-        grayscale: false,
-        titlePage: true,
-        versionInTitle: true,
-      }),
-      fileName: computed(() => "Novel.epub"),
-      warnings: ref([]),
-      progress: ref(null),
-      exporting: ref(false),
-      error: ref(null),
-      lastOutput: ref(null),
-      exportEpub: vi.fn<ExportController["exportEpub"]>(),
-      revealOutput: vi.fn<ExportController["revealOutput"]>(),
-    } as unknown as ExportController;
+    const controller = makeController();
+    controller.options.value.versionInTitle = true;
 
     render(ExportDialog, { props: { controller, project } });
 
@@ -71,23 +81,9 @@ describe("ExportDialog", () => {
       chapters: [{ id: "chapter1", source: "# Chapter" }],
       resources: new Map(),
       customCss: null,
+      dictionary: [],
     });
-    const controller = {
-      options: ref({
-        imagePreset: "kindle-paperwhite",
-        grayscale: false,
-        titlePage: true,
-        versionInTitle: false,
-      }),
-      fileName: computed(() => "Novel.epub"),
-      warnings: ref([]),
-      progress: ref(null),
-      exporting: ref(false),
-      error: ref(null),
-      lastOutput: ref(null),
-      exportEpub: vi.fn<ExportController["exportEpub"]>().mockResolvedValue("Novel.epub"),
-      revealOutput: vi.fn<ExportController["revealOutput"]>(),
-    } as unknown as ExportController;
+    const controller = makeController();
 
     render(ExportDialog, { props: { controller, project } });
     // The preset control is a shadcn-vue Select (a Reka listbox), not a native
@@ -100,7 +96,133 @@ describe("ExportDialog", () => {
     await userEvent.click(screen.getByRole("button", { name: /export/i }));
     const status = await screen.findByRole("status");
     expect(status.textContent).toContain("EPUB saved");
+    expect(controller.exportBook).toHaveBeenCalledWith(
+      expect.objectContaining({ dialogFilterName: "EPUB book" }),
+    );
   });
+
+  it("selects AZW3, updates its output name and filters, and reveals the written file", async () => {
+    const controller = makeController();
+    controller.lastOutput.value = "/exports/previous.epub";
+    controller.exportBook = vi.fn<ExportController["exportBook"]>().mockResolvedValue("Novel.azw3");
+    const { rerender } = render(ExportDialog, { props: { controller } });
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole("combobox", { name: /format/i }));
+    await user.click(await screen.findByRole("option", { name: "AZW3" }));
+    expect(controller.format.value).toBe("azw3");
+    expect(controller.lastOutput.value).toBeNull();
+    expect(await screen.findByText("Novel.azw3")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Export AZW3" })).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: /export/i }));
+    expect(controller.exportBook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dialogTitle: "Export AZW3",
+        dialogFilterName: "AZW3 book",
+      }),
+    );
+    expect((await screen.findByRole("status")).textContent).toContain("AZW3 saved");
+    await user.click(screen.getByRole("button", { name: /show in folder/i }));
+    expect(controller.revealOutput).toHaveBeenCalledOnce();
+
+    await rerender({ controller, open: false });
+    await rerender({ controller, open: true });
+    expect(screen.getByRole("combobox", { name: /format/i })).toBeTruthy();
+  });
+
+  it("restores the AZW3 format supplied by saved settings", async () => {
+    const controller = makeController("azw3");
+    render(ExportDialog, { props: { controller } });
+
+    expect(await screen.findByRole("heading", { name: "Export AZW3" })).toBeTruthy();
+    expect(await screen.findByText("Novel.azw3")).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: /format/i }).textContent).toContain("AZW3");
+  });
+
+  it("disables all export choices while an export is running", async () => {
+    const controller = makeController();
+    controller.exporting.value = true;
+    render(ExportDialog, { props: { controller } });
+
+    expect(
+      (await screen.findByRole("combobox", { name: /format/i })).hasAttribute("data-disabled"),
+    ).toBe(true);
+    expect(
+      screen.getByRole("combobox", { name: /image preset/i }).hasAttribute("data-disabled"),
+    ).toBe(true);
+    expect(screen.getByRole("checkbox", { name: /grayscale/i }).hasAttribute("disabled")).toBe(
+      true,
+    );
+    expect(screen.getByRole("checkbox", { name: /title page/i }).hasAttribute("disabled")).toBe(
+      true,
+    );
+    expect(
+      screen.getByRole("checkbox", { name: /version to title/i }).hasAttribute("disabled"),
+    ).toBe(true);
+  });
+
+  it("shows AZW3 progress instead of ZIP progress", async () => {
+    const controller = makeController("azw3");
+    controller.progress.value = { stage: "azw3", done: 1, total: 3 };
+    render(ExportDialog, { props: { controller } });
+
+    expect(await screen.findByText("Creating AZW3…")).toBeTruthy();
+    expect(screen.queryByText("Creating EPUB…")).toBeNull();
+  });
+
+  it("aborts an active export when Escape dismisses the dialog", async () => {
+    const controller = makeController();
+    let signal: AbortSignal | undefined;
+    controller.exportBook = vi.fn<ExportController["exportBook"]>(
+      ({ signal: requestSignal } = {}) => {
+        signal = requestSignal;
+        controller.exporting.value = true;
+        return new Promise<string | null>((resolve) => {
+          requestSignal?.addEventListener("abort", () => {
+            controller.exporting.value = false;
+            resolve(null);
+          });
+        });
+      },
+    );
+    render(ExportDialog, { props: { controller } });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: /export/i }));
+    await user.keyboard("{Escape}");
+
+    expect(signal?.aborted).toBe(true);
+  });
+
+  it.each(["cancel button", "outside click"] as const)(
+    "aborts an active export when dismissed by %s",
+    async (dismissal) => {
+      const controller = makeController();
+      let signal: AbortSignal | undefined;
+      controller.exportBook = vi.fn<ExportController["exportBook"]>(
+        ({ signal: requestSignal } = {}) => {
+          signal = requestSignal;
+          controller.exporting.value = true;
+          return new Promise<string | null>((resolve) => {
+            requestSignal?.addEventListener("abort", () => {
+              controller.exporting.value = false;
+              resolve(null);
+            });
+          });
+        },
+      );
+      render(ExportDialog, { props: { controller } });
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole("button", { name: /export/i }));
+      if (dismissal === "cancel button") {
+        await user.click(await screen.findByRole("button", { name: /cancel/i }));
+      } else {
+        await user.click(document.querySelector('[data-slot="dialog-overlay"]')!);
+      }
+
+      expect(signal?.aborted).toBe(true);
+    },
+  );
 
   it("starts fresh after closing and reopening, not stuck on the last success", async () => {
     // EditorView keeps ExportDialog mounted permanently and only toggles its
@@ -113,23 +235,9 @@ describe("ExportDialog", () => {
       chapters: [{ id: "chapter1", source: "# Chapter" }],
       resources: new Map(),
       customCss: null,
+      dictionary: [],
     });
-    const controller = {
-      options: ref({
-        imagePreset: "kindle-paperwhite",
-        grayscale: false,
-        titlePage: true,
-        versionInTitle: false,
-      }),
-      fileName: computed(() => "Novel.epub"),
-      warnings: ref([]),
-      progress: ref(null),
-      exporting: ref(false),
-      error: ref(null),
-      lastOutput: ref(null),
-      exportEpub: vi.fn<ExportController["exportEpub"]>().mockResolvedValue("Novel.epub"),
-      revealOutput: vi.fn<ExportController["revealOutput"]>(),
-    } as unknown as ExportController;
+    const controller = makeController();
 
     const { rerender } = render(ExportDialog, { props: { controller, project, open: true } });
     await userEvent.click(await screen.findByRole("button", { name: /export/i }));
@@ -141,4 +249,40 @@ describe("ExportDialog", () => {
     expect(screen.queryByRole("status")).toBeNull();
     expect(await screen.findByRole("button", { name: /export/i })).not.toBeNull();
   });
+});
+
+it("shows CSS warning and info messages, updates locale, and allows export", async () => {
+  setActivePinia(createPinia());
+  const controller = makeController();
+  controller.cssFindings = {
+    value: [
+      {
+        from: 4,
+        to: 11,
+        code: "unknownProperty",
+        severity: "warning",
+        params: { property: "mystery" },
+      },
+      {
+        from: 20,
+        to: 27,
+        code: "unknownProperty",
+        severity: "warning",
+        params: { property: "another" },
+      },
+      { from: 30, to: 31, code: "syntax", severity: "info", params: {} },
+    ],
+  } as unknown as ExportController["cssFindings"];
+  const i18n = createI18nPlugin("en");
+  render(ExportDialog, { props: { controller }, global: { plugins: [i18n] } });
+  expect(
+    await screen.findByText("Property “mystery” is not in the Kindle support table."),
+  ).toBeVisible();
+  expect(screen.getByText("Property “another” is not in the Kindle support table.")).toBeVisible();
+  expect(screen.getByText("CSS syntax error. Other valid rules are still checked.")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Export…" })).toBeEnabled();
+  i18n.global.locale.value = "ru";
+  await nextTick();
+  expect(screen.getByText("Свойства «mystery» нет в таблице поддержки Kindle.")).toBeVisible();
+  cleanup();
 });

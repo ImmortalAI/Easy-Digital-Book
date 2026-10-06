@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { setDiagnostics } from "@codemirror/lint";
+import { cssLintDiagnostics } from "@/components/editor/css-diagnostics";
+import { useDiagnosticsStore } from "@/stores/diagnostics";
 import { Compartment, EditorState } from "@codemirror/state";
 import { EditorView, keymap, lineNumbers } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
@@ -13,13 +16,41 @@ import { useResolvedTheme } from "@/composables/use-theme";
 import { useSafeI18n } from "@/composables/use-safe-i18n";
 import { chapterSearch, searchPanelLabels } from "@/components/editor/chapter-search-panel";
 const project = useProjectStore();
+const diagnostics = useDiagnosticsStore();
 const host = ref<HTMLElement>();
 let view: EditorView | undefined;
 // Matches SourceEditor: a definite height makes .cm-scroller the scroll container
 // so the editor fills its pane instead of growing past it.
-const editorTheme = EditorView.theme({ "&": { height: "100%" } });
+const editorTheme = EditorView.theme({
+  "&": { height: "100%" },
+  ".cm-lintRange-info": {
+    backgroundImage: "none",
+    textDecorationLine: "underline",
+    textDecorationStyle: "dotted",
+    textDecorationColor: "var(--muted-foreground)",
+    textUnderlineOffset: "3px",
+  },
+});
 const resolvedTheme = useResolvedTheme();
 const { t } = useSafeI18n();
+const lintItems = computed(() =>
+  cssLintDiagnostics(diagnostics.css, (key, params) => t(key, key, params)),
+);
+function updateDiagnostics() {
+  if (view) view.dispatch(setDiagnostics(view.state, lintItems.value));
+}
+function focusRange(range: { from: number; to: number }) {
+  if (!view) return;
+  const from = Math.min(Math.max(range.from, 0), view.state.doc.length);
+  const to = Math.min(Math.max(range.to, from), view.state.doc.length);
+  view.dispatch({
+    selection: { anchor: from, head: to },
+    effects: EditorView.scrollIntoView(from, { y: "center" }),
+  });
+  view.focus();
+}
+defineExpose({ focusRange });
+watch(lintItems, updateDiagnostics);
 const contentLabel = computed(() => t("editor.cssLabel", "Custom CSS"));
 // The colour scheme and the label follow the app's theme and locale live.
 const liveSettings = new Compartment();
@@ -54,6 +85,7 @@ function mount() {
     }),
     parent: host.value,
   });
+  updateDiagnostics();
 }
 onMounted(mount);
 watch(

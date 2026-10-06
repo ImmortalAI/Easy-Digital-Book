@@ -4,6 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import StatusBar from "@/components/layout/StatusBar.vue";
 import { createI18nPlugin } from "@/plugins/i18n";
+import { createBook } from "@/services/book/create";
+import { useProjectStore } from "@/stores/project";
+import { useSpellingStore } from "@/stores/spelling";
 
 describe("StatusBar", () => {
   beforeEach(() => setActivePinia(createPinia()));
@@ -64,5 +67,35 @@ describe("StatusBar", () => {
     expect(screen.getByRole("region", { name: "Строка состояния" })).toHaveTextContent(
       "Сохранение…",
     );
+  });
+});
+
+describe("StatusBar spelling badge", () => {
+  beforeEach(() => setActivePinia(createPinia()));
+  afterEach(cleanup);
+
+  it("puts the spelling badge right after the warnings and forwards its selection", async () => {
+    const project = useProjectStore();
+    project.setBook({
+      ...createBook({
+        locale: "en",
+        now: new Date("2026-01-01"),
+        newUuid: () => "550e8400-e29b-41d4-a716-446655440000",
+        newChapterId: () => "chapter1",
+      }),
+      chapters: [{ id: "chapter1", source: "превет" }],
+    });
+    useSpellingStore().setChapter("chapter1", "превет", [
+      { word: "превет", lang: "ru", from: 0, to: 6 },
+    ]);
+    const { emitted } = render(StatusBar, { props: { saveState: "saved", counts: null } });
+    const buttons = screen.getAllByRole("button");
+    expect(buttons[0]).toHaveAccessibleName(/warning/i);
+    expect(buttons[1]).toHaveAccessibleName("1 spelling issue");
+
+    await userEvent.click(buttons[1]!);
+    await userEvent.click(screen.getAllByRole("button", { name: /превет/ })[0]!);
+
+    expect(emitted("selectSpelling")).toEqual([[{ chapterId: "chapter1", from: 0, to: 6 }]]);
   });
 });

@@ -1,7 +1,7 @@
 # Kindle CSS checker — specification
 
 - **Date:** 2026-10-03
-- **Status:** roadmap, after v1. Not scheduled. No implementation plan yet.
+- **Status:** implementation on `feat/kindle-css-check`; plan: `docs/superpowers/plans/2026-10-05-kindle-css-checker.md`. Device verification remains a release gate.
 - **Source:** user feedback session 2026-10-03
   (`docs/superpowers/notes/2026-10-03-issues.md`, item 4a)
 - **Base spec:** `docs/superpowers/specs/2026-09-15-easy-digital-book-design.md`
@@ -74,7 +74,7 @@ Prerequisite: CSS syntax highlighting in the `custom.css` editor (plan
   tree through `@codemirror/lang-css`). It is a plain parser with no DOM or
   CodeMirror view dependency, so it runs inside `services/` and the same
   check runs both in the editor and at export. Add `@lezer/css` as a direct
-  dependency instead of reaching through `lang-css`.
+  dependency instead of reaching through `lang-css`. Implementation refinement after review: semantic compatibility analysis reuses CSS Tree parser/walker/tokenizer/utils subpaths. Lezer supplements structural syntax errors and recovered fragments. Confirmed Lezer recovery/escaped-token limitations justify the additional parser; no full lexer/MDN dictionaries are bundled. Library evaluation: `docs/superpowers/notes/2026-10-05-css-library-analysis.md`.
 - What it checks:
   - property names (unknown to Kindle → warning);
   - keyword values per property (`position: fixed`, `display: grid`, …);

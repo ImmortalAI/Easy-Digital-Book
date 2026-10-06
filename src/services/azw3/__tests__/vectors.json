@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "provenance": "Hand-calculated from docs/formats/azw3.md; no production serializer produced these expectations. Full fixture dumps are Tasks 3–7 deliverables.",
+  "vwi": [
+    {
+      "value": 0,
+      "forward": "80",
+      "backward": "80"
+    },
+    {
+      "value": 1,
+      "forward": "81",
+      "backward": "81"
+    },
+    {
+      "value": 127,
+      "forward": "ff",
+      "backward": "ff"
+    },
+    {
+      "value": 128,
+      "forward": "0180",
+      "backward": "8100"
+    },
+    {
+      "value": 4096,
+      "forward": "2080",
+      "backward": "a000"
+    },
+    {
+      "value": 69905,
+      "forward": "042291",
+      "backward": "842211"
+    }
+  ],
+  "palmDoc": [
+    {
+      "name": "empty",
+      "plain": "",
+      "compressed": ""
+    },
+    {
+      "name": "literal",
+      "plain": "616263",
+      "compressed": "616263"
+    },
+    {
+      "name": "binary-run",
+      "plain": "010203",
+      "compressed": "03010203"
+    },
+    {
+      "name": "space-pair",
+      "plain": "2041",
+      "compressed": "c1"
+    },
+    {
+      "name": "backreference",
+      "plain": "616263616263",
+      "compressed": "6162638018"
+    },
+    {
+      "name": "overlapping-backreference",
+      "plain": "61616161",
+      "compressed": "618008"
+    },
+    {
+      "name": "cyrillic",
+      "plain": "d0af",
+      "compressed": "02d0af"
+    },
+    {
+      "name": "cjk",
+      "plain": "e4b8ad",
+      "compressed": "03e4b8ad"
+    },
+    {
+      "name": "emoji",
+      "plain": "f09f9880",
+      "compressed": "04f09f9880"
+    }
+  ],
+  "utf8Boundaries": [
+    {
+      "textPrefix": "A",
+      "prefixRepeat": 4095,
+      "character": "Я",
+      "suffix": "Z",
+      "firstPayloadFinalHex": "d0",
+      "overlapHex": "af01",
+      "secondPayloadHex": "af5a"
+    },
+    {
+      "textPrefix": "A",
+      "prefixRepeat": 4095,
+      "character": "中",
+      "suffix": "Z",
+      "firstPayloadFinalHex": "e4",
+      "overlapHex": "b8ad02",
+      "secondPayloadHex": "b8ad5a"
+    },
+    {
+      "textPrefix": "A",
+      "prefixRepeat": 4095,
+      "character": "😀",
+      "suffix": "Z",
+      "firstPayloadFinalHex": "f0",
+      "overlapHex": "9f988003",
+      "secondPayloadHex": "9f98805a"
+    }
+  ],
+  "structures": {
+    "palmdbDescriptors": "00000060000000000000007000000002",
+    "palmDocHeader": "000200000000002a0001100000000000",
+    "mobiPrefixAt16": "4d4f424900000108000000020000fde9",
+    "exthEmpty": "455854480000000c00000000",
+    "exthEbok": "455854480000001800000001000001f50000000c45424f4b",
+    "exthCyrillicAuthorEntry": "000000640000000ad0af",
+    "coverOffsetZeroEntry": "000000c90000000c00000000",
+    "simpleSkeleton": "3c68746d6c3e3c626f6479206169643d2230223e3c2f626f64793e3c2f68746d6c3e",
+    "simpleFragment": "3c703e413c2f703e",
+    "skelTagx": "5441475800000018000000010101030006020c0000000001",
+    "fragTagx": "5441475800000020000000010201010003010200040104000602080000000001",
+    "ncxTagx": "544147580000003000000001010101000201020003010400040108001501100016012000170140000602800000000001",
+    "skelEntry": "0e534b454c303030303030303030300a818180a280a2",
+    "fragEntry": "0a303030303030303032300f8080808088",
+    "ncxEntry": "0230308f949680808080",
+    "idxtOneEntryAt192": "4944585400c00000",
+    "cncxLabelA": "81410000",
+    "fdstTwoFlows": "464453540000000c00000002000000000000002a0000002a0000002e",
+    "flis": "464c4953000000080041000000000000ffffffff000100030000000300000001ffffffff",
+    "fcis": "46434953000000140000001000000002000000000000002a00000000000000280000000000000028000000080001000100000000",
+    "eof": "e98e0d0a",
+    "pngSignature": "89504e470d0a1a0a",
+    "tbsFlatOneEntry": "8288",
+    "tbsFlatTwoEntries": "868802",
+    "tbsFlatSpanningEntryTwo": "938880",
+    "emptyTbsTrailer": "81",
+    "tbsOneEntryTrailer": "828883",
+    "noOverlapTrailer": "00",
+    "emptyDataIndxRecord": "494e4458000000c0000000000000000100000000000000c000000000ffffffffffffffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000049445854"
+  },
+  "links": [
+    {
+      "fid": 0,
+      "offset": 0,
+      "expected": "kindle:pos:fid:0000:off:0000000000"
+    },
+    {
+      "fid": 1,
+      "offset": 33,
+      "expected": "kindle:pos:fid:0001:off:0000000011"
+    }
+  ],
+  "language": [
+    {
+      "tag": "ru",
+      "hex": "00000019"
+    },
+    {
+      "tag": "ru-RU",
+      "hex": "00000419"
+    },
+    {
+      "tag": "en",
+      "hex": "00000009"
+    },
+    {
+      "tag": "en-US",
+      "hex": "00000409"
+    },
+    {
+      "tag": "en-GB",
+      "hex": "00000809"
+    },
+    {
+      "tag": "zh-CN",
+      "hex": "00000804"
+    },
+    {
+      "tag": "zh-Hant",
+      "hex": "00000404"
+    },
+    {
+      "tag": "und",
+      "hex": "00000000"
+    }
+  ]
+}

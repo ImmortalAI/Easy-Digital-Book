@@ -60,7 +60,8 @@
     "count": "{count} предупреждение | {count} предупреждения | {count} предупреждений",
     "currentChapter": "Эта глава",
     "book": "Книга",
-    "none": "Нет предупреждений"
+    "none": "Нет предупреждений",
+    "styles": "Стили ({count})"
   },
   "files": {
     "openTitle": "Открыть проект",
@@ -127,7 +128,8 @@
     "styles": "Стили",
     "chapters": "Главы",
     "newChapter": "Новая глава",
-    "images": "Изображения"
+    "images": "Изображения",
+    "dictionary": "Словарь"
   },
   "gallery": {
     "selected": "Выбрано: {count}",
@@ -197,7 +199,8 @@
     "discard": "Не сохранять"
   },
   "export": {
-    "title": "Экспорт EPUB",
+    "format": "Формат",
+    "title": "Экспорт {format}",
     "preset": "Пресет изображений",
     "kindle": "Kindle Paperwhite",
     "original": "Без изменений",
@@ -207,10 +210,11 @@
     "action": "Экспортировать…",
     "progressImages": "Картинки {done}/{total}",
     "progressChapters": "Главы {done}/{total}",
+    "progressAzw3": "Создание AZW3…",
     "progressZip": "Создание EPUB…",
-    "saved": "EPUB сохранён",
+    "saved": "{format} сохранён",
     "showInFolder": "Показать в папке",
-    "filterName": "Книга EPUB"
+    "filterName": "Книга {format}"
   },
   "settings": {
     "title": "Настройки",
@@ -233,7 +237,12 @@
     "theme": "Тема",
     "themeLight": "Светлая",
     "themeDark": "Тёмная",
-    "themeSystem": "Системная"
+    "themeSystem": "Системная",
+    "spelling": "Проверять орфографию",
+    "spellingLanguages": "Языки проверки",
+    "spellingRussian": "Русский",
+    "spellingEnglish": "English",
+    "spellingCredits": "Словари: LibreOffice ru_RU (© Александр Лебедев, лицензия BSD) и SCOWL en_US (© Kevin Atkinson и др.)."
   },
   "errors": {
     "title": "Произошла непредвиденная ошибка",
@@ -248,7 +257,10 @@
     "export": {
       "cancelled": "Экспорт отменён",
       "noProject": "Проект не открыт",
-      "failed": "Не удалось экспортировать EPUB",
+      "failed": "Не удалось экспортировать книгу",
+      "azw3Limit": "Книга превышает ограничение формата AZW3",
+      "azw3Link": "Не удалось создать ссылки AZW3",
+      "azw3Resource": "Не удалось добавить ресурс книги в AZW3",
       "invalidXhtml": "Глава {chapter} «{title}»: некорректный XHTML"
     }
   },
@@ -280,5 +292,45 @@
     "dimImages": "Приглушить изображения",
     "styledNotice": "Превью стилизовано — книга будет выглядеть иначе",
     "showOriginal": "Показать оригинальный вид"
+  },
+  "cssSupport": {
+    "property": "Поддержка «{property}» не проверена на обоих целевых Paperwhite.",
+    "value": "Поддержка «{property}: {value}» на Kindle ограничена или не проверена.",
+    "selector": "Поддержка селектора «{selector}» на Kindle ограничена или не проверена.",
+    "atRule": "Поддержка @{atRule} на Kindle зависит от формата и прошивки.",
+    "unit": "Единица «{unit}» может отображаться иначе на Kindle; поддержка не проверена.",
+    "fontFace": "Приложение не экспортирует шрифты; @font-face может не работать.",
+    "unknownProperty": "Свойства «{property}» нет в таблице поддержки Kindle.",
+    "unknownSelector": "Селектора «{selector}» нет в таблице поддержки Kindle.",
+    "unknownUnit": "Единицы «{unit}» нет в таблице поддержки Kindle.",
+    "unknownAtRule": "Правила @{atRule} нет в таблице поддержки Kindle.",
+    "syntax": "Ошибка синтаксиса CSS. Остальные корректные правила продолжают проверяться.",
+    "externalUrl": "Ресурс «{url}» находится вне images/ и не включается в книгу.",
+    "customProperty": "Поддержка CSS-переменных не проверена на обоих целевых Paperwhite."
+  },
+  "spelling": {
+    "badge": "{count} орфографическая ошибка | {count} орфографические ошибки | {count} орфографических ошибок",
+    "checking": "Проверка орфографии…",
+    "unavailable": "Проверка орфографии недоступна",
+    "unavailableHint": "Не удалось загрузить словари. Подробности — в логе.",
+    "openLogs": "Папка логов",
+    "none": "Орфографических ошибок нет",
+    "chapterGroup": "Глава {number} · {title} — {count}",
+    "occurrences": "×{count}",
+    "addToDictionary": "Добавить в словарь книги",
+    "ignore": "Пропустить",
+    "noSuggestions": "Нет вариантов",
+    "loadingSuggestions": "Ищем варианты…",
+    "menuLabel": "Орфография: {word}"
+  },
+  "dictionary": {
+    "title": "Словарь книги",
+    "filter": "Фильтр слов",
+    "newWord": "Новое слово",
+    "add": "Добавить слово",
+    "remove": "Удалить {word}",
+    "empty": "Словарь книги пуст",
+    "noMatches": "Нет подходящих слов",
+    "invalid": "Введите одно слово без пробелов"
   }
 }

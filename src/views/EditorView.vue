@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onMounted, ref, watch } from "vue";
+import { useCssSupport } from "@/composables/use-css-support";
+import { useSpellcheck } from "@/composables/use-spellcheck";
 import { useShortcuts } from "@/composables/use-shortcuts";
 import { useResolvedTheme } from "@/composables/use-theme";
 import { projectFilesKey } from "@/composables/use-project-files";
 import { useLayoutStore, type CenterView, type LayoutMode } from "@/stores/layout";
 import { useProjectStore } from "@/stores/project";
-import type { DiagnosticPosition } from "@/types/diagnostics";
+import type { DiagnosticPosition, WarningSelection } from "@/types/diagnostics";
 import AppToolbar from "@/components/layout/AppToolbar.vue";
 import FileMenu from "@/components/layout/FileMenu.vue";
 import ContentHeader from "@/components/layout/ContentHeader.vue";
@@ -20,6 +22,7 @@ import MetadataForm from "@/components/metadata/MetadataForm.vue";
 import CssEditor from "@/components/editor/CssEditor.vue";
 import ImageGallery from "@/components/images/ImageGallery.vue";
 import ImageView from "@/components/editor/ImageView.vue";
+import DictionaryView from "@/components/spelling/DictionaryView.vue";
 import SettingsView from "@/components/settings/SettingsView.vue";
 import ExportDialog from "@/components/export/ExportDialog.vue";
 import { createSettingsActions } from "@/composables/use-settings-actions";
@@ -41,6 +44,8 @@ import { syncChapterEditorText } from "@/components/editor/editor-commands";
 
 const project = useProjectStore();
 const diagnostics = useDiagnosticsStore();
+useCssSupport();
+useSpellcheck();
 const { t } = useSafeI18n();
 const files = inject(projectFilesKey, null);
 const layout = useLayoutStore();
@@ -55,6 +60,7 @@ const sourceEditor = ref<{
   focusRange: (range: { from: number; to: number }) => void;
   syncSource: (source: string, cursor: number) => void;
 } | null>(null);
+const cssEditor = ref<{ focusRange(range: { from: number; to: number }): void } | null>(null);
 const pendingFocusPosition = ref<DiagnosticPosition | null>(null);
 const focusRequest = ref(0);
 const pendingFocusRange = ref<{ from: number; to: number } | null>(null);
@@ -78,7 +84,7 @@ const selectedChapter = computed(() =>
 );
 const canUseModes = computed(() => ["chapter", "css"].includes(layout.center.kind));
 const singlePane = computed(() =>
-  ["metadata", "image", "images", "settings"].includes(layout.center.kind),
+  ["metadata", "image", "images", "dictionary", "settings"].includes(layout.center.kind),
 );
 // The highlighted tile is the sidebar view on screen; with the sidebar hidden,
 // Settings when it is the open page, otherwise none.
@@ -209,7 +215,19 @@ function selectActivity(view: "explorer" | "search" | "settings") {
   persistLayout();
 }
 
-async function selectWarning(item: { chapterId?: string; position?: DiagnosticPosition }) {
+async function selectWarning(item: WarningSelection) {
+  if ("kind" in item && item.kind === "css") {
+    if (!project.book?.customCss) return;
+    layout.center = { kind: "css" };
+    if (layout.mode === "preview") {
+      layout.mode = "split";
+      persistLayout();
+    }
+    await nextTick();
+    cssEditor.value?.focusRange(item);
+    return;
+  }
+  if ("kind" in item) return;
   const chapterId = item.chapterId ?? selectedChapterId.value;
   if (!chapterId || !hasChapter(chapterId)) return;
   layout.center = { kind: "chapter", id: chapterId };
@@ -355,6 +373,7 @@ onMounted(findSourceScroller);
               :on-drop-files="importDroppedImages"
             />
             <ImageView v-else-if="layout.center.kind === 'image'" :path="layout.center.path" />
+            <DictionaryView v-else-if="layout.center.kind === 'dictionary'" />
             <SettingsView
               v-else-if="layout.center.kind === 'settings'"
               :settings="settings"
@@ -375,7 +394,7 @@ onMounted(findSourceScroller);
               :focus-request="focusRequest"
               :import-image="importImageAt"
             />
-            <CssEditor v-else-if="layout.center.kind === 'css'" />
+            <CssEditor ref="cssEditor" v-else-if="layout.center.kind === 'css'" />
             <div v-else class="grid flex-1 place-items-center text-muted-foreground">
               {{ t("editor.chooseChapter", "Select a chapter") }}
             </div>
@@ -396,6 +415,7 @@ onMounted(findSourceScroller);
       :chapter-id="selectedChapterId || previewChapterId"
       :preview-styled="previewStyled"
       @select-warning="selectWarning"
+      @select-spelling="(item) => selectSearchResult(item.chapterId, item.from, item.to)"
       @show-original-preview="settings.setPreview({ paperStyle: false })"
     />
     <ExportDialog
