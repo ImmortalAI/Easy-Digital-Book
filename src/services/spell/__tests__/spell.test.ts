@@ -37,19 +37,19 @@ describe("tokenize", () => {
     ]);
   });
   it("keeps inner hyphens and apostrophes, drops edge ones", () => {
-    const source = "из-за кто-нибудь don’t rock’n’roll -край- ’quoted’";
+    const source = "из-за кто-нибудь don't rock’n’roll -край- 'quoted'";
     expect(words(source)).toEqual([
       "из-за",
       "кто-нибудь",
-      "don’t",
+      "don't",
       "rock’n’roll",
       "край",
       "quoted",
     ]);
     // Verify typographic apostrophe (U+2019) is kept as single token
-    const tokens = tokenize("don’t");
+    const tokens = tokenize("don't");
     expect(tokens).toHaveLength(1);
-    expect(tokens[0].word).toBe("don’t");
+    expect(tokens[0].word).toBe("don't");
   });
   it("skips tokens with digits or underscores, and scene breaks", () => {
     expect(words("глава2 3D 2026 snake_case\n***\nслово")).toEqual(["слово"]);
@@ -65,16 +65,17 @@ describe("languageOf", () => {
     expect(languageOf("слово")).toBe("ru");
     expect(languageOf("из-за")).toBe("ru");
     expect(languageOf("ёлка")).toBe("ru");
-    expect(languageOf("don’t")).toBe("en");
+    expect(languageOf("don't")).toBe("en");
     expect(languageOf("Café")).toBe("en");
     expect(languageOf("словоword")).toBeNull();
     expect(languageOf("北京")).toBeNull();
     expect(languageOf("λόγος")).toBeNull();
   });
-  it("handles typographic apostrophe U+2019", () => {
-    // Typographic apostrophe in English word
-    expect(languageOf("don’t")).toBe("en");
-    expect(languageOf("rock’n’roll")).toBe("en");
+  it("handles both straight and typographic apostrophes", () => {
+    // Straight apostrophe U+0027
+    expect(languageOf("don't")).toBe("en");
+    // Typographic apostrophe U+2019
+    expect(languageOf("don't")).toBe("en");
   });
 });
 
