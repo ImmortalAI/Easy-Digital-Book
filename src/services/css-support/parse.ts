@@ -3,7 +3,7 @@ import parse from "css-tree/parser";
 import walk from "css-tree/walker";
 import { tokenize, tokenTypes } from "css-tree/tokenizer";
 import { ident } from "css-tree/utils";
-import type { CssNode, ParseOptions } from "css-tree";
+import type { CssNode, ParseOptions, WalkContext } from "css-tree";
 
 export interface CssToken {
   type: number;
@@ -39,7 +39,6 @@ export function parseCss(css: string): {
   });
   parts.push(css.slice(copied));
   const normalized = parts.join("");
-  const lezer = parser.parse(normalized);
   let syntax: CssRange | null = null;
   const report = (from: number, to = from + 1) => {
     if (syntax || !css.length) return;
@@ -54,9 +53,9 @@ export function parseCss(css: string): {
   const trees: CssNode[] = [ast];
   const declarationStarts = new Set<number>();
   const ruleStarts = new Set<number>();
-  const validUrls: CssRange[] = [];
+  const validatedRanges: (CssRange & { replacement: string })[] = [];
   function index(tree: CssNode) {
-    walk(tree, (node) => {
+    walk(tree, function (this: WalkContext, node) {
       if (!node.loc) return;
       const { offset: from } = node.loc.start,
         { offset: to } = node.loc.end;
@@ -70,10 +69,62 @@ export function parseCss(css: string): {
           report(from, to);
       }
       if (node.type === "Rule") ruleStarts.add(from);
-      if (node.type === "Url") validUrls.push({ from, to });
+      // CSS Tree tolerates URLs terminated by EOF, including unclosed strings.
+      // Such nodes must not hide Lezer's structural errors (or errors at their end).
+      if (node.type === "Url") {
+        let delimiterStart = to - 1;
+        while (normalized[delimiterStart - 1] === "\\") delimiterStart--;
+        const completeUrl = normalized[to - 1] === ")" && (to - 1 - delimiterStart) % 2 === 0;
+        let argumentStart =
+          tokens.get(from)?.type === tokenTypes.Function ? tokens.get(from)!.end : from + 4;
+        while (
+          [tokenTypes.WhiteSpace, tokenTypes.Comment].includes(
+            tokens.get(argumentStart)?.type ?? -1,
+          )
+        )
+          argumentStart = tokens.get(argumentStart)!.end;
+        const argument = tokens.get(argumentStart);
+        const completeString =
+          argument?.type !== tokenTypes.BadString &&
+          (argument?.type !== tokenTypes.String ||
+            normalized[argument.end - 1] === normalized[argument.start]);
+        if (completeUrl && completeString)
+          validatedRanges.push({ from, to, replacement: "url(" + " ".repeat(to - from - 5) + ")" });
+        else report(from, to);
+      }
+      // Lezer's generic function arguments do not accept the selector list
+      // in `:nth-child(An+B of S)`, which CSS Tree validates explicitly.
+      if (node.type === "Nth" && node.selector)
+        validatedRanges.push({ from, to, replacement: "n" + " ".repeat(to - from - 1) });
+      if (
+        node.type === "Raw" &&
+        this.function &&
+        ident.decode(this.function.name).toLowerCase() === "var" &&
+        !ident.decode(this.declaration?.property ?? "").startsWith("--")
+      ) {
+        try {
+          const fallback = parse(normalized.slice(from, to), {
+            positions: true,
+            context: "value",
+            offset: from,
+            parseCustomProperty: true,
+          });
+          trees.push(fallback);
+          index(fallback);
+        } catch {
+          // A variable fallback may contain arbitrary tokens; keep it advisory.
+        }
+      }
     });
   }
   index(ast);
+  // Adapt only library-validated constructs before structural parsing. Merely
+  // suppressing their errors leaves cascading Lezer errors outside their ranges.
+  const structural = normalized.split("");
+  for (const range of validatedRanges)
+    for (let offset = range.from; offset < range.to; offset++)
+      structural[offset] = range.replacement[offset - range.from]!;
+  const lezer = parser.parse(structural.join(""));
   // A malformed function can consume the remainder in CSS Tree. Analyze valid
   // declarations/rules recovered independently by Lezer through the SAME parser.
   lezer.iterate({
@@ -103,11 +154,7 @@ export function parseCss(css: string): {
   });
   lezer.iterate({
     enter(ref) {
-      if (
-        ref.type.isError &&
-        !validUrls.some((range) => ref.from >= range.from && ref.to <= range.to)
-      )
-        report(ref.from, ref.to);
+      if (ref.type.isError) report(ref.from, ref.to);
     },
   });
   return { trees, tokens, syntax };

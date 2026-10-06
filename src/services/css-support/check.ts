@@ -78,7 +78,8 @@ export function checkKindleCss(
               node.value.children.forEach((child) => {
                 if (child.type !== "Identifier" || !child.loc) return;
                 const value = identifier(child.name),
-                  status = row.values?.[value];
+                  status =
+                    row.values && Object.hasOwn(row.values, value) ? row.values[value] : undefined;
                 if (status !== undefined) {
                   override = true;
                   support(

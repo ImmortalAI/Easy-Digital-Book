@@ -125,6 +125,51 @@ describe("checkKindleCss", () => {
 });
 
 describe("review regressions", () => {
+  it("does not treat inherited object keys as keyword overrides", () => {
+    expect(findings("p{display:constructor}")).toMatchObject([
+      { code: "property", token: "display", severity: "info" },
+    ]);
+  });
+  it.each(['url("x)}', "url('x)}", 'url("x)', "url(https://x"])(
+    "reports incomplete URL syntax: %s",
+    (url) => {
+      expect(findings(`p{background:${url}`).filter((f) => f.code === "syntax")).toHaveLength(1);
+    },
+  );
+  it("requires an unescaped closing URL delimiter", () => {
+    expect(
+      findings(String.raw`p{background:url(images/x\)}`).filter((f) => f.code === "syntax"),
+    ).toHaveLength(1);
+    expect(
+      findings(String.raw`p{background:url(images/x\))}`).filter((f) => f.code === "syntax"),
+    ).toEqual([]);
+  });
+  it.each(["nth-child(2n of .a)", "nth-last-child(odd of .a, [title])"])(
+    "accepts a valid filtered positional selector: %s",
+    (selector) => {
+      const result = findings(`p:${selector}{display:grid}`);
+      expect(result.filter((f) => f.code === "syntax")).toEqual([]);
+      expect(result).toContainEqual(expect.objectContaining({ code: "value", token: "grid" }));
+    },
+  );
+  it("still reports malformed filtered positional selectors", () => {
+    expect(
+      findings("p:nth-child(2n of .){display:grid}").filter((f) => f.code === "syntax"),
+    ).toHaveLength(1);
+  });
+  it("checks URL and unit compatibility inside nested variable fallbacks", () => {
+    const result = findings(
+      "p{background:var(--bg,var(--other,url(https://x)));width:var(--width,2vw)}",
+    );
+    expect(result).toContainEqual(
+      expect.objectContaining({ code: "externalUrl", token: "https://x" }),
+    );
+    expect(result).toContainEqual(expect.objectContaining({ code: "unit", token: "vw" }));
+    expect(result.filter((f) => f.code === "syntax")).toEqual([]);
+    expect(
+      findings("p{background:var(--bg,url(images/a.png))}").filter((f) => f.code === "externalUrl"),
+    ).toEqual([]);
+  });
   it.each([
     "p { color red; display: grid; } q { mystery: x }",
     "p { color:red width:2vw; } q { mystery:x }",
