@@ -182,6 +182,47 @@ text. Formatting (fonts, indents, alignment) is not set by markup but by the
 book theme and the optional `styles/custom.css` file ("Styles" in the
 Explorer).
 
+## custom.css on Kindle
+
+The book theme only uses styling that works on Kindle. If you add your own
+rules to `custom.css`, the lists below show what had a visible effect on a
+real **Kindle Paperwhite 3** (firmware 5.16.2.1.1, exported AZW3, font size 3,
+portrait). Other models, firmware versions and reader settings may behave
+differently, so check the book on your own device. Until these features are
+also tested on a Paperwhite 12th gen, the app's CSS check keeps showing them
+as unverified notes; the notes never block export.
+
+**Worked:**
+
+- margins, padding, borders, backgrounds, `text-indent`, alignment, font
+  properties, `text-transform`, `float` and `clear`, `height`;
+- `display: block`, `position: relative`, `word-wrap: break-word`;
+- type, class and attribute selectors, combinators, `:not`, `:first-child`,
+  `:only-child` and other structural pseudo-classes, `::before`, `::after`,
+  `::first-letter`, `::first-line`;
+- `@media all`, `@media screen`, `@media (min-width: …)`;
+- units `em`, `rem`, `ex`, `%`, `px`, `pt`, `pc`, `cm`, `mm`, `in`.
+
+**Had no effect, avoid:**
+
+- `display: flex` and `display: grid`;
+- CSS variables (`var()`), `calc()`, `transform`;
+- `:has`, `:is`, `:where`, `:visited`;
+- `@supports`, `@layer`, `@page`, and the `@media amzn-kf8` condition;
+- page breaks inside a chapter: `page-break-after`, `break-after`, and
+  `page-break-inside: avoid` / `break-inside: avoid`;
+- units `ch`, `vw`, `vh`, `vmin`, `vmax` and their `dv*`, `sv*`, `lv*`
+  variants.
+
+**Unreliable:**
+
+- `position: fixed` sticks to the corner of the screen, but its border and
+  text are split across several pages;
+- `background-size` worked at font size 3, but at size 6 the box moved off
+  the screen;
+- `hyphens`, `position: sticky`, `:hover`, `:active`, `:focus` and
+  `@keyframes` gave no clear result.
+
 ## Full example
 
 ```

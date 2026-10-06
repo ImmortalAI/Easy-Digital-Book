@@ -167,6 +167,41 @@ Mod 在 Windows 和 Linux 上是 Ctrl，在 macOS 上是 ⌘。
 HTML 标签。这些都会按普通文本输出。排版（字体、缩进、对齐）不由标记决定，
 而由书籍主题和可选的 `styles/custom.css` 文件（资源管理器中的“样式”）控制。
 
+## Kindle 上的 custom.css
+
+书籍主题只使用在 Kindle 上有效的样式。如果你在 `custom.css` 中添加自己的规则，
+下面的列表列出了在一台真实的 **Kindle Paperwhite 3**（固件 5.16.2.1.1，
+导出的 AZW3，字号 3，竖屏）上产生可见效果的内容。其他型号、固件版本和阅读设置
+可能表现不同，请在你自己的设备上检查书籍。在 Paperwhite 第 12 代上也完成测试
+之前，应用的 CSS 检查仍会为这些功能显示“支持未验证”的提示；这些提示不会阻止导出。
+
+**有效：**
+
+- 外边距、内边距、边框、背景、`text-indent`、对齐、字体属性、
+  `text-transform`、`float` 和 `clear`、`height`；
+- `display: block`、`position: relative`、`word-wrap: break-word`；
+- 类型、类和属性选择器，组合器，`:not`、`:first-child`、`:only-child`
+  及其他结构伪类，`::before`、`::after`、`::first-letter`、`::first-line`；
+- `@media all`、`@media screen`、`@media (min-width: …)`；
+- 单位 `em`、`rem`、`ex`、`%`、`px`、`pt`、`pc`、`cm`、`mm`、`in`。
+
+**没有效果，建议避免：**
+
+- `display: flex` 和 `display: grid`；
+- CSS 变量（`var()`）、`calc()`、`transform`；
+- `:has`、`:is`、`:where`、`:visited`；
+- `@supports`、`@layer`、`@page`，以及 `@media amzn-kf8` 条件；
+- 章节内的分页：`page-break-after`、`break-after`，以及
+  `page-break-inside: avoid` / `break-inside: avoid`；
+- 单位 `ch`、`vw`、`vh`、`vmin`、`vmax` 及其 `dv*`、`sv*`、`lv*` 变体。
+
+**不可靠：**
+
+- `position: fixed` 会固定在屏幕角落，但边框和文字会被拆分到多页；
+- `background-size` 在字号 3 时有效，但在字号 6 时区域移出了屏幕；
+- `hyphens`、`position: sticky`、`:hover`、`:active`、`:focus` 和
+  `@keyframes` 没有得到明确结果。
+
 ## 完整示例
 
 ```
