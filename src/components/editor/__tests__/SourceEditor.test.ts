@@ -14,6 +14,8 @@ import { chapterParseResults, resetChapterParseResults } from "@/composables/use
 import { EditorView } from "@codemirror/view";
 import { createI18nPlugin } from "@/plugins/i18n";
 import { useSettingsStore } from "@/stores/settings";
+import { useSpellingStore } from "@/stores/spelling";
+import { nextTick } from "vue";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 
 function deferredImageFile(name: string) {
@@ -110,6 +112,20 @@ describe("SourceEditor lifecycle", () => {
       "chapter two edited",
     ]);
     expect(chapterEditorStates.get("chapter1")?.doc.toString()).toBe("chapter one edited");
+    wrapper.unmount();
+  });
+
+  it("turns off WebView spellcheck and shows store misspellings for the current text only", async () => {
+    const wrapper = mount(SourceEditor, { props: { chapterId: "chapter1" } });
+    const source = useProjectStore().book!.chapters[0]!.source;
+    expect(wrapper.find(".cm-content").attributes("spellcheck")).toBe("false");
+    const spelling = useSpellingStore();
+    spelling.setChapter("chapter1", "old text", [{ word: "old", lang: "en", from: 0, to: 3 }]);
+    await nextTick();
+    expect(wrapper.find(".cm-misspelled").exists()).toBe(false);
+    spelling.setChapter("chapter1", source, [{ word: "Chapter", lang: "en", from: 2, to: 9 }]);
+    await nextTick();
+    expect(wrapper.find(".cm-misspelled").text()).toBe("Chapter");
     wrapper.unmount();
   });
 

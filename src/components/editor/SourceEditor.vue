@@ -24,6 +24,8 @@ import { useSafeI18n } from "@/composables/use-safe-i18n";
 import { chapterSearch, searchPanelLabels } from "@/components/editor/chapter-search-panel";
 import { chapterParseResults, useNovlangParse } from "@/composables/use-novlang-parse";
 import { useProjectStore } from "@/stores/project";
+import { useSpellingStore } from "@/stores/spelling";
+import { setMisspellings, spellingExtensions } from "./spelling-decorations";
 import {
   captureImageImportIdentity,
   isImageImportIdentityCurrent,
@@ -43,6 +45,7 @@ const props = defineProps<{
 }>();
 const host = ref<HTMLElement>();
 const project = useProjectStore();
+const spelling = useSpellingStore();
 const parser = useNovlangParse(toRef(props, "chapterId"));
 const resolvedTheme = useResolvedTheme();
 const { t } = useSafeI18n();
@@ -70,13 +73,14 @@ function editorExtensions(chapterId: string) {
   return [
     novlangLanguage,
     syntaxHighlighting(novlangHighlightStyle),
+    ...spellingExtensions,
     editorTheme,
     editorColorTheme,
     editorColorScheme(resolvedTheme.value),
     EditorView.lineWrapping,
     chapterSearch(() => searchPanelLabels(t)),
     EditorView.contentAttributes.of({
-      spellcheck: "true",
+      spellcheck: "false",
       lang: language,
       "aria-label": contentLabel.value,
     }),
@@ -168,6 +172,15 @@ function updateDiagnostics() {
   view.dispatch(setDiagnostics(view.state, items));
 }
 
+function updateMisspellings() {
+  if (!view) return;
+  const entry = spelling.visible.get(props.chapterId);
+  // Offsets belong to the text that was checked; a newer text waits for its own result
+  // and meanwhile keeps the mapped underlines from misspellingField.
+  if (entry && entry.source !== view.state.doc.toString()) return;
+  view.dispatch({ effects: setMisspellings.of(entry?.items ?? []) });
+}
+
 function mountEditor(chapterId: string) {
   const chapter = project.book?.chapters.find((item) => item.id === chapterId);
   if (!chapter || !host.value) return;
@@ -178,6 +191,7 @@ function mountEditor(chapterId: string) {
   const effect = reconfigureChapterEditor(chapterId, editorExtensions(chapterId));
   if (effect) view.dispatch({ effects: effect });
   updateDiagnostics();
+  updateMisspellings();
 }
 
 function disposeEditor() {
@@ -220,6 +234,7 @@ watch(
 );
 
 watch(() => [props.chapterId, chapterParseResults.get(props.chapterId)], updateDiagnostics);
+watch(() => [props.chapterId, spelling.visible.get(props.chapterId)], updateMisspellings);
 
 watch(
   () => props.focusRequest,
