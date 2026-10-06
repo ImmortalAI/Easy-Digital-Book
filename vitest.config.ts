@@ -21,6 +21,7 @@ export default defineConfig({
         "src/services/search/**/*.ts",
         "src/services/checks/**/*.ts",
         "src/services/css-support/**/*.ts",
+        "src/services/spell/**/*.ts",
         "src/stores/**/*.ts",
       ],
       thresholds: { lines: 80, functions: 75, branches: 70, statements: 80 },

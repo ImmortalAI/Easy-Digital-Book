@@ -1,6 +1,6 @@
 export const restrictedImports = [
   {
-    target: "src/services/{book,edb,epub,azw3,export,search,checks,css-support}/**",
+    target: "src/services/{book,edb,epub,azw3,export,search,checks,css-support,spell}/**",
     paths: ["vue", "pinia"],
     patterns: ["@tauri-apps/**"],
   },
@@ -63,7 +63,7 @@ export default {
       },
       {
         files: [
-          "src/services/{book,edb,epub,azw3,export,search,checks,css-support}/**",
+          "src/services/{book,edb,epub,azw3,export,search,checks,css-support,spell}/**",
           "src/utils/**",
         ],
         env: { browser: false },
