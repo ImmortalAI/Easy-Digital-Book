@@ -17,6 +17,8 @@ import { tauriSettings } from "./settings";
 import { githubUpdates, noUpdates } from "./updates";
 import { tauriLogs } from "./logs";
 import { tauriWindow } from "./window";
+import { tauriSpellChecker } from "./spell";
+import { createMemorySpellChecker } from "./memory-spell";
 
 export const platformServices: PlatformServices = {
   files: tauriFileSystem,
@@ -28,6 +30,7 @@ export const platformServices: PlatformServices = {
   opener: tauriOpener,
   updates: githubUpdates,
   window: tauriWindow,
+  spell: tauriSpellChecker,
 };
 
 class MemoryFiles implements FileSystem {
@@ -155,6 +158,8 @@ class MemoryRecovery implements RecoveryStore {
 export interface InMemoryPlatformOptions {
   dialogPaths?: { project?: string; epub?: string; azw3?: string };
   confirm?: boolean;
+  spellWords?: string[];
+  spellUnavailable?: boolean;
 }
 
 export interface InMemoryPlatformTestApi {
@@ -214,6 +219,10 @@ export function createInMemoryPlatformServices(
     opener: { async reveal() {}, async open() {} },
     updates: noUpdates,
     window,
+    spell: createMemorySpellChecker({
+      known: options.spellWords,
+      failLoad: options.spellUnavailable,
+    }),
     test: {
       files: files.data,
       settings: settings.data,
