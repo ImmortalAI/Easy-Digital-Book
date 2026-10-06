@@ -42,6 +42,18 @@ describe("application stores", () => {
     expect(reloaded.preview).toEqual({ paperStyle: false, dimImages: true });
   });
 
+  it("loads spelling settings with defaults and persists patches", async () => {
+    const repository = createInMemoryPlatformServices().settings;
+    setActivePinia(createPinia());
+    const settings = useSettingsStore();
+    settings.configure(repository);
+    await settings.load();
+    expect(settings.spelling).toEqual({ enabled: true, languages: { ru: true, en: true } });
+    await settings.setSpelling({ languages: { en: false } });
+    expect(settings.spelling).toEqual({ enabled: true, languages: { ru: true, en: false } });
+    expect(await repository.get("spelling", null)).toEqual(settings.spelling);
+  });
+
   it("tracks revision and recovery deltas for mutations", () => {
     setActivePinia(createPinia());
     const project = useProjectStore();

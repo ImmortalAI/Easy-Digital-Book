@@ -4,6 +4,7 @@ import type { SettingsRepository } from "@/types/platform";
 import type { SupportedLocale } from "@/plugins/i18n";
 import type { Theme } from "@/composables/use-theme";
 import type { ExportFormat } from "@/services/export/types";
+import type { SpellLanguage } from "@/types/spelling";
 export interface ExportSettings {
   format: ExportFormat;
   imagePreset: "kindle-paperwhite" | "original";
@@ -21,6 +22,11 @@ export interface PreviewSettings {
 export interface UpdateSettings {
   lastCheckedAt: number | null;
 }
+export interface SpellingSettings {
+  enabled: boolean;
+  languages: Record<SpellLanguage, boolean>;
+}
+const defaultSpelling: SpellingSettings = { enabled: true, languages: { ru: true, en: true } };
 const defaultExport: ExportSettings = {
   format: "epub",
   imagePreset: "kindle-paperwhite",
@@ -37,7 +43,8 @@ export const useSettingsStore = defineStore("settings", () => {
     locale = ref<SupportedLocale | null>(null),
     theme = ref<Theme>("system"),
     preview = ref<PreviewSettings>({ ...defaultPreview }),
-    updates = ref<UpdateSettings>({ lastCheckedAt: null });
+    updates = ref<UpdateSettings>({ lastCheckedAt: null }),
+    spelling = ref<SpellingSettings>(structuredClone(defaultSpelling));
   let repository: SettingsRepository | undefined;
   function configure(value: SettingsRepository) {
     repository = value;
@@ -64,6 +71,11 @@ export const useSettingsStore = defineStore("settings", () => {
         (await repository?.get<number | null>("updates.lastCheckedAt", null)) ??
         null,
     };
+    const storedSpelling = await repository?.get<Partial<SpellingSettings>>("spelling", {});
+    spelling.value = {
+      enabled: storedSpelling?.enabled ?? true,
+      languages: { ...defaultSpelling.languages, ...storedSpelling?.languages },
+    };
   }
   async function persist() {
     await repository?.set("confirmDelete", confirmDelete.value);
@@ -74,6 +86,17 @@ export const useSettingsStore = defineStore("settings", () => {
     await repository?.set("preview", preview.value);
     await repository?.set("updates", updates.value);
     await repository?.set("updates.lastCheckedAt", updates.value.lastCheckedAt);
+    await repository?.set("spelling", spelling.value);
+  }
+  async function setSpelling(patch: {
+    enabled?: boolean;
+    languages?: Partial<Record<SpellLanguage, boolean>>;
+  }) {
+    spelling.value = {
+      enabled: patch.enabled ?? spelling.value.enabled,
+      languages: { ...spelling.value.languages, ...patch.languages },
+    };
+    await repository?.set("spelling", spelling.value);
   }
   async function setPreview(patch: Partial<PreviewSettings>) {
     preview.value = { ...preview.value, ...patch };
@@ -95,10 +118,12 @@ export const useSettingsStore = defineStore("settings", () => {
     theme,
     preview,
     updates,
+    spelling,
     configure,
     load,
     persist,
     setPreview,
+    setSpelling,
     addRecent,
     removeRecent,
   };

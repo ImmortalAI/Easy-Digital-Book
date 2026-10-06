@@ -128,7 +128,8 @@
     "styles": "Styles",
     "chapters": "Chapters",
     "newChapter": "New chapter",
-    "images": "Images"
+    "images": "Images",
+    "dictionary": "Dictionary"
   },
   "gallery": {
     "selected": "Selected: {count}",
@@ -236,7 +237,12 @@
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",
-    "themeSystem": "System"
+    "themeSystem": "System",
+    "spelling": "Check spelling",
+    "spellingLanguages": "Spelling languages",
+    "spellingRussian": "Russian",
+    "spellingEnglish": "English",
+    "spellingCredits": "Dictionaries: LibreOffice ru_RU (© Alexander I. Lebedev, BSD licence) and SCOWL en_US (© Kevin Atkinson and others)."
   },
   "errors": {
     "title": "An unexpected error occurred",
@@ -301,5 +307,30 @@
     "syntax": "CSS syntax error. Other valid rules are still checked.",
     "externalUrl": "Resource “{url}” is outside images/ and is not included in the book.",
     "customProperty": "CSS variables are not verified on both target Paperwhites."
+  },
+  "spelling": {
+    "badge": "{count} spelling issue | {count} spelling issues",
+    "checking": "Checking spelling…",
+    "unavailable": "Spell checking is unavailable",
+    "unavailableHint": "The dictionaries could not be loaded. Details are in the log.",
+    "openLogs": "Log folder",
+    "none": "No spelling issues",
+    "chapterGroup": "Chapter {number} · {title} — {count}",
+    "occurrences": "×{count}",
+    "addToDictionary": "Add to book dictionary",
+    "ignore": "Ignore",
+    "noSuggestions": "No suggestions",
+    "loadingSuggestions": "Looking for suggestions…",
+    "menuLabel": "Spelling: {word}"
+  },
+  "dictionary": {
+    "title": "Book dictionary",
+    "filter": "Filter words",
+    "newWord": "New word",
+    "add": "Add word",
+    "remove": "Remove {word}",
+    "empty": "The book dictionary is empty",
+    "noMatches": "No matching words",
+    "invalid": "Enter one word without spaces"
   }
 }

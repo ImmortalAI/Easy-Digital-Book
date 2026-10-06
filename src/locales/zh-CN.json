@@ -128,7 +128,8 @@
     "styles": "样式",
     "chapters": "章节",
     "newChapter": "新建章节",
-    "images": "图片"
+    "images": "图片",
+    "dictionary": "词典"
   },
   "gallery": {
     "selected": "已选择：{count}",
@@ -236,7 +237,12 @@
     "theme": "主题",
     "themeLight": "浅色",
     "themeDark": "深色",
-    "themeSystem": "跟随系统"
+    "themeSystem": "跟随系统",
+    "spelling": "检查拼写",
+    "spellingLanguages": "拼写检查语言",
+    "spellingRussian": "Русский（俄语）",
+    "spellingEnglish": "English（英语）",
+    "spellingCredits": "词典：LibreOffice ru_RU（© Alexander I. Lebedev，BSD 许可）和 SCOWL en_US（© Kevin Atkinson 等）。"
   },
   "errors": {
     "title": "发生了意外错误",
@@ -301,5 +307,30 @@
     "syntax": "CSS 语法错误。仍会检查其他有效规则。",
     "externalUrl": "资源“{url}”位于 images/ 之外，不会包含在书中。",
     "customProperty": "CSS 变量尚未在两款目标 Paperwhite 上验证。"
+  },
+  "spelling": {
+    "badge": "{count} 个拼写问题",
+    "checking": "正在检查拼写…",
+    "unavailable": "拼写检查不可用",
+    "unavailableHint": "无法加载词典。详细信息见日志。",
+    "openLogs": "日志文件夹",
+    "none": "没有拼写问题",
+    "chapterGroup": "第 {number} 章 · {title} — {count}",
+    "occurrences": "×{count}",
+    "addToDictionary": "添加到本书词典",
+    "ignore": "忽略",
+    "noSuggestions": "没有建议",
+    "loadingSuggestions": "正在查找建议…",
+    "menuLabel": "拼写：{word}"
+  },
+  "dictionary": {
+    "title": "本书词典",
+    "filter": "筛选词语",
+    "newWord": "新词",
+    "add": "添加词语",
+    "remove": "删除 {word}",
+    "empty": "本书词典为空",
+    "noMatches": "没有匹配的词语",
+    "invalid": "请输入一个不含空格的词"
   }
 }
