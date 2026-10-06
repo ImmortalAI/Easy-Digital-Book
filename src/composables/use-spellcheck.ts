@@ -34,6 +34,8 @@ export function useSpellcheck(options: { checker?: SpellChecker; logger?: Logger
   const notifications = useNotificationsStore();
   const { t } = useSafeI18n();
   const pending = new Set<string>();
+  // Edited chapters wait here until the debounce fires, even while a drain runs.
+  const edited = new Set<string>();
   let generation = 0;
   let running = false;
   let disposed = false;
@@ -75,6 +77,7 @@ export function useSpellcheck(options: { checker?: SpellChecker; logger?: Logger
       }
     }
     if (runGeneration !== generation) return;
+    if (!project.book?.chapters.some((item) => item.id === chapter.id)) return;
     spelling.setChapter(
       chapter.id,
       source,
@@ -127,10 +130,15 @@ export function useSpellcheck(options: { checker?: SpellChecker; logger?: Logger
       }
     }
   }
-  const schedule = useDebounceFn(() => void drain(), SPELL_DEBOUNCE_MS);
+  const schedule = useDebounceFn(() => {
+    for (const id of edited) pending.add(id);
+    edited.clear();
+    void drain();
+  }, SPELL_DEBOUNCE_MS);
 
   function queueBook() {
     pending.clear();
+    edited.clear();
     if (!canRun()) return;
     for (const chapter of project.book?.chapters ?? []) pending.add(chapter.id);
     if (pending.size) spelling.status = "checking";
@@ -142,6 +150,7 @@ export function useSpellcheck(options: { checker?: SpellChecker; logger?: Logger
     () => {
       generation++;
       schedule.cancel();
+      edited.clear();
       spelling.resetBook();
       queueBook();
     },
@@ -155,9 +164,10 @@ export function useSpellcheck(options: { checker?: SpellChecker; logger?: Logger
       const ids = new Set(chapters.map((chapter) => chapter.id));
       for (const id of spelling.chapters.keys()) if (!ids.has(id)) spelling.removeChapter(id);
       for (const id of [...pending]) if (!ids.has(id)) pending.delete(id);
+      for (const id of [...edited]) if (!ids.has(id)) edited.delete(id);
       for (const chapter of chapters)
-        if (before.get(chapter.id) !== chapter.source) pending.add(chapter.id);
-      if (pending.size && canRun()) schedule();
+        if (before.get(chapter.id) !== chapter.source) edited.add(chapter.id);
+      if (edited.size && canRun()) schedule();
     },
   );
   const stopEnabled = watch(

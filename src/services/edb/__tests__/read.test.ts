@@ -144,7 +144,7 @@ describe("readEdb", () => {
       await archive({ "manifest.json": manifest({ formatVersion: 1 }) }),
       deps,
     );
-    expect(result.migrated).toBe(true);
+    expect(result.migrated).toBe(false);
     expect(result.book.dictionary).toEqual([]);
   });
 

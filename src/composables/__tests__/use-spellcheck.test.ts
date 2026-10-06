@@ -110,6 +110,60 @@ describe("useSpellcheck", () => {
     expect(useSpellingStore().chapters.get("chapter0")?.source).not.toBe("превет");
   });
 
+  it("keeps edits behind the debounce while a drain is running", async () => {
+    const project = useProjectStore();
+    const releases: Array<(value: string[]) => void> = [];
+    const check = vi.fn<(lang: string, words: string[]) => Promise<string[]>>(
+      () => new Promise<string[]>((resolve) => releases.push(resolve)),
+    );
+    const checker = { check, suggest: vi.fn<() => Promise<string[]>>(async () => []) };
+    project.setBook(book(["превет"]));
+    start(checker as never);
+    await flushPromises();
+    expect(check).toHaveBeenCalledTimes(1);
+    project.updateChapterSource("chapter0", "превето");
+    await nextTick();
+    vi.advanceTimersByTime(200);
+    project.updateChapterSource("chapter0", "превето мир");
+    await nextTick();
+    releases[0]!(["превет"]);
+    await flushPromises();
+    vi.advanceTimersByTime(299);
+    await flushPromises();
+    expect(check).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(1);
+    await flushPromises();
+    expect(check).toHaveBeenCalledTimes(2);
+    releases[1]!(["превето", "мир"]);
+    await flushPromises();
+    expect(useSpellingStore().chapters.get("chapter0")?.source).toBe("превето мир");
+  });
+
+  it("ignores a result for a chapter deleted mid-check", async () => {
+    const project = useProjectStore();
+    let release!: (value: string[]) => void;
+    const checker = {
+      check: vi.fn<() => Promise<string[]>>(
+        () => new Promise<string[]>((resolve) => (release = resolve)),
+      ),
+      suggest: vi.fn<() => Promise<string[]>>(async () => []),
+    };
+    project.setBook(book(["превет", "мир"]));
+    start(checker as never);
+    await flushPromises();
+    project.applyMutation({
+      book: { ...project.book!, chapters: project.book!.chapters.slice(1) },
+      changedChapters: new Set(),
+      removedChapters: new Set(["chapter0"]),
+      changedResources: new Set(),
+      removedResources: new Set(),
+    });
+    await nextTick();
+    release(["превет"]);
+    await flushPromises();
+    expect(useSpellingStore().chapters.has("chapter0")).toBe(false);
+  });
+
   it("removes deleted chapters from the results", async () => {
     const project = useProjectStore();
     project.setBook(book(["превет", "иии"]));
