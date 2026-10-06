@@ -25,6 +25,8 @@ const segments = computed<Segment[]>(() => {
   if (center.kind === "metadata") return [{ label: t("breadcrumbs.metadata", "Metadata") }];
   if (center.kind === "css") return [{ label: t("explorer.styles", "Styles") }];
   if (center.kind === "images") return [{ label: book }, { label: images }];
+  if (center.kind === "dictionary")
+    return [{ label: book }, { label: t("explorer.dictionary", "Dictionary") }];
   if (center.kind === "image")
     return [{ label: book }, { label: images, target: { kind: "images" } }, { label: center.path }];
   if (center.kind === "settings") return [{ label: t("breadcrumbs.settings", "Settings") }];

@@ -22,6 +22,7 @@ import MetadataForm from "@/components/metadata/MetadataForm.vue";
 import CssEditor from "@/components/editor/CssEditor.vue";
 import ImageGallery from "@/components/images/ImageGallery.vue";
 import ImageView from "@/components/editor/ImageView.vue";
+import DictionaryView from "@/components/spelling/DictionaryView.vue";
 import SettingsView from "@/components/settings/SettingsView.vue";
 import ExportDialog from "@/components/export/ExportDialog.vue";
 import { createSettingsActions } from "@/composables/use-settings-actions";
@@ -83,7 +84,7 @@ const selectedChapter = computed(() =>
 );
 const canUseModes = computed(() => ["chapter", "css"].includes(layout.center.kind));
 const singlePane = computed(() =>
-  ["metadata", "image", "images", "settings"].includes(layout.center.kind),
+  ["metadata", "image", "images", "dictionary", "settings"].includes(layout.center.kind),
 );
 // The highlighted tile is the sidebar view on screen; with the sidebar hidden,
 // Settings when it is the open page, otherwise none.
@@ -372,6 +373,7 @@ onMounted(findSourceScroller);
               :on-drop-files="importDroppedImages"
             />
             <ImageView v-else-if="layout.center.kind === 'image'" :path="layout.center.path" />
+            <DictionaryView v-else-if="layout.center.kind === 'dictionary'" />
             <SettingsView
               v-else-if="layout.center.kind === 'settings'"
               :settings="settings"
