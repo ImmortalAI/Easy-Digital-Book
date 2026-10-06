@@ -7,6 +7,7 @@ import { useProjectStore } from "@/stores/project";
 import { useNotificationsStore } from "@/stores/notifications";
 import { useLayoutStore } from "@/stores/layout";
 import { useSettingsStore } from "@/stores/settings";
+import { useSpellingStore } from "@/stores/spelling";
 
 function deferred<T = void>() {
   let resolve!: (value: T | PromiseLike<T>) => void;
@@ -294,5 +295,47 @@ describe("application stores", () => {
     settings.theme = "dark";
     await settings.persist();
     expect(await services.settings.get("theme", null)).toBe("dark");
+  });
+});
+
+const bookOptions = {
+  locale: "ru",
+  now: "2026-10-06T00:00:00Z",
+  newUuid: () => "550e8400-e29b-41d4-a716-446655440000",
+  newChapterId: () => "chapter1",
+};
+
+describe("spelling store", () => {
+  it("filters by settings, book dictionary and ignores without new results", async () => {
+    setActivePinia(createPinia());
+    const project = useProjectStore();
+    project.setBook({ ...createBook(bookOptions), dictionary: ["Минжуй"] });
+    const settings = useSettingsStore();
+    const spelling = useSpellingStore();
+    spelling.setChapter("chapter1", "Минжуй превет wrold", [
+      { word: "Минжуй", lang: "ru", from: 0, to: 6 },
+      { word: "превет", lang: "ru", from: 7, to: 13 },
+      { word: "wrold", lang: "en", from: 14, to: 19 },
+    ]);
+    expect(spelling.visible.get("chapter1")?.items.map((i) => i.word)).toEqual(["превет", "wrold"]);
+    settings.spelling = { enabled: true, languages: { ru: true, en: false } };
+    expect(spelling.total).toBe(1);
+    spelling.ignore("превет");
+    expect(spelling.total).toBe(0);
+    expect(spelling.visible.has("chapter1")).toBe(false);
+    settings.spelling = { enabled: false, languages: { ru: true, en: true } };
+    expect(spelling.total).toBe(0);
+  });
+  it("keeps the word cache across books but resets chapters and ignores", () => {
+    setActivePinia(createPinia());
+    const spelling = useSpellingStore();
+    spelling.remember("ru", ["мир", "мирр"], new Set(["мирр"]));
+    spelling.setChapter("a", "мирр", [{ word: "мирр", lang: "ru", from: 0, to: 4 }]);
+    spelling.ignore("мирр");
+    spelling.resetBook();
+    expect(spelling.cached("ru", "мир")).toBe(true);
+    expect(spelling.cached("ru", "мирр")).toBe(false);
+    expect(spelling.chapters.size).toBe(0);
+    expect(spelling.total).toBe(0);
   });
 });
