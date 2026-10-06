@@ -1,12 +1,12 @@
 import type { SpellToken } from "@/types/spelling";
 
 // NovLang markup whose letters are not prose: footnote ids and image paths.
-const FOOTNOTE_DEF = /^\[\^[^\]\s]+\]:\[ \t\]?/gm;
+const FOOTNOTE_DEF = /^\[\^[^\]\s]+\]:[ \t]?/gm;
 const FOOTNOTE_REF = /\[\^[^\]\s]+\]/g;
 const IMAGE_TARGET = /!\[[^\]\n]*\](\([^)\n]*\))/g;
 // Letters with inner hyphens or apostrophes; digits and `_` are captured so the
 // whole token can be dropped instead of checking its letter part.
-const TOKEN = /[\p{L}\p{M}\p{N}_]+(?:['’-][\p{L}\p{M}\p{N}_]+)*/gu;
+const TOKEN = /[\p{L}\p{M}\p{N}_]+(?:['\u2019-][\p{L}\p{M}\p{N}_]+)*/gu;
 const NOT_PROSE = /[\p{N}_]/u;
 
 function skippedRanges(source: string): Array<[number, number]> {
