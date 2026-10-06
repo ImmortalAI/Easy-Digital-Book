@@ -49,6 +49,7 @@ function book(): Book {
     ],
     resources: new Map(),
     customCss: "p { color: black; }",
+    dictionary: [],
   };
 }
 const resource = (byte: number, mediaType: Resource["mediaType"] = "image/jpeg"): Resource => ({

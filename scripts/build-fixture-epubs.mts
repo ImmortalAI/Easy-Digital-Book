@@ -54,6 +54,7 @@ const book: Book = {
     ["images/scene.png", { bytes: png, mediaType: "image/png" }],
   ]),
   customCss: 'body { background-image: url("images/scene.png"); }',
+  dictionary: [],
 };
 
 const output = resolve("fixtures/task-18-fixture.epub");

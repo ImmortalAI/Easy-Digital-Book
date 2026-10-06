@@ -60,6 +60,7 @@ describe("ExportDialog", () => {
       chapters: [{ id: "chapter1", source: "# Chapter" }],
       resources: new Map(),
       customCss: null,
+      dictionary: [],
     });
     const controller = makeController();
     controller.options.value.versionInTitle = true;
@@ -80,6 +81,7 @@ describe("ExportDialog", () => {
       chapters: [{ id: "chapter1", source: "# Chapter" }],
       resources: new Map(),
       customCss: null,
+      dictionary: [],
     });
     const controller = makeController();
 
@@ -233,6 +235,7 @@ describe("ExportDialog", () => {
       chapters: [{ id: "chapter1", source: "# Chapter" }],
       resources: new Map(),
       customCss: null,
+      dictionary: [],
     });
     const controller = makeController();
 

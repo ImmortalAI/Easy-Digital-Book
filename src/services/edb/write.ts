@@ -1,4 +1,5 @@
 import type { Book } from "@/types/book";
+import { normalizeDictionary, serializeDictionary } from "@/services/book/dictionary";
 import { CURRENT_EDB_FORMAT_VERSION } from "@/types/manifest";
 import { buildDeterministicZip, type ZipEntry } from "./zip";
 
@@ -35,6 +36,12 @@ export async function writeEdb(
     entries.push({
       path: "styles/custom.css",
       bytes: utf8(book.customCss.replace(/\r\n?/g, "\n")),
+      binary: false,
+    });
+  if (book.dictionary.length)
+    entries.push({
+      path: "dictionary.txt",
+      bytes: utf8(serializeDictionary(normalizeDictionary(book.dictionary))),
       binary: false,
     });
   return buildDeterministicZip(entries);

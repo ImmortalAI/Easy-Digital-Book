@@ -37,6 +37,7 @@ export function fixtureBook(): Book {
     ],
     resources: new Map(),
     customCss: null,
+    dictionary: [],
   };
 }
 

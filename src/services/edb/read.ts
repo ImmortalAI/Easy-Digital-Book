@@ -2,6 +2,7 @@ import JSZip from "jszip";
 import type { Book, ImageMediaType } from "@/types/book";
 import type { AppWarning } from "@/types/diagnostics";
 import { AppError } from "@/types/errors";
+import { parseDictionaryText } from "@/services/book/dictionary";
 import { parseManifest, normalizeMetadata } from "./manifest";
 
 export interface ReadEdbDeps {
@@ -95,12 +96,14 @@ export async function readEdb(bytes: Uint8Array, deps: ReadEdbDeps): Promise<Rea
     metadata.cover = null;
   }
   const css = zip.file("styles/custom.css");
+  const dictionaryFile = zip.file("dictionary.txt");
   return {
     book: {
       metadata,
       chapters,
       resources,
       customCss: css ? normalized(await css.async("string")) : null,
+      dictionary: dictionaryFile ? parseDictionaryText(await dictionaryFile.async("string")) : [],
     },
     warnings,
     migrated: parsed.migrated,

@@ -24,6 +24,7 @@ const book = (): Book => ({
   ],
   resources: new Map([["images/a.png", { bytes: new Uint8Array([1]), mediaType: "image/png" }]]),
   customCss: "body {}",
+  dictionary: [],
 });
 
 describe("indexeddb recovery", () => {

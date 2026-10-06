@@ -46,6 +46,7 @@ const book: Book = {
     ],
   ]),
   customCss: null,
+  dictionary: [],
 };
 
 describe("buildEpub", () => {

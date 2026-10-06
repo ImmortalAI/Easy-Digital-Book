@@ -19,6 +19,7 @@ const book: Book = {
   chapters: [],
   resources: new Map(),
   customCss: null,
+  dictionary: [],
 };
 
 describe("renderChapter", () => {

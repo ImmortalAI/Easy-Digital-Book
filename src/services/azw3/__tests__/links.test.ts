@@ -146,6 +146,7 @@ it("addresses real shared endnotes when two chapters reuse a label, a reference 
       ],
       resources: new Map(),
       customCss: null,
+      dictionary: [],
     },
     { imagePreset: "original", grayscale: false, titlePage: false, versionInTitle: false },
     {

@@ -135,6 +135,7 @@ export function createRecoveryStore(logger?: Logger): RecoveryStore {
           chapters,
           resources,
           customCss: session.customCss,
+          dictionary: [],
           originalPath: session.originalPath,
         } satisfies RecoveredBook;
       } catch {

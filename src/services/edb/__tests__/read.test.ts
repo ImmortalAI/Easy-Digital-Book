@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readEdb } from "@/services/edb/read";
+import { writeEdb } from "@/services/edb/write";
 import { archive, manifest } from "./fixtures";
 
 const deps = { now: () => new Date("2026-02-01T00:00:00.000Z") };
@@ -19,7 +20,7 @@ describe("readEdb", () => {
       readEdb(await archive({ "manifest.json": manifest({ format: "other" }) }), deps),
     ).rejects.toMatchObject({ code: "edb.foreignFormat" });
     await expect(
-      readEdb(await archive({ "manifest.json": manifest({ formatVersion: 2 }) }), deps),
+      readEdb(await archive({ "manifest.json": manifest({ formatVersion: 3 }) }), deps),
     ).rejects.toMatchObject({ code: "edb.tooNew" });
   });
 
@@ -125,5 +126,36 @@ describe("readEdb", () => {
     const result = await readEdb(await archive({ "manifest.json": JSON.stringify(old) }), deps);
     expect(result.migrated).toBe(true);
     expect(result.book.metadata.version).toBeNull();
+  });
+
+  it("reads and normalizes dictionary.txt", async () => {
+    const result = await readEdb(
+      await archive({
+        "manifest.json": manifest({ formatVersion: 2 }),
+        "dictionary.txt": "дао\r\n\r\nМинжуй\nдао",
+      }),
+      deps,
+    );
+    expect(result.book.dictionary).toEqual(["Минжуй", "дао"]);
+  });
+
+  it("migrates a version 1 file to an empty dictionary", async () => {
+    const result = await readEdb(
+      await archive({ "manifest.json": manifest({ formatVersion: 1 }) }),
+      deps,
+    );
+    expect(result.migrated).toBe(true);
+    expect(result.book.dictionary).toEqual([]);
+  });
+
+  it("roundtrips the dictionary", async () => {
+    const written = await writeEdb(
+      {
+        ...(await readEdb(await archive({ "manifest.json": manifest() }), deps)).book,
+        dictionary: ["Минжуй"],
+      },
+      new Date(),
+    );
+    expect((await readEdb(written, deps)).book.dictionary).toEqual(["Минжуй"]);
   });
 });

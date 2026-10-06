@@ -145,6 +145,7 @@ class MemoryRecovery implements RecoveryStore {
         ]),
       ),
       customCss: session.customCss,
+      dictionary: [],
       originalPath: session.originalPath,
     };
   }
