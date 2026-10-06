@@ -153,6 +153,8 @@ function editorExtensions(chapterId: string) {
     }),
     EditorView.domEventHandlers({
       contextmenu: (event, editor) => {
+        if (!(event.target instanceof Element && event.target.closest(".cm-misspelled")))
+          return false;
         const pos =
           editor.posAtCoords({ x: event.clientX, y: event.clientY }) ??
           (event.target instanceof Node ? editor.posAtDOM(event.target) : null);
@@ -252,6 +254,7 @@ function disposeEditor() {
 }
 
 function remountEditor(chapterId: string) {
+  spellingMenu.value = null;
   disposeEditor();
   mountEditor(chapterId);
 }

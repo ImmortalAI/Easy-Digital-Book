@@ -171,6 +171,18 @@ describe("SourceEditor lifecycle", () => {
     wrapper.unmount();
   });
 
+  it("does not open the spelling menu for a right-click outside the underline", async () => {
+    vi.useRealTimers();
+    const { wrapper, view } = await mountMisspelled();
+    // Pin the hit-test position to the misspelled word while the target is a plain line.
+    vi.spyOn(view, "posAtCoords").mockReturnValue(6);
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    view.contentDOM.querySelector(".cm-line")!.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+    expect(screen.queryByRole("menuitem")).toBeNull();
+    wrapper.unmount();
+  });
+
   it("turns off WebView spellcheck and shows store misspellings for the current text only", async () => {
     const wrapper = mount(SourceEditor, { props: { chapterId: "chapter1" } });
     const source = useProjectStore().book!.chapters[0]!.source;

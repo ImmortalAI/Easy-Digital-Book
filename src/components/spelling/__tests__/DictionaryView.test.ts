@@ -50,5 +50,14 @@ describe("DictionaryView", () => {
     await userEvent.type(screen.getByRole("textbox", { name: "New word" }), "два слова{Enter}");
     expect(screen.getByText("Enter one word without spaces")).toBeInTheDocument();
     expect(project.book!.dictionary).toEqual([]);
+    const input = screen.getByRole("textbox", { name: "New word" });
+    expect(input).toHaveAttribute("aria-describedby", "dictionary-error");
+    expect(document.getElementById("dictionary-error")).toHaveTextContent(
+      "Enter one word without spaces",
+    );
+    await userEvent.type(input, "x");
+    expect(input).toHaveAttribute("aria-invalid", "false");
+    expect(input).not.toHaveAttribute("aria-describedby");
+    expect(screen.queryByText("Enter one word without spaces")).toBeNull();
   });
 });

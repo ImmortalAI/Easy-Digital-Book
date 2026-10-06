@@ -94,7 +94,7 @@ describe("StatusBar spelling badge", () => {
     expect(buttons[1]).toHaveAccessibleName("1 spelling issue");
 
     await userEvent.click(buttons[1]!);
-    await userEvent.click(screen.getByRole("button", { name: /превет/ }));
+    await userEvent.click(screen.getAllByRole("button", { name: /превет/ })[0]!);
 
     expect(emitted("selectSpelling")).toEqual([[{ chapterId: "chapter1", from: 0, to: 6 }]]);
   });

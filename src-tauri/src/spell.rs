@@ -134,6 +134,8 @@ pub fn bundled_service<R: Runtime>(app: &AppHandle<R>) -> SpellService {
     })
 }
 
+// Release builds use `panic = "abort"`, so a panicking task takes the process
+// down; `SpellTask` therefore only surfaces in dev builds or for cancelled tasks.
 async fn run_blocking<T: Send + 'static>(
     task: impl FnOnce() -> Result<T, CommandError> + Send + 'static,
 ) -> Result<T, CommandError> {

@@ -40,11 +40,11 @@ test("the spelling popover keeps each row's actions inside the popover", async (
   await page.getByRole("button", { name: /spelling issue/ }).click();
   const popover = page
     .getByRole("dialog")
-    .filter({ has: page.getByRole("button", { name: "Ignore" }).first() });
+    .filter({ has: page.getByRole("button", { name: /^Ignore/ }).first() });
   await expect(popover).toBeVisible();
   const box = await popover.boundingBox();
   expect(box).not.toBeNull();
-  for (const name of ["Add to book dictionary", "Ignore"]) {
+  for (const name of [/^Add to book dictionary/, /^Ignore/]) {
     const buttons = popover.getByRole("button", { name });
     await expect(buttons).toHaveCount(3);
     for (let i = 0; i < 3; i++) {

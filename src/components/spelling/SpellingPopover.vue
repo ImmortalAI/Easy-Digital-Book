@@ -9,6 +9,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useSafeI18n } from "@/composables/use-safe-i18n";
 import { useSpellingActions } from "@/composables/use-spelling-actions";
 import { extractTitle } from "@/services/book/extract-title";
+import { tokenize } from "@/services/spell/tokenize";
 import { contextSnippet, summarizeMisspellings } from "@/services/spell/summary";
 import { useProjectStore } from "@/stores/project";
 import { useSettingsStore } from "@/stores/settings";
@@ -72,9 +73,17 @@ const label = computed(() =>
           },
         ),
 );
-function select(chapterId: string, from: number, to: number) {
+function select(chapterId: string, word: string, from: number, to: number) {
   open.value = false;
-  emit("select", { chapterId, from, to });
+  const current = project.book?.chapters.find((chapter) => chapter.id === chapterId)?.source;
+  if (current === undefined) return;
+  if (spelling.visible.get(chapterId)?.source === current) {
+    emit("select", { chapterId, from, to });
+    return;
+  }
+  // The listed offsets belong to older text: look the word up in the current one.
+  const found = tokenize(current).find((token) => token.word === word);
+  if (found) emit("select", { chapterId, from: found.from, to: found.to });
 }
 </script>
 
@@ -135,7 +144,7 @@ function select(chapterId: string, from: number, to: number) {
                 variant="ghost"
                 size="sm"
                 class="h-auto min-w-0 flex-1 flex-col items-start whitespace-normal px-1 py-1 text-left text-xs font-normal"
-                @click="select(group.chapterId, word.first.from, word.first.to)"
+                @click="select(group.chapterId, word.word, word.first.from, word.first.to)"
               >
                 <span
                   ><span class="font-medium text-spelling">{{ word.word }}</span>
@@ -152,10 +161,20 @@ function select(chapterId: string, from: number, to: number) {
                   >{{ word.snippet.after }}</span
                 >
               </Button>
-              <Button variant="ghost" size="xs" @click="actions.addToDictionary(word.word)">
+              <Button
+                variant="ghost"
+                size="xs"
+                :aria-label="`${t('spelling.addToDictionary', 'Add to book dictionary')}: ${word.word}`"
+                @click="actions.addToDictionary(word.word)"
+              >
                 {{ t("spelling.addToDictionary", "Add to book dictionary") }}
               </Button>
-              <Button variant="ghost" size="xs" @click="actions.ignore(word.word)">
+              <Button
+                variant="ghost"
+                size="xs"
+                :aria-label="`${t('spelling.ignore', 'Ignore')}: ${word.word}`"
+                @click="actions.ignore(word.word)"
+              >
                 {{ t("spelling.ignore", "Ignore") }}
               </Button>
             </div>

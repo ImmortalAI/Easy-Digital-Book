@@ -46,7 +46,7 @@ describe("SpellingPopover", () => {
     expect(screen.getByText("Chapter 2 · Встреча — 2")).toBeInTheDocument();
     expect(screen.getByText("×2")).toBeInTheDocument();
     expect(screen.getByText(/сказал/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: /Минжуи/ }));
+    await userEvent.click(screen.getAllByRole("button", { name: /Минжуи/ })[0]!);
     expect(emitted().select).toEqual([[{ chapterId: "chapter2", from: first, to: first + 6 }]]);
   });
 
@@ -63,12 +63,44 @@ describe("SpellingPopover", () => {
     ]);
     render(SpellingPopover);
     await userEvent.click(screen.getByRole("button", { name: "4 spelling issues" }));
-    await userEvent.click(screen.getAllByRole("button", { name: "Add to book dictionary" })[0]!);
+    await userEvent.click(screen.getAllByRole("button", { name: /^Add to book dictionary/ })[0]!);
     expect(project.book!.dictionary).toEqual(["Минжуи"]);
     expect(spelling.total).toBe(2);
-    await userEvent.click(screen.getAllByRole("button", { name: "Ignore" })[0]!);
+    await userEvent.click(screen.getAllByRole("button", { name: /^Ignore/ })[0]!);
     expect(spelling.total).toBe(0);
     expect(project.book!.dictionary).toEqual(["Минжуи"]);
+  });
+
+  it("re-finds the word in the current text when the listed offsets are stale", async () => {
+    const project = useProjectStore();
+    project.setBook({
+      ...createBook(bookOptions),
+      chapters: [{ id: "chapter1", source: "превет мир" }],
+    });
+    useSpellingStore().setChapter("chapter1", "превет мир", [
+      { word: "превет", lang: "ru", from: 0, to: 6 },
+    ]);
+    project.updateChapterSource("chapter1", "мир, мир превет");
+    const { emitted } = render(SpellingPopover);
+    await userEvent.click(screen.getByRole("button", { name: "1 spelling issue" }));
+    await userEvent.click(screen.getAllByRole("button", { name: /^превет/ })[0]!);
+    expect(emitted().select).toEqual([[{ chapterId: "chapter1", from: 9, to: 15 }]]);
+  });
+
+  it("emits nothing when the stale word is gone from the current text", async () => {
+    const project = useProjectStore();
+    project.setBook({
+      ...createBook(bookOptions),
+      chapters: [{ id: "chapter1", source: "превет мир" }],
+    });
+    useSpellingStore().setChapter("chapter1", "превет мир", [
+      { word: "превет", lang: "ru", from: 0, to: 6 },
+    ]);
+    project.updateChapterSource("chapter1", "привет мир");
+    const { emitted } = render(SpellingPopover);
+    await userEvent.click(screen.getByRole("button", { name: "1 spelling issue" }));
+    await userEvent.click(screen.getAllByRole("button", { name: /^превет/ })[0]!);
+    expect(emitted().select).toBeUndefined();
   });
 
   it("is grey with a hint and a log button when unavailable", async () => {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { IconTrash } from "@tabler/icons-vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ const project = useProjectStore();
 const filter = ref("");
 const draft = ref("");
 const invalid = ref(false);
+watch(draft, () => (invalid.value = false));
 const words = computed(() => {
   const query = filter.value.trim().toLocaleLowerCase();
   return (project.book?.dictionary ?? []).filter((word) =>
@@ -45,11 +46,12 @@ function add() {
         v-model="draft"
         :aria-label="t('dictionary.newWord', 'New word')"
         :aria-invalid="invalid"
+        :aria-describedby="invalid ? 'dictionary-error' : undefined"
         class="flex-1"
       />
       <Button type="submit">{{ t("dictionary.add", "Add word") }}</Button>
     </form>
-    <p v-if="invalid" class="text-xs text-destructive">
+    <p v-if="invalid" id="dictionary-error" class="text-xs text-destructive">
       {{ t("dictionary.invalid", "Enter one word without spaces") }}
     </p>
     <Input
