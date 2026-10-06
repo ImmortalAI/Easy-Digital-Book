@@ -2,12 +2,23 @@
 
 All notable changes to Easy Digital Book are documented here.
 
-## [Unreleased]
+## [1.2.0] — 2026-10-06
 
 ### Added
 
+- Direct AZW3/KF8 export alongside EPUB. Pick the format in the export dialog, which remembers the choice. Books keep their navigation, endnotes with return links, cover, images and custom CSS. Calibre is not required.
+- Russian and English spell checking that works the same on Windows, macOS and Linux, with dictionaries bundled with the app.
+  - Wavy underlines in chapter text. Right-click or Mod+. opens suggestions, "Add to dictionary" and "Ignore".
+  - A status-bar badge lists issues across the book, grouped by chapter.
+  - Each book has its own dictionary, managed in Explorer → Dictionary.
+  - Settings → Editor can turn checking off and enable each language separately.
 - Advisory CSS syntax and Kindle compatibility checks in custom.css, with editor diagnostics, a Styles section linking to findings, and export warnings in RU, EN and zh-CN. Export remains available with all findings.
 - Isolated CSS device-test projects covering the support table. Unverified rules remain informational until tested on both target Paperwhites.
+
+### Changed
+
+- Projects are saved as `.edb` format version 2, which can store the book dictionary. Older files open as before and are upgraded on their next save. Version 1.1.x and earlier can't open files saved by 1.2.0.
+- Dependency updates: Tauri 2.12.1, Vite 8.3.2, Vitest 5.0.3, vue-i18n 11.4.13 and others.
 
 ## [1.1.1] — 2026-10-04
 
