@@ -65,6 +65,7 @@ export function useSpellcheck(options: { checker?: SpellChecker; logger?: Logger
         const batch = words.slice(index, index + SPELL_BATCH_SIZE);
         const started = performance.now();
         const misspelled = new Set(await checker.check(lang, batch));
+        if (runGeneration !== generation) return;
         logger.debug("Spell check batch", {
           lang,
           words: batch.length,
@@ -119,8 +120,11 @@ export function useSpellcheck(options: { checker?: SpellChecker; logger?: Logger
       }
     } finally {
       running = false;
-      if (spelling.status === "checking" && (!pending.size || !canRun())) spelling.status = "idle";
-      if (canRun() && pending.size) void drain();
+      if (!disposed) {
+        if (spelling.status === "checking" && (!pending.size || !canRun()))
+          spelling.status = "idle";
+        if (canRun() && pending.size) void drain();
+      }
     }
   }
   const schedule = useDebounceFn(() => void drain(), SPELL_DEBOUNCE_MS);
@@ -164,6 +168,7 @@ export function useSpellcheck(options: { checker?: SpellChecker; logger?: Logger
   );
   onScopeDispose(() => {
     disposed = true;
+    generation++;
     schedule.cancel();
     stopBook();
     stopChapters();

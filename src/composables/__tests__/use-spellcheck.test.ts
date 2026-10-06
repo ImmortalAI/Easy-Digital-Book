@@ -171,4 +171,42 @@ describe("useSpellcheck", () => {
     await flushPromises();
     expect(useSpellingStore().total).toBe(1);
   });
+
+  it("a disposed instance stops writing to the shared store", async () => {
+    const project = useProjectStore();
+    const releases: ((value: string[]) => void)[] = [];
+    const pendingChecker = () => ({
+      check: vi.fn<() => Promise<string[]>>(
+        () => new Promise<string[]>((resolve) => releases.push(resolve)),
+      ),
+      suggest: vi.fn<() => Promise<string[]>>(async () => []),
+    });
+    const words = Array.from(
+      { length: 2100 },
+      (_, i) =>
+        `сл${String.fromCharCode(1072 + (i % 32))}${String.fromCharCode(1072 + (Math.floor(i / 32) % 32))}${String.fromCharCode(1072 + Math.floor(i / 1024))}`,
+    );
+    project.setBook(book([words.join(" "), "иии"]));
+    const checkerA = pendingChecker();
+    const a = effectScope();
+    a.run(() => useSpellcheck({ checker: checkerA as never, logger }));
+    await flushPromises();
+    expect(checkerA.check).toHaveBeenCalledTimes(1);
+    a.stop();
+    const newBook = book(["мир"], "6ba7b810-9dad-41d1-80b4-00c04fd430c8");
+    project.setBook(newBook);
+    const checkerB = pendingChecker();
+    const b = effectScope();
+    b.run(() => useSpellcheck({ checker: checkerB as never, logger }));
+    await flushPromises();
+    const spelling = useSpellingStore();
+    expect(spelling.status).toBe("checking");
+    releases[0]!(["слааа"]);
+    await flushPromises();
+    expect(checkerA.check).toHaveBeenCalledTimes(1);
+    expect(spelling.chapters.has("chapter1")).toBe(false);
+    expect(spelling.chapters.size).toBe(0);
+    expect(spelling.status).toBe("checking");
+    b.stop();
+  });
 });
