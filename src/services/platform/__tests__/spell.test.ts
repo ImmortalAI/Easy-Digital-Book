@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMemorySpellChecker } from "../memory-spell";
 import { createInMemoryPlatformServices } from "..";
 
-const invoke = vi.hoisted(() => vi.fn<[string, Record<string, unknown>], Promise<unknown>>());
+const invoke = vi.hoisted(() =>
+  vi.fn<(command: string, args: Record<string, unknown>) => Promise<unknown>>(),
+);
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
 
 describe("memory spell checker", () => {
