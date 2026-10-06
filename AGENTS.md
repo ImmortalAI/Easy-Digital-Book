@@ -4,16 +4,27 @@
 чтобы в будущей сессии можно было продолжить с текущей точки, не
 восстанавливая рассуждения заново.
 
+**Статус (2026-10-06, релиз):** опубликован
+[v1.2.0](https://github.com/ImmortalAI/Easy-Digital-Book/releases/tag/v1.2.0)
+(коммит `d89d1af`, тег `v1.2.0`): экспорт AZW3/KF8 (PR #10), CSS checker
+(PR #11), проверка орфографии (PR #13) и обновление зависимостей (PR #12).
+`.edb` сохраняется как formatVersion 2, версии 1.1.x такие файлы не
+открывают. CI на `main` зелёный, включая `azw3-interoperability`. Релиз
+вышел **до** ручных проверок: AZW3 и CSS на Paperwhite 3/12, прямые
+экспорты из установленных сборок трёх ОС, орфография в сборках
+(`docs/release-checklist.md`). Найденные проблемы исправлять в 1.2.x.
+Порядок релиза: коммит `chore(release): X.Y.Z` прямо в `main`
+(`package.json`, `src-tauri/Cargo.toml`, `Cargo.lock`, `CHANGELOG.md`) →
+тег `vX.Y.Z` → `release.yml` создаёт черновик → опубликовать вручную.
+
 **Текущая работа (2026-10-06): изучение реальной работоспособности CSS на Kindle.**
 Анализ двух прогонов PW3 завершён. Актуальные выводы —
 `docs/superpowers/notes/2026-10-06-paperwhite-3-css-conclusions.md`;
 не начинать повторное проектирование checker или третий прогон этих образцов.
 
-- CSS checker реализован на ветке `feat/kindle-css-check`; создан
-  [PR #11](https://github.com/ImmortalAI/Easy-Digital-Book/pull/11)
-  с базой `feat/azw3-export` (зависит от PR #10). На момент создания
-  проверены 633 unit-теста, 24 браузерных сценария, сборка и четыре
-  AZW3 fixture через Calibre. Текущее состояние PR проверять перед интеграцией.
+- CSS checker
+  ([PR #11](https://github.com/ImmortalAI/Easy-Digital-Book/pull/11))
+  слит в `main` и вышел в v1.2.0.
 - Для физической проверки собрана первая книга:
   `.artifacts/css-paperwhite-3/css-paperwhite-3.azw3`, 142 теста
   (134 случая таблицы приложения + 8 дополнительных).
@@ -89,10 +100,10 @@ Mod+., плашка в строке статуса, пункт «Словарь�
 
 **Статус (2026-10-05):** экспорт EPUB и AZW3/KF8 реализован. Локально
 проверены четыре AZW3 fixture с Calibre 9.15.0: смысл глав и TOC, сноски,
-обложка, CSS и изображения. Для независимого чтения добавлен отдельный Linux CI job; он
-ещё не запускался в GitHub Actions. Обязательные ручные проверки на
-Paperwhite 3 и Paperwhite 12, а также прямые экспорты из сборок трёх ОС,
-остаются открытыми до релиза. План и отчёт Task 10 —
+обложка, CSS и изображения. Для независимого чтения добавлен отдельный Linux CI job
+`azw3-interoperability`; он проходит в GitHub Actions. Ручные проверки на
+Paperwhite 3 и Paperwhite 12, а также прямые экспорты из сборок трёх ОС
+остаются открытыми (v1.2.0 вышел без них). План и отчёт Task 10 —
 `docs/superpowers/plans/2026-10-04-azw3-export.md` и
 `.superpowers/sdd/2026-10-04-azw3-export/task-10-report.md`.
 
@@ -682,10 +693,10 @@ AZW3/KF8 экспорт реализован; его обязательные п
 орфография WebView на Windows 11 не работала вовсе, поэтому
 `spellcheck="true"` больше не используется.
 
-Остальной пункт остаётся планом после v1, без назначенных сроков:
-
-- `docs/superpowers/specs/2026-10-03-kindle-css-checker-design.md` —
-  проверка `custom.css` на совместимость с Kindle.
+Проверка `custom.css` на совместимость с Kindle реализована
+(`docs/superpowers/specs/2026-10-03-kindle-css-checker-design.md`).
+Все три пункта дорожной карты вышли в v1.2.0 (2026-10-06); новых пунктов
+пока нет.
 
 Исходные заметки — `docs/superpowers/notes/2026-10-03-issues.md`; план
 исправлений — `docs/superpowers/plans/2026-10-03-user-feedback-fixes.md`.
