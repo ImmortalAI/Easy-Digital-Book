@@ -119,4 +119,37 @@ describe("indexeddb recovery", () => {
     await services.recovery.remove("book");
     expect(await services.recovery.restore("book")).toBeNull();
   });
+
+  const emptyDelta = () => ({
+    changedChapters: new Set<string>(),
+    removedChapters: new Set<string>(),
+    changedResources: new Set<string>(),
+    removedResources: new Set<string>(),
+  });
+
+  it("keeps the dictionary in the session", async () => {
+    const store = createRecoveryStore();
+    const withWords = { ...book(), dictionary: ["Минжуй"] };
+    await store.writeChanges(withWords, emptyDelta());
+    expect((await store.restore("book"))?.dictionary).toEqual(["Минжуй"]);
+    await store.writeChanges({ ...withWords, dictionary: [] }, emptyDelta());
+    expect((await store.restore("book"))?.dictionary).toEqual([]);
+  });
+
+  it("reads a session written before dictionaries as an empty dictionary", async () => {
+    const store = createRecoveryStore();
+    await store.writeChanges(book(), emptyDelta());
+    const db = await openDB("edb-recovery", 1);
+    const row = await db.get("sessions", "book");
+    delete row.dictionary;
+    await db.put("sessions", row);
+    db.close();
+    expect((await store.restore("book"))?.dictionary).toEqual([]);
+  });
+
+  it("memory recovery keeps the dictionary too", async () => {
+    const { recovery } = createInMemoryPlatformServices();
+    await recovery.writeChanges({ ...book(), dictionary: ["дао"] }, emptyDelta());
+    expect((await recovery.restore("book"))?.dictionary).toEqual(["дао"]);
+  });
 });

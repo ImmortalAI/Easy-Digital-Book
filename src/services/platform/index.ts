@@ -73,6 +73,7 @@ class MemoryRecovery implements RecoveryStore {
       metadata: Book["metadata"];
       chapterOrder: string[];
       customCss: string | null;
+      dictionary: string[];
     }
   >();
   readonly chapters = new Map<string, Map<string, string>>();
@@ -100,6 +101,7 @@ class MemoryRecovery implements RecoveryStore {
       metadata: structuredClone(book.metadata),
       chapterOrder: book.chapters.map(({ id }) => id),
       customCss: book.customCss,
+      dictionary: [...book.dictionary],
     });
     const chapters = this.chapters.get(book.metadata.id) ?? new Map<string, string>();
     const resources = this.resources.get(book.metadata.id) ?? new Map<string, Resource>();
@@ -145,7 +147,7 @@ class MemoryRecovery implements RecoveryStore {
         ]),
       ),
       customCss: session.customCss,
-      dictionary: [],
+      dictionary: [...session.dictionary],
       originalPath: session.originalPath,
     };
   }
