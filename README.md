@@ -44,8 +44,9 @@ valid EPUB 3 or AZW3/KF8 books for Kindle Paperwhite — no Sigil spelunking.
   <tr>
     <td width="33%" valign="top">
       <h3>✍️ Distraction-free writing</h3>
-      A proportional-font editor with soft wrap, spell checking in the book's
-      language, and separate undo history for every chapter.
+      A proportional-font editor with soft wrap, Russian and English spell
+      checking with a per-book dictionary, and separate undo history for
+      every chapter.
     </td>
     <td width="33%" valign="top">
       <h3>👁️ Live book preview</h3>
@@ -218,6 +219,7 @@ Grab the latest build for your system from
 | Show or hide the sidebar      | Mod+\\                              |
 | Explorer / Search the book    | Mod+Shift+E / Mod+Shift+F           |
 | Find & replace in the chapter | Mod+F                               |
+| Spelling suggestions          | Mod+.                               |
 | Preview: paper style on / off | Mod+Alt+P                           |
 | Replace all in the book       | Mod+Alt+Enter                       |
 | Move the selected chapter     | Alt+↑ / Alt+↓                       |
@@ -234,8 +236,8 @@ Planned after v1, in no particular order and with no dates yet:
       converting the EPUB in Calibre.
 - [x] **Kindle CSS check.** Advisory syntax and compatibility diagnostics in
       the CSS editor and export dialog; device verification remains open.
-- [ ] **Language check for English and Russian.** Catch spelling and wording
-      mistakes in chapters beyond the system spell checker.
+- [x] **Spell check for English and Russian.** Offline spelling check with
+      suggestions and a per-book dictionary; wording checks remain open.
 
 Ideas and votes are welcome in
 [Issues](https://github.com/ImmortalAI/easy-digital-book/issues).
@@ -266,6 +268,11 @@ Easy Digital Book is free software, released under the
 [GNU General Public License v3.0 or later](LICENSE). You may use, study, change
 and share it; if you distribute a modified version, you must share its source
 code under the same license.
+
+Spell checking uses the [`spellbook`](https://github.com/helix-editor/spellbook)
+engine (MPL-2.0) and bundled Hunspell dictionaries: Russian (BSD-style) and
+English (SCOWL). Sources and licences are listed in
+[`src-tauri/resources/dictionaries/README.md`](src-tauri/resources/dictionaries/README.md).
 
 <div align="center">
 <br />

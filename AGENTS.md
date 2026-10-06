@@ -73,6 +73,12 @@
 
 **Статус (2026-10-05, CSS):** реализован advisory checker синтаксиса и совместимости `custom.css` с Kindle: Lezer + CSS Tree parser/walker/tokenizer, lint в редакторе, «Стили» в списке проблем и предупреждения экспорта. Непроверенные правила — `partial`; физические проверки Paperwhite 3/12 открыты. План — `docs/superpowers/plans/2026-10-05-kindle-css-checker.md`, отчёт — `docs/superpowers/notes/2026-10-05-css-checker-implementation.md`.
 
+**Статус (2026-10-06):** реализована проверка орфографии ru/en по плану
+`docs/superpowers/plans/2026-10-06-spell-checker.md`: Rust-crate `spellbook`
+и словари Hunspell в бандле, словарь книги `dictionary.txt` (`.edb`
+formatVersion 2), подчёркивание `.cm-misspelled`, меню по правому клику и
+Mod+., плашка в строке статуса, пункт «Словарь» в Проводнике.
+
 **Статус (2026-10-04):** по отзывам пользователя: тёмное превью «старая
 бумага» (только превью, переключатели + Mod+Alt+P, пометка в строке
 статуса), Tab в CSS-редакторе, своя панель поиска по главе со счётчиком
@@ -261,7 +267,8 @@ my-novel.edb (zip)
 ├── manifest.json
 ├── chapters/<id>.nov     id: 8 символов [a-z0-9]; UTF-8, LF
 ├── images/               все картинки, включая обложку
-└── styles/custom.css     необязательный
+├── styles/custom.css     необязательный
+└── dictionary.txt        необязательный: слова словаря книги, по одному в строке (formatVersion 2)
 ```
 
 - Файлы глав названы по стабильному id: перестановка глав меняет только
@@ -665,15 +672,18 @@ AZW3/KF8 экспорт реализован; его обязательные п
 пакетированных сборок перечислены в
 `docs/superpowers/plans/2026-10-04-azw3-export.md`.
 
-Остальные два пункта остаются планами после v1, без назначенных сроков:
+Проверка орфографии ru/en реализована (2026-10-06, план
+`docs/superpowers/plans/2026-10-06-spell-checker.md`, спецификация
+`docs/superpowers/specs/2026-10-04-spell-checker-design.md`): Rust-crate
+`spellbook` + словари Hunspell в бандле, словарь книги `dictionary.txt` в
+`.edb` (formatVersion 2), плашка рядом с ⚠ в строке статуса. Встроенная
+орфография WebView на Windows 11 не работала вовсе, поэтому
+`spellcheck="true"` больше не используется.
+
+Остальной пункт остаётся планом после v1, без назначенных сроков:
 
 - `docs/superpowers/specs/2026-10-03-kindle-css-checker-design.md` —
   проверка `custom.css` на совместимость с Kindle.
-- `docs/superpowers/specs/2026-10-04-spell-checker-design.md` — проверка
-  орфографии ru/en (первый этап «проверки лексики»): Rust-crate
-  `spellbook` + словари Hunspell в бандле, словарь книги `dictionary.txt`
-  в `.edb` (formatVersion 2), плашка рядом с ⚠ в строке статуса.
-  Встроенная орфография WebView на Windows 11 не работает вовсе.
 
 Исходные заметки — `docs/superpowers/notes/2026-10-03-issues.md`; план
 исправлений — `docs/superpowers/plans/2026-10-03-user-feedback-fixes.md`.

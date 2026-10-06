@@ -115,3 +115,20 @@ an inapplicable rule or missing external font/stylesheet is inconclusive.
 The initial table deliberately keeps all unverified rows **partial**.
 Promote to supported/unsupported only with recorded results for both target
 devices; add the sample ID and evidence path to that row's `source`.
+
+## Spelling
+
+Run in the packaged app on Windows 11 (WebView2), macOS and Linux (WebKitGTK).
+
+| Scenario                                                                                                          | macOS | Windows | Ubuntu |
+| ----------------------------------------------------------------------------------------------------------------- | ----- | ------- | ------ |
+| Russian and English words in one chapter are underlined                                                           | [ ]   | [ ]     | [ ]    |
+| Right click and Mod+. show suggestions; picking one replaces the word and Mod+Z undoes it                         | [ ]   | [ ]     | [ ]    |
+| "Ignore" and "Add to book dictionary" remove the underline                                                        | [ ]   | [ ]     | [ ]    |
+| The status-bar spelling badge lists issues by chapter and jumps to the word                                       | [ ]   | [ ]     | [ ]    |
+| macOS shows no second (system) underline                                                                          | [ ]   | n/a     | n/a    |
+| Time to the first underlines on a book with 100+ chapters is acceptable (record seconds)                          | [ ]   | [ ]     | [ ]    |
+| Deleting `ru_RU.dic` from the bundle gives one notification and a grey badge; editing keeps working               | [ ]   | [ ]     | [ ]    |
+| An old `.edb` v1 opens and is saved as v2; a v2 book with `dictionary.txt` round-trips                            | [ ]   | [ ]     | [ ]    |
+| The Dictionary view lists, adds and removes words; the log folder contains counts and timings only, no book words | [ ]   | [ ]     | [ ]    |
+| Spelling UI texts are correct in RU, EN and zh-CN                                                                 | [ ]   | [ ]     | [ ]    |
