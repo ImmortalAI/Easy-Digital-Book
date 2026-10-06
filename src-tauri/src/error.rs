@@ -14,6 +14,10 @@ pub enum CommandError {
     },
     #[error("filesystem scope operation failed: {message}")]
     Scope { message: String },
+    #[error("spelling dictionary {lang} could not be loaded: {message}")]
+    DictionaryLoad { lang: String, message: String },
+    #[error("spelling task failed: {message}")]
+    SpellTask { message: String },
 }
 
 impl CommandError {
@@ -22,6 +26,8 @@ impl CommandError {
             Self::PermissionDenied { .. } => "fs.permissionDenied",
             Self::Io { .. } => "fs.ioError",
             Self::Scope { .. } => "fs.scopeError",
+            Self::DictionaryLoad { .. } => "spell.dictionaryLoad",
+            Self::SpellTask { .. } => "spell.task",
         }
     }
 

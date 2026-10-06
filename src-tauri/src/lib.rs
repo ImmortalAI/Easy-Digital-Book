@@ -3,6 +3,7 @@ mod fs_scope;
 #[cfg(target_os = "macos")]
 mod menu;
 mod open_paths;
+mod spell;
 
 use std::path::Path;
 
@@ -86,12 +87,15 @@ pub fn run() {
         .plugin(tauri_plugin_persisted_scope::init())
         .plugin(tauri_plugin_opener::init())
         .setup(move |app| {
+            app.manage(std::sync::Arc::new(spell::bundled_service(app.handle())));
             handle_open_paths(app.handle(), startup_args.clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             take_pending_open_paths,
-            fs_scope::write_file_atomic_command
+            fs_scope::write_file_atomic_command,
+            spell::spell_check_command,
+            spell::spell_suggest_command
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
