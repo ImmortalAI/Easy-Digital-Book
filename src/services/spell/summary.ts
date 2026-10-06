@@ -15,7 +15,12 @@ export function summarizeMisspellings(items: readonly Misspelling[]): WordSummar
   }
   return [...byWord.values()];
 }
-export function contextSnippet(source: string, from: number, to: number, radius = 30) {
+export function contextSnippet(
+  source: string,
+  from: number,
+  to: number,
+  radius = 30,
+): { before: string; word: string; after: string } {
   const lineStart = source.lastIndexOf("\n", from - 1) + 1;
   const lineEndIndex = source.indexOf("\n", to);
   const lineEnd = lineEndIndex === -1 ? source.length : lineEndIndex;
