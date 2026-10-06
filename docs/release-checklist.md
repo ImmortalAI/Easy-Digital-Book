@@ -73,6 +73,16 @@ tool paths and cached browsers can differ.
 
 ## Kindle CSS checker
 
+PW3 empirical analysis is complete for the two standalone AZW3 test books:
+[conclusions and per-case evidence](superpowers/notes/2026-10-06-paperwhite-3-css-conclusions.md),
+firmware 5.16.2.1.1, 142 initial cases and 57 clarifying cases. Retest results
+at font size 3 in portrait are 26 yes, 24 no and 7 inconclusive; the sole
+font-size-6 observation is inconclusive background-size. These records
+do not complete PW12, other settings or packaged-app export checks.
+Do not infer that all media queries fail: all/screen/min-width worked;
+amzn-kf8 did not. Fixed had pagination defects despite positioning effects.
+The existing common support statuses remain partial pending both devices.
+
 - [ ] RU / EN / zh-CN: messages in the CSS editor, Styles section and export summary translate without editing the book.
 - [ ] Syntax errors produce one info finding; valid neighboring rules continue to be checked. Fixing/deleting CSS removes stale findings.
 - [ ] Styles expands into individual findings; selecting one opens and focuses the correct CSS range, including from Preview mode.
