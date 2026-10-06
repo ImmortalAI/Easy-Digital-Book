@@ -115,7 +115,7 @@ valid EPUB 3 or AZW3/KF8 books for Kindle Paperwhite — no Sigil spelunking.
     </td>
     <td width="50%" valign="top">
       <img src="docs/assets/screenshots/export.png" alt="EPUB export dialog" />
-      <p align="center"><b>One-click export</b><br /><sub>Warnings summary, image preset, title page — then a ready EPUB.</sub></p>
+      <p align="center"><b>One-click export</b><br /><sub>Warnings summary, image preset, title page — then a ready EPUB or AZW3.</sub></p>
     </td>
   </tr>
 </table>
@@ -230,9 +230,9 @@ Grab the latest build for your system from
 
 ## 🗺️ Roadmap
 
-Planned after v1, in no particular order and with no dates yet:
+Everything planned after v1 shipped in v1.2.0:
 
-- [ ] **AZW3 export.** Save a Kindle-native book directly, without
+- [x] **AZW3 export.** Save a Kindle-native book directly, without
       converting the EPUB in Calibre.
 - [x] **Kindle CSS check.** Advisory syntax and compatibility diagnostics in
       the CSS editor and export dialog; device verification remains open.

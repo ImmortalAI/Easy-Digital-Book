@@ -9,6 +9,7 @@ lerna-debug.log*
 
 node_modules
 .artifacts/
+.tools/
 dist
 dist-ssr
 coverage

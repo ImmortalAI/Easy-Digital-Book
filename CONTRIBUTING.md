@@ -21,6 +21,8 @@ lists every supported construct. A sample project to try things on lives in
 ```sh
 pnpm test:coverage
 pnpm build:fixture-epubs
+pnpm test:verify-azw3
+pnpm verify:azw3
 pnpm test:e2e
 cargo fmt --manifest-path src-tauri/Cargo.toml --check
 cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
@@ -32,7 +34,13 @@ release unpacked whole into `.tools/epubcheck` — the released jar is thin and
 loads its dependencies from the `lib` directory beside it, so copying the jar
 on its own is not enough. Rename `epubcheck.jar` to `epubcheck-5.2.1.jar`, or
 point `EPUBCHECK_JAR` at it. The build fails when either requirement is
-unavailable; required EPUB validation is never silently skipped. See
+unavailable; required EPUB validation is never silently skipped.
+
+`pnpm verify:azw3` builds the AZW3 fixtures into `.artifacts/azw3-fixtures`
+and reads them back with Python 3 and Calibre 9.15.0. Calibre is looked up
+in `/Applications/calibre.app/Contents/MacOS` by default; point `CALIBRE_DIR`
+at the folder containing `ebook-convert` elsewhere. CI runs it in the
+separate `azw3-interoperability` job. See
 [the release checklist](docs/release-checklist.md) for manual checks on all
 supported desktop targets.
 
@@ -43,6 +51,14 @@ macOS DMG, Windows NSIS, and Ubuntu 22.04 AppImage/deb/rpm. Release tags must
 exactly match the `package.json` version: for example, version `1.0.1` is
 released as tag `v1.0.1`. The workflow checks this before building and
 includes the matching `CHANGELOG.md` section in the draft notes.
+
+To cut a release:
+
+1. Bump `version` in `package.json`, run `pnpm sync:cargo-version`, and let
+   `cargo check` refresh `src-tauri/Cargo.lock`.
+2. Add the `CHANGELOG.md` section and commit as `chore(release): X.Y.Z`.
+3. Tag `vX.Y.Z` and push it. `release.yml` creates a draft release; publish it
+   by hand once the artifacts are in.
 
 The Tauri application identifier is `com.immortalai.edb`; changing it breaks
 recovery data tied to the WebView origin.
