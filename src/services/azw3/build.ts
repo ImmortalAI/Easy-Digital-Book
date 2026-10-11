@@ -10,6 +10,7 @@ import { buildResources, rewriteResources } from "./resources";
 import { compressPalmDoc, splitTextRecords } from "./palmdoc";
 import { buildEndRecords } from "./records";
 import { writePalmDbAsync } from "./palmdb";
+import { jpegNeedsKindleCleanup } from "./jpeg";
 
 function check(signal?: AbortSignal): void {
   if (signal?.aborted) throw new AppError("export.cancelled", "Export cancelled");
@@ -31,6 +32,33 @@ async function appendRecords(
     target.push(source[i]!);
     if ((i + 1) % 128 === 0) await checkpoint(deps);
   }
+}
+
+/** Re-encode JPEGs Kindle may not display, mirroring Calibre's process_jpegs_for_amazon. */
+async function cleanJpegs(
+  prepared: PreparedExport,
+  deps: BuildDependencies,
+): Promise<PreparedExport> {
+  const images: PreparedExport["images"] = [];
+  for (const image of prepared.images) {
+    check(deps.signal);
+    const { output } = image;
+    if (output.mediaType !== "image/jpeg" || !jpegNeedsKindleCleanup(output.bytes)) {
+      images.push(image);
+      continue;
+    }
+    // A square box keeps the size when the decoder applies EXIF rotation.
+    const side = Math.max(output.width, output.height);
+    const cleaned = await deps.imageProcessor.process(
+      {
+        bytes: output.bytes,
+        plan: { width: side, height: side, format: "jpeg", quality: 0.9, grayscale: false },
+      },
+      deps.signal,
+    );
+    images.push({ ...image, output: cleaned });
+  }
+  return { ...prepared, images };
 }
 
 // Calibre's MAX_THUMB_DIMEN for MOBI/KF8 cover thumbnails.
@@ -70,7 +98,7 @@ export async function buildAzw3(
 ): Promise<Uint8Array> {
   const exportedAt = deps.now();
   check(deps.signal);
-  const prepared = await prepareExport(book, options, deps);
+  const prepared = await cleanJpegs(await prepareExport(book, options, deps), deps);
   check(deps.signal);
 
   // Resource indices are assigned before markup rewriting so every Kindle embed

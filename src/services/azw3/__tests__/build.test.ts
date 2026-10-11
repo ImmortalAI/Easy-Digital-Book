@@ -382,4 +382,43 @@ describe("buildAzw3", () => {
       grayscale: false,
     });
   });
+
+  it("re-encodes original JPEGs with EXIF once so Kindle shows them on the cover screen", async () => {
+    const book = fixtureBook();
+    book.metadata.cover = "images/cover.jpg";
+    book.resources = new Map([["images/cover.jpg", { mediaType: "image/jpeg", bytes: jpeg }]]);
+    const cleaned = Uint8Array.from([
+      0xff, 0xd8, 0xff, 0xe0, 0, 7, 0x4a, 0x46, 0x49, 0x46, 0, 0xff, 0xd9,
+    ]);
+    const plans: Array<{ passthrough?: boolean; width: number; height: number }> = [];
+    const bytes = await buildAzw3(
+      book,
+      { ...exportOptions(), imagePreset: "original" },
+      {
+        imageProcessor: {
+          process: async ({ bytes: input, plan }) => {
+            plans.push(plan);
+            return {
+              bytes: plan.passthrough ? input.slice() : cleaned,
+              mediaType: "image/jpeg",
+              width: plan.width,
+              height: plan.height,
+            };
+          },
+          dispose() {},
+        },
+        now: () => at("08"),
+      },
+    );
+    // prepareExport may serve the passthrough from its cache; after it come one
+    // cleanup pass in a square box (EXIF rotation must not shrink the image)
+    // and the thumbnail.
+    const encoded = plans.filter((plan) => !plan.passthrough);
+    expect(encoded).toHaveLength(2);
+    expect(encoded[0]).toMatchObject({ width: 64, height: 64, format: "jpeg", grayscale: false });
+    const palm = readPalmDb(bytes);
+    const recordZero = palm.records[0]!;
+    const header = new DataView(recordZero.buffer, recordZero.byteOffset, recordZero.byteLength);
+    expect(palm.records[header.getUint32(108)]).toEqual(cleaned);
+  });
 });
