@@ -69,6 +69,24 @@ describe("buildResources", () => {
     expect(plan.thumbnailIndex).toBeNull();
   });
 
+  it("appends the cover thumbnail after every image so embed indices stay stable", () => {
+    const thumbnail = Uint8Array.from([0xff, 0xd8, 0xff, 0xe0]);
+    const plan = buildResources(prepared(), thumbnail);
+    expect(plan.records).toEqual([png, png, jpg, thumbnail]);
+    expect(plan.coverIndex).toBe(2);
+    expect(plan.thumbnailIndex).toBe(3);
+    expect([...plan.imageIndices.values()]).toEqual([0, 1, 2]);
+  });
+
+  it("rejects a thumbnail without a cover", () => {
+    const source = prepared();
+    source.metadata.cover = null;
+    source.images[0]!.isCover = false;
+    expect(() => buildResources(source, Uint8Array.from([0xff, 0xd8, 0xff]))).toThrow(
+      expect.objectContaining({ code: "export.azw3Resource" }),
+    );
+  });
+
   it("rejects media types and byte signatures that disagree with supported encoded images", () => {
     const invalid = prepared();
     invalid.images[0]!.output = {

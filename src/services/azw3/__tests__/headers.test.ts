@@ -150,6 +150,8 @@ describe("buildRecordZero", () => {
     expect(entries.get(201)?.[0]).toEqual(new Uint8Array([0, 0, 0, 0]));
     expect(entries.get(202)?.[0]).toEqual(new Uint8Array([0, 0, 0, 1]));
     expect(entries.get(203)?.[0]).toEqual(new Uint8Array([0, 0, 0, 0]));
+    expect(str(entries.get(129)![0]!, 0, 17)).toBe("kindle:embed:0001");
+    expect(exthEntries(buildRecordZero(input())).has(129)).toBe(false);
     expect(() => buildRecordZero(input({ thumbnailIndex: 2, resourceCount: 2 }))).toThrow(
       expect.objectContaining({ code: "export.invalidMetadata" }),
     );

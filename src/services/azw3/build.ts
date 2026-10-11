@@ -1,5 +1,5 @@
 import { prepareExport } from "@/services/export/prepare";
-import type { BuildDependencies, ExportOptions } from "@/services/export/types";
+import type { BuildDependencies, ExportOptions, PreparedExport } from "@/services/export/types";
 import type { Book } from "@/types/book";
 import { AppError } from "@/types/errors";
 import { concatBytes } from "@/utils/bytes";
@@ -33,6 +33,35 @@ async function appendRecords(
   }
 }
 
+// Calibre's MAX_THUMB_DIMEN for MOBI/KF8 cover thumbnails.
+const THUMBNAIL_WIDTH = 180;
+const THUMBNAIL_HEIGHT = 240;
+
+async function coverThumbnail(
+  prepared: PreparedExport,
+  options: ExportOptions,
+  deps: BuildDependencies,
+): Promise<Uint8Array | undefined> {
+  const cover = prepared.images.find((image) => image.isCover);
+  if (!cover) return undefined;
+  const { width, height } = cover.output;
+  const scale = Math.min(1, THUMBNAIL_WIDTH / width, THUMBNAIL_HEIGHT / height);
+  const thumbnail = await deps.imageProcessor.process(
+    {
+      bytes: cover.output.bytes,
+      plan: {
+        width: Math.max(1, Math.round(width * scale)),
+        height: Math.max(1, Math.round(height * scale)),
+        format: "jpeg",
+        quality: 0.8,
+        grayscale: options.grayscale,
+      },
+    },
+    deps.signal,
+  );
+  return thumbnail.bytes;
+}
+
 /** Assemble a deterministic, reflowable KF8-only book from the in-memory project. */
 export async function buildAzw3(
   book: Book,
@@ -46,7 +75,9 @@ export async function buildAzw3(
 
   // Resource indices are assigned before markup rewriting so every Kindle embed
   // URI and EXTH resource offset refers to the same deterministic ordering.
-  const resourcePlan = buildResources(prepared);
+  const thumbnail = await coverThumbnail(prepared, options, deps);
+  check(deps.signal);
+  const resourcePlan = buildResources(prepared, thumbnail);
   const rewritten = rewriteResources(prepared, resourcePlan);
   await checkpoint(deps);
 
