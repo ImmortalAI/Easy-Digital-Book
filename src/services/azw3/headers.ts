@@ -127,8 +127,8 @@ function exthBytes(input: HeaderInput, normalizedUuid: string): Uint8Array {
   for (const author of input.metadata.authors)
     entries.push({ type: 100, payload: encoder.encode(author) });
   pushExthString(entries, 103, input.metadata.description);
-  for (const translator of input.metadata.translators)
-    entries.push({ type: 108, payload: encoder.encode(translator) });
+  // Translators are not written: EXTH 108 means "book producer" to Calibre and
+  // MOBI has no translator field. They stay on the generated title page.
   pushExthString(entries, 106, input.exportedAt.toISOString());
   pushExthString(entries, 112, input.metadata.id);
   pushExthString(entries, 113, normalizedUuid);
