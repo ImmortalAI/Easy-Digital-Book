@@ -14,4 +14,14 @@ describe("EPUB labels", () => {
     expect(getLabels("en").notes).toBe("Notes");
     expect(getLabels("zh-CN").notes).toBe("注释");
   });
+
+  it("matches regional and script tags by their base language", () => {
+    expect(getLabels("ru-RU").translation).toBe("Перевод");
+    expect(getLabels("RU-ru").notes).toBe("Примечания");
+    expect(getLabels("en-GB").series).toBe("Series");
+    expect(getLabels("zh-Hans-CN").notes).toBe("注释");
+    expect(getLabels("zh").version).toBe("版本");
+    expect(getLabels("fr-CA").translation).toBe("Translation");
+    expect(getLabels("").translation).toBe("Translation");
+  });
 });

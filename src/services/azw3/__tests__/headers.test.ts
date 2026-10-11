@@ -68,7 +68,7 @@ function exthEntries(bytes: Uint8Array): Map<number, Uint8Array[]> {
 describe("buildRecordZero", () => {
   it("writes documented PalmDOC and MOBI v8 offsets and aligned EXTH metadata", () => {
     const bytes = buildRecordZero(input());
-    expect(bytes.length).toBe(595);
+    expect(bytes.length).toBe(567);
     expect([...bytes.slice(0, 16)]).toEqual([0, 2, 0, 0, 0, 0, 0, 42, 0, 1, 16, 0, 0, 0, 0, 0]);
     expect(str(bytes, 16, 20)).toBe("MOBI");
     expect(u32(bytes, 20)).toBe(264);
@@ -111,7 +111,8 @@ describe("buildRecordZero", () => {
     const entries = exthEntries(bytes);
     expect(entries.get(100)?.map((entry) => str(entry, 0, entry.length))).toEqual(["Я", "作者 😀"]);
     expect(entries.get(103)?.map((entry) => str(entry, 0, entry.length))).toEqual(["Описание"]);
-    expect(entries.get(108)?.map((entry) => str(entry, 0, entry.length))).toEqual(["Переводчик"]);
+    // EXTH 108 is the book producer in Calibre; MOBI has no translator field.
+    expect(entries.has(108)).toBe(false);
     expect(entries.get(112)?.map((entry) => str(entry, 0, entry.length))).toEqual([metadata.id]);
     expect(entries.get(113)?.map((entry) => str(entry, 0, entry.length))).toEqual([
       "12345678-1234-5678-9abc-def012345678",
@@ -150,6 +151,8 @@ describe("buildRecordZero", () => {
     expect(entries.get(201)?.[0]).toEqual(new Uint8Array([0, 0, 0, 0]));
     expect(entries.get(202)?.[0]).toEqual(new Uint8Array([0, 0, 0, 1]));
     expect(entries.get(203)?.[0]).toEqual(new Uint8Array([0, 0, 0, 0]));
+    expect(str(entries.get(129)![0]!, 0, 17)).toBe("kindle:embed:0001");
+    expect(exthEntries(buildRecordZero(input())).has(129)).toBe(false);
     expect(() => buildRecordZero(input({ thumbnailIndex: 2, resourceCount: 2 }))).toThrow(
       expect.objectContaining({ code: "export.invalidMetadata" }),
     );

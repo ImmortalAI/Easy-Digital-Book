@@ -1,5 +1,6 @@
 import { AppError } from "@/types/errors";
 import { writeUint16BE, writeUint32BE } from "./binary";
+import { radix32 } from "./links";
 import type { HeaderInput } from "./types";
 
 export type { HeaderInput } from "./types";
@@ -126,12 +127,15 @@ function exthBytes(input: HeaderInput, normalizedUuid: string): Uint8Array {
   for (const author of input.metadata.authors)
     entries.push({ type: 100, payload: encoder.encode(author) });
   pushExthString(entries, 103, input.metadata.description);
-  for (const translator of input.metadata.translators)
-    entries.push({ type: 108, payload: encoder.encode(translator) });
+  // Translators are not written: EXTH 108 means "book producer" to Calibre and
+  // MOBI has no translator field. They stay on the generated title page.
   pushExthString(entries, 106, input.exportedAt.toISOString());
   pushExthString(entries, 112, input.metadata.id);
   pushExthString(entries, 113, normalizedUuid);
   pushExthInteger(entries, 125, input.resourceCount);
+  // Calibre writes this cover URI together with the thumbnail offset.
+  if (input.coverIndex !== null && input.thumbnailIndex !== null)
+    pushExthString(entries, 129, `kindle:embed:${radix32(input.coverIndex + 1, 4)}`);
   if (input.coverIndex !== null) {
     pushExthInteger(entries, 201, input.coverIndex);
     if (input.thumbnailIndex !== null) pushExthInteger(entries, 202, input.thumbnailIndex);

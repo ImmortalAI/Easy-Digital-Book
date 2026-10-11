@@ -48,7 +48,12 @@ function normalizedOutputPath(path: string): string {
   return path.replaceAll("\\", "/").replace(/^\.\//, "");
 }
 
-export function buildResources(prepared: PreparedExport): Azw3ResourcePlan {
+/**
+ * Kindle opens the in-book cover page only when a separate thumbnail record is
+ * referenced by EXTH 202 (verified on Paperwhite 3). It is appended after all
+ * images, so existing `kindle:embed` indices stay unchanged.
+ */
+export function buildResources(prepared: PreparedExport, thumbnail?: Uint8Array): Azw3ResourcePlan {
   const images = prepared.images
     .map((image) => ({
       image,
@@ -77,11 +82,14 @@ export function buildResources(prepared: PreparedExport): Azw3ResourcePlan {
   ) {
     resourceError("Prepared cover identity is inconsistent", { cover: prepared.metadata.cover });
   }
+  if (thumbnail && cover < 0) resourceError("A cover thumbnail requires a cover image");
+  const records = images.map(({ image }) => image.output.bytes.slice());
+  if (thumbnail) records.push(thumbnail.slice());
   return {
-    records: images.map(({ image }) => image.output.bytes.slice()),
+    records,
     imageIndices: new Map(images.map(({ source }, index) => [source, index])),
     coverIndex: cover < 0 ? null : cover,
-    thumbnailIndex: null,
+    thumbnailIndex: thumbnail ? records.length - 1 : null,
   };
 }
 

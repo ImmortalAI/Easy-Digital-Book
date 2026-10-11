@@ -1,5 +1,5 @@
 import { prepareExport } from "@/services/export/prepare";
-import type { BuildDependencies, ExportOptions } from "@/services/export/types";
+import type { BuildDependencies, ExportOptions, PreparedExport } from "@/services/export/types";
 import type { Book } from "@/types/book";
 import { AppError } from "@/types/errors";
 import { concatBytes } from "@/utils/bytes";
@@ -10,6 +10,7 @@ import { buildResources, rewriteResources } from "./resources";
 import { compressPalmDoc, splitTextRecords } from "./palmdoc";
 import { buildEndRecords } from "./records";
 import { writePalmDbAsync } from "./palmdb";
+import { jpegNeedsKindleCleanup } from "./jpeg";
 
 function check(signal?: AbortSignal): void {
   if (signal?.aborted) throw new AppError("export.cancelled", "Export cancelled");
@@ -33,6 +34,62 @@ async function appendRecords(
   }
 }
 
+/** Re-encode JPEGs Kindle may not display, mirroring Calibre's process_jpegs_for_amazon. */
+async function cleanJpegs(
+  prepared: PreparedExport,
+  deps: BuildDependencies,
+): Promise<PreparedExport> {
+  const images: PreparedExport["images"] = [];
+  for (const image of prepared.images) {
+    check(deps.signal);
+    const { output } = image;
+    if (output.mediaType !== "image/jpeg" || !jpegNeedsKindleCleanup(output.bytes)) {
+      images.push(image);
+      continue;
+    }
+    // A square box keeps the size when the decoder applies EXIF rotation.
+    const side = Math.max(output.width, output.height);
+    const cleaned = await deps.imageProcessor.process(
+      {
+        bytes: output.bytes,
+        plan: { width: side, height: side, format: "jpeg", quality: 0.9, grayscale: false },
+      },
+      deps.signal,
+    );
+    images.push({ ...image, output: cleaned });
+  }
+  return { ...prepared, images };
+}
+
+// Calibre's MAX_THUMB_DIMEN for MOBI/KF8 cover thumbnails.
+const THUMBNAIL_WIDTH = 180;
+const THUMBNAIL_HEIGHT = 240;
+
+async function coverThumbnail(
+  prepared: PreparedExport,
+  options: ExportOptions,
+  deps: BuildDependencies,
+): Promise<Uint8Array | undefined> {
+  const cover = prepared.images.find((image) => image.isCover);
+  if (!cover) return undefined;
+  const { width, height } = cover.output;
+  const scale = Math.min(1, THUMBNAIL_WIDTH / width, THUMBNAIL_HEIGHT / height);
+  const thumbnail = await deps.imageProcessor.process(
+    {
+      bytes: cover.output.bytes,
+      plan: {
+        width: Math.max(1, Math.round(width * scale)),
+        height: Math.max(1, Math.round(height * scale)),
+        format: "jpeg",
+        quality: 0.8,
+        grayscale: options.grayscale,
+      },
+    },
+    deps.signal,
+  );
+  return thumbnail.bytes;
+}
+
 /** Assemble a deterministic, reflowable KF8-only book from the in-memory project. */
 export async function buildAzw3(
   book: Book,
@@ -41,12 +98,14 @@ export async function buildAzw3(
 ): Promise<Uint8Array> {
   const exportedAt = deps.now();
   check(deps.signal);
-  const prepared = await prepareExport(book, options, deps);
+  const prepared = await cleanJpegs(await prepareExport(book, options, deps), deps);
   check(deps.signal);
 
   // Resource indices are assigned before markup rewriting so every Kindle embed
   // URI and EXTH resource offset refers to the same deterministic ordering.
-  const resourcePlan = buildResources(prepared);
+  const thumbnail = await coverThumbnail(prepared, options, deps);
+  check(deps.signal);
+  const resourcePlan = buildResources(prepared, thumbnail);
   const rewritten = rewriteResources(prepared, resourcePlan);
   await checkpoint(deps);
 
