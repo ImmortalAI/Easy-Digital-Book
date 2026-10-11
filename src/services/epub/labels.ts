@@ -11,6 +11,10 @@ const labels: Record<string, EpubLabels> = {
   "zh-CN": { translation: "翻译", series: "系列", version: "版本", notes: "注释" },
 };
 
+const baseLanguages: Record<string, string> = { ru: "ru", en: "en", zh: "zh-CN" };
+
+/** Labels follow the book's base language, so "ru-RU" and "zh-Hans-CN" are covered too. */
 export function getLabels(language: string): EpubLabels {
-  return labels[language] ?? labels.en;
+  const base = language.split(/[-_]/, 1)[0]!.toLowerCase();
+  return labels[baseLanguages[base] ?? "en"]!;
 }
