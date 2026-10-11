@@ -2,6 +2,15 @@
 
 All notable changes to Easy Digital Book are documented here.
 
+## [1.2.1] — 2026-10-11
+
+### Fixed
+
+- On Kindle, AZW3 books exported with a cover can now open the cover page inside the book ("Go To → Cover"), not only show it in the library. The export adds the cover thumbnail that Kindle expects.
+- With the "Original" image preset, AZW3 export now re-encodes JPEGs that lack a JFIF header or carry EXIF data, applying the EXIF rotation. Kindle may not display such images, especially on the cover screen. Other JPEGs and EPUB export are unchanged.
+- Title page and notes labels follow the book's base language, so books tagged `ru-RU`, `en-GB` or `zh-Hans-CN` no longer get English "Translation", "Series" and "Notes" labels.
+- AZW3 export no longer stores translators in the contributor field, which Calibre shows as "Book Producer". The format has no translator field. Translators remain on the title page and in EPUB metadata.
+
 ## [1.2.0] — 2026-10-06
 
 ### Added
