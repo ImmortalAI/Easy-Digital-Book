@@ -3297,7 +3297,8 @@ export interface ResourceRename {
   to: string;
 }
 export type RenamePlan =
-  { renames: ResourceRename[] } | { error: "empty" | "conflict"; path?: string };
+  | { renames: ResourceRename[] }
+  | { error: "empty" | "conflict"; path?: string };
 export type TextEdit = { from: number; to: number; insert: string };
 
 const IMAGE_REF = /!\[[^\]]*\]\(([^)\s]+)\)/g;

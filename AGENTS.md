@@ -510,7 +510,7 @@ Mod+Shift+F — вид «Поиск» в сайдбаре: опции Aa / сл�
 
 - **Центральная область** переключается по `layoutStore.center`:
   `{ kind: 'chapter', id } | { kind: 'metadata' } | { kind: 'css' } |
-{ kind: 'image', path }`. Без vue-router.
+  { kind: 'image', path }`. Без vue-router.
 - **Операции** — чистые функции в `services/book/` (addChapter, removeChapter,
   moveChapter, updateMetadata, importImage, removeResource, setCover,
   setCustomCss); действия `projectStore` вызывают их, делают `revision++` и
@@ -582,14 +582,14 @@ Mod+Shift+F — вид «Поиск» в сайдбаре: опции Aa / сл�
   иначе en), не UI.
 
 - `services/epub/buildEpub(book, options, { imageProcessor, now, onProgress,
-signal }) → Uint8Array`. Работает на снимке `Book`: можно редактировать во
+  signal }) → Uint8Array`. Работает на снимке `Book`: можно редактировать во
   время экспорта; `dirty` не меняется, сохранять перед экспортом не нужно.
 - Модули: `resources.ts` (план картинок и карта путей), `chapter.ts`,
   `opf.ts`, `nav.ts`, `ncx.ts`, `container.ts`, `zip.ts`, `fileName.ts`.
 - **Структура плоская**, чтобы `images/x.png` из разметки работали без
   переписывания: `mimetype` (первым, STORE) · `META-INF/container.xml` ·
   `OEBPS/{content.opf, nav.xhtml, toc.ncx, theme.css, custom.css?,
-c-<id>.xhtml, images/…}`. Детерминированный zip, как у `.edb`.
+  c-<id>.xhtml, images/…}`. Детерминированный zip, как у `.edb`.
 - **Сноски — концевые** (2026-10-03). Прежняя схема (скрытый `aside`)
   отброшена: конвертация Calibre в MOBI и Kindle скрытых `aside` не
   показывали. Теперь определения выносятся в `notes.xhtml`: последним в
@@ -613,7 +613,7 @@ c-<id>.xhtml, images/…}`. Детерминированный zip, как у `.
   `dc:description`, `dcterms:modified` = момент экспорта, серия:
   `belongs-to-collection` + `collection-type=series` + `group-position` и
   `calibre:series` / `calibre:series_index`; обложка: `properties=
-"cover-image"` + `<meta name="cover">`, отдельной cover.xhtml нет.
+  "cover-image"` + `<meta name="cover">`, отдельной cover.xhtml нет.
 - **Навигация:** `nav.xhtml` (toc + landmarks `bodymatter`), не в spine;
   `toc.ncx` для старых читалок и Calibre.
 - **theme.css:** без `font-family` и размеров шрифта у body; `p` без
@@ -672,7 +672,7 @@ c-<id>.xhtml, images/…}`. Детерминированный zip, как у `.
 - **CI (`ci.yml`, PR и push):** ubuntu: install с кэшем pnpm, `vue-tsc`,
   Oxlint (с границами импортов), `pnpm format:check`, Vitest + coverage, epubcheck,
   Playwright. Rust на матрице 3 ОС: `cargo fmt --check`, `clippy -D
-warnings`, `cargo test` (атомарная запись ведёт себя по-разному на
+  warnings`, `cargo test` (атомарная запись ведёт себя по-разному на
   Windows). Dependabot/Renovate раз в неделю, группами.
 - **Релизы (`release.yml`, тег `v*`):** `tauri-apps/tauri-action`, матрица:
   macOS universal (dmg), Windows (NSIS .exe), ubuntu-22.04 (AppImage, deb,
