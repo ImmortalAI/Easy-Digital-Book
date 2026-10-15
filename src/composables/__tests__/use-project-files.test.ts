@@ -10,6 +10,13 @@ import { useLayoutStore } from "@/stores/layout";
 import type { WindowCloseEvent } from "@/types/platform";
 import type { UnsavedAction, UnsavedDecision } from "@/composables/use-unsaved-guard";
 import { createProjectFiles } from "../use-project-files";
+import { buildAzw3 } from "@/services/azw3/build";
+import { exportOptions, fixtureBook, fixtureProcessor } from "@/services/azw3/__tests__/fixtures";
+import { makeZip } from "@/services/epub/zip";
+import { writePalmDb } from "@/services/azw3/palmdb";
+import { EMBEDDED_PROJECT_ENTRY } from "@/services/export/embedded-project";
+import type { Book } from "@/types/book";
+import { createAutosave } from "../use-autosave";
 
 const makeBook = () =>
   createBook({
@@ -391,5 +398,248 @@ describe("project files", () => {
     // here reaches window.onunhandledrejection and the crash dialog.
     await expect(files.pickImage()).resolves.toBeNull();
     expect(message).toHaveBeenCalledOnce();
+  });
+});
+
+describe("opening a project embedded in a book", () => {
+  beforeEach(() => setActivePinia(createPinia()));
+
+  const edbOf = (book: Book) => writeEdb(book, new Date("2026-01-02"), { updateModified: false });
+  const epubWith = (project: Uint8Array | null) => {
+    const entries: Array<[string, string | Uint8Array]> = [["mimetype", "application/epub+zip"]];
+    if (project) entries.push([EMBEDDED_PROJECT_ENTRY, project]);
+    return makeZip(entries);
+  };
+  const everything = (book: Book) => ({
+    changedChapters: new Set(book.chapters.map(({ id }) => id)),
+    removedChapters: new Set<string>(),
+    changedResources: new Set(book.resources.keys()),
+    removedResources: new Set<string>(),
+  });
+
+  it("opens the project of an EPUB as an unsaved book that is not in Recent", async () => {
+    const services = createInMemoryPlatformServices();
+    await services.files.writeFile("/inbox/novel.epub", await epubWith(await edbOf(makeBook())));
+    const files = createProjectFiles({ services, locale: "en" });
+    useLayoutStore().center = { kind: "metadata" };
+
+    await expect(files.openPath("/inbox/novel.epub")).resolves.toBe(true);
+
+    const project = useProjectStore();
+    expect(project.book?.chapters[0]?.source).toBe("# Chapter 1");
+    expect(project.filePath).toBeNull();
+    expect(project.fileMtime).toBeNull();
+    expect(project.dirty).toBe(true);
+    expect(await services.settings.get("recentFiles", [])).toEqual([]);
+    expect(useDiagnosticsStore().readWarnings).toEqual([]);
+    expect(useLayoutStore().center).toEqual({ kind: "chapter", id: "chapter1" });
+  });
+
+  it("opens the project of an AZW3", async () => {
+    const services = createInMemoryPlatformServices();
+    const book = fixtureBook();
+    await services.files.writeFile(
+      "/inbox/novel.azw3",
+      await buildAzw3(
+        book,
+        { ...exportOptions(), embedProject: true },
+        {
+          imageProcessor: fixtureProcessor(),
+          now: () => new Date("2026-01-08T03:04:05.000Z"),
+        },
+      ),
+    );
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await expect(files.openPath("/inbox/novel.azw3")).resolves.toBe(true);
+
+    expect(useProjectStore().book?.metadata.id).toBe(book.metadata.id);
+    expect(useProjectStore().filePath).toBeNull();
+    expect(useProjectStore().dirty).toBe(true);
+  });
+
+  it("says so when the book has no project and keeps the current one", async () => {
+    const services = createInMemoryPlatformServices();
+    await services.files.writeFile("/inbox/plain.epub", await epubWith(null));
+    const project = useProjectStore();
+    project.configure(services);
+    const current = makeBook();
+    project.setBook(current, "/books/current.edb", { dirty: false });
+    const message = vi.spyOn(services.dialogs, "message");
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await expect(files.openPath("/inbox/plain.epub")).resolves.toBe(false);
+
+    expect(message).toHaveBeenCalledOnce();
+    expect(message).toHaveBeenCalledWith(
+      "This book does not contain a project file",
+      "Open project",
+    );
+    expect(project.book?.metadata.id).toBe(current.metadata.id);
+    expect(project.filePath).toBe("/books/current.edb");
+  });
+
+  it("reports a broken embedded project with the usual open error", async () => {
+    const services = createInMemoryPlatformServices();
+    await services.files.writeFile(
+      "/inbox/broken.epub",
+      await epubWith(Uint8Array.from([1, 2, 3])),
+    );
+    const message = vi.spyOn(services.dialogs, "message");
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await expect(files.openPath("/inbox/broken.epub")).resolves.toBe(false);
+
+    expect(message).toHaveBeenCalledOnce();
+    expect(message).toHaveBeenCalledWith("Could not open project", "Open project");
+    expect(useProjectStore().book).toBeNull();
+  });
+
+  it("asks before discarding unsaved recovery work of the same book", async () => {
+    const services = createInMemoryPlatformServices({ confirm: false });
+    const original = makeBook();
+    const edb = await edbOf(original);
+    await services.files.writeFile("/inbox/novel.epub", await epubWith(edb));
+    await services.recovery.writeChanges(original, everything(original), "/books/original.edb");
+    const confirm = vi.spyOn(services.dialogs, "confirm");
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await expect(files.openPath("/inbox/novel.epub")).resolves.toBe(false);
+
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(confirm.mock.calls[0]![0]).toContain("discards them");
+    expect(await services.recovery.list()).toEqual([
+      expect.objectContaining({
+        bookId: original.metadata.id,
+        originalPath: "/books/original.edb",
+      }),
+    ]);
+    expect(useProjectStore().book).toBeNull();
+  });
+
+  it("says a KindleGen book with its own sources has no project file", async () => {
+    const services = createInMemoryPlatformServices();
+    // KindleGen stores a zip of the book's sources in SRCS; it is not an .edb.
+    const sources = await makeZip([["source.html", "<p>Text</p>"]]);
+    const srcs = new Uint8Array(16 + sources.length);
+    srcs.set([0x53, 0x52, 0x43, 0x53, 0, 0, 0, 0x10, 0, 0, 0, 0x2f, 0, 0, 0, 1]);
+    srcs.set(sources, 16);
+    const zero = new Uint8Array(280);
+    const view = new DataView(zero.buffer);
+    zero.set(new TextEncoder().encode("MOBI"), 16);
+    view.setUint32(20, 264);
+    view.setUint32(224, 1);
+    view.setUint32(228, 1);
+    await services.files.writeFile(
+      "/inbox/kindlegen.azw3",
+      writePalmDb([zero, srcs], "KindleGen", { created: new Date("2026-01-01T00:00:00Z") }),
+    );
+    const message = vi.spyOn(services.dialogs, "message");
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await expect(files.openPath("/inbox/kindlegen.azw3")).resolves.toBe(false);
+
+    expect(message).toHaveBeenCalledWith(
+      "This book does not contain a project file",
+      "Open project",
+    );
+  });
+
+  it("drops a recovery session of the same book so the original file cannot be overwritten", async () => {
+    const services = createInMemoryPlatformServices({ confirm: true });
+    const original = makeBook();
+    const edb = await edbOf(original);
+    await services.files.writeFile("/books/original.edb", edb);
+    await services.files.writeFile("/inbox/novel.epub", await epubWith(edb));
+    await services.recovery.writeChanges(original, everything(original), "/books/original.edb");
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await expect(files.openPath("/inbox/novel.epub")).resolves.toBe(true);
+    expect(await services.recovery.list()).toEqual([]);
+    expect(files.recoverySessions.value).toEqual([]);
+
+    // The next autosave must not inherit the original project's path.
+    const autosave = createAutosave({ project: useProjectStore(), services });
+    await autosave.persist();
+    autosave.stop();
+    expect(await services.recovery.list()).toEqual([
+      expect.objectContaining({ bookId: original.metadata.id, originalPath: null }),
+    ]);
+  });
+
+  it("detaches from the original file when the same book is open and dirty", async () => {
+    const services = createInMemoryPlatformServices();
+    const original = makeBook();
+    const edb = await edbOf(original);
+    await services.files.writeFile("/books/original.edb", edb);
+    await services.files.writeFile("/inbox/novel.epub", await epubWith(edb));
+    const project = useProjectStore();
+    project.configure(services);
+    project.setBook(original, "/books/original.edb", { dirty: true });
+    await services.recovery.writeChanges(original, everything(original), "/books/original.edb");
+    const files = createProjectFiles({
+      services,
+      locale: "en",
+      requestDecision: async () => "discard",
+    });
+
+    await expect(files.openPath("/inbox/novel.epub")).resolves.toBe(true);
+
+    expect(project.filePath).toBeNull();
+    expect(await services.recovery.list()).toEqual([]);
+    const saveDialog = vi.spyOn(services.dialogs, "save").mockResolvedValue(null);
+    const write = vi.spyOn(services.files, "writeFileAtomic");
+    await expect(files.save()).resolves.toBe(false);
+    expect(saveDialog).toHaveBeenCalledOnce();
+    expect(write).not.toHaveBeenCalled();
+  });
+
+  it("does not open the book when the old recovery session cannot be removed", async () => {
+    const services = createInMemoryPlatformServices();
+    await services.files.writeFile("/inbox/novel.epub", await epubWith(await edbOf(makeBook())));
+    const project = useProjectStore();
+    project.configure(services);
+    const current = fixtureBook();
+    project.setBook(current, "/books/current.edb", { dirty: false });
+    vi.spyOn(services.recovery, "remove").mockRejectedValue(new Error("idb"));
+    const message = vi.spyOn(services.dialogs, "message");
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await expect(files.openPath("/inbox/novel.epub")).resolves.toBe(false);
+
+    expect(message).toHaveBeenCalledOnce();
+    expect(message).toHaveBeenCalledWith("Could not open project", "Open project");
+    expect(project.book?.metadata.id).toBe(current.metadata.id);
+    expect(project.filePath).toBe("/books/current.edb");
+  });
+
+  it("decides by the bytes, not by the extension", async () => {
+    const services = createInMemoryPlatformServices();
+    const edb = await edbOf(makeBook());
+    await services.files.writeFile("/inbox/renamed.edb", await epubWith(edb));
+    await services.files.writeFile("/inbox/project.epub", edb);
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await expect(files.openPath("/inbox/renamed.edb")).resolves.toBe(true);
+    expect(useProjectStore().filePath).toBeNull();
+    expect(await services.settings.get("recentFiles", [])).toEqual([]);
+
+    await expect(files.openPath("/inbox/project.epub")).resolves.toBe(true);
+    expect(useProjectStore().filePath).toBe("/inbox/project.epub");
+    expect(useProjectStore().dirty).toBe(false);
+  });
+
+  it("offers project files and books in the Open dialog", async () => {
+    const services = createInMemoryPlatformServices();
+    const open = vi.spyOn(services.dialogs, "open").mockResolvedValue(null);
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await expect(files.open()).resolves.toBe(false);
+
+    expect(open).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filters: [{ name: "Easy Digital Book", extensions: ["edb", "epub", "azw3"] }],
+      }),
+    );
   });
 });

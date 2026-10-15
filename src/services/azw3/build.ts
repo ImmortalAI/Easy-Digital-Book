@@ -1,3 +1,4 @@
+import { writeEdb } from "@/services/edb/write";
 import { prepareExport } from "@/services/export/prepare";
 import type { BuildDependencies, ExportOptions, PreparedExport } from "@/services/export/types";
 import type { Book } from "@/types/book";
@@ -8,7 +9,7 @@ import { buildRecordZero } from "./headers";
 import { layoutTextAsync } from "./skeleton";
 import { buildResources, rewriteResources } from "./resources";
 import { compressPalmDoc, splitTextRecords } from "./palmdoc";
-import { buildEndRecords } from "./records";
+import { buildEndRecords, buildSrcsRecord } from "./records";
 import { writePalmDbAsync } from "./palmdb";
 import { jpegNeedsKindleCleanup } from "./jpeg";
 
@@ -134,11 +135,25 @@ export async function buildAzw3(
   await appendIndex("ncx", indexes.ncx);
   if (resourcePlan.records.length) recordIndices.set("firstResource", records.length);
   await appendRecords(records, resourcePlan.records, deps);
-  recordIndices.set("fdst", records.length);
+  // Each index is captured when its record is pushed: the tail of the list is
+  // not fixed once an SRCS record can sit between FCIS and EOF.
   const [flis, fcis, eof] = buildEndRecords(layout.text.length, textParts.length);
-  records.push(indexes.fdst, flis!, fcis!, eof!);
-  recordIndices.set("flis", records.length - 3);
-  recordIndices.set("fcis", records.length - 2);
+  const pushRecord = (key: string, record: Uint8Array) => {
+    recordIndices.set(key, records.length);
+    records.push(record);
+  };
+  pushRecord("fdst", indexes.fdst);
+  pushRecord("flis", flis!);
+  pushRecord("fcis", fcis!);
+  if (options.embedProject) {
+    check(deps.signal);
+    pushRecord(
+      "srcs",
+      buildSrcsRecord(await writeEdb(book, exportedAt, { updateModified: false })),
+    );
+    await checkpoint(deps);
+  }
+  records.push(eof!);
 
   const recordZero = buildRecordZero({
     metadata: prepared.metadata,

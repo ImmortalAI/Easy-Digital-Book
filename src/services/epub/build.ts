@@ -1,5 +1,7 @@
 import { AppError } from "@/types/errors";
 import type { Book } from "@/types/book";
+import { writeEdb } from "@/services/edb/write";
+import { EMBEDDED_PROJECT_ENTRY } from "@/services/export/embedded-project";
 import { prepareExport } from "@/services/export/prepare";
 import type { BuildDependencies, ExportOptions } from "@/services/export/types";
 import { containerXml } from "./container";
@@ -65,6 +67,14 @@ export async function buildEpub(
     entries.push([`OEBPS/${document.path}`, document.xhtml]);
   for (const style of prepared.styles) entries.push([`OEBPS/${style.path}`, style.css]);
   for (const image of prepared.images) entries.push([`OEBPS/${image.path}`, image.output.bytes]);
+  if (options.embedProject) {
+    check(deps.signal);
+    // Last entry, outside OEBPS and the OPF manifest: reading systems never see it.
+    entries.push([
+      EMBEDDED_PROJECT_ENTRY,
+      await writeEdb(book, exported, { updateModified: false }),
+    ]);
+  }
   deps.onProgress?.({ stage: "zip", done: 0, total: entries.length });
   check(deps.signal);
   const result = await makeZip(entries);

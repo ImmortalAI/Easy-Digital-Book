@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { cssSupportSamples } from "./css-support-fixtures";
 import { writeEdb } from "../src/services/edb/write";
 import { buildAzw3 } from "../src/services/azw3/build";
+import type { ExportOptions } from "../src/services/export/types";
 import {
   exportOptions,
   fixtureBook,
@@ -19,9 +20,13 @@ const outputDir = configuredOutputDir
 if (configuredOutputDir) await rm(outputDir, { recursive: true, force: true });
 await mkdir(outputDir, { recursive: true });
 const now = () => new Date("2026-01-02T03:04:05.000Z");
-const writeBook = async (name: string, book: ReturnType<typeof fixtureBook>) => {
+const writeBook = async (
+  name: string,
+  book: ReturnType<typeof fixtureBook>,
+  options: ExportOptions = exportOptions(),
+) => {
   const started = performance.now();
-  const bytes = await buildAzw3(book, exportOptions(), {
+  const bytes = await buildAzw3(book, options, {
     imageProcessor: fixtureProcessor(),
     now,
   });
@@ -112,11 +117,20 @@ longBook.chapters = Array.from({ length: 300 }, (_, index) => ({
       : `# Chapter ${index + 1}\n\nA short synthetic chapter used to measure book assembly.`,
 }));
 
+const embeddedProject = fixtureBook();
+embeddedProject.metadata.title = "AZW3 Embedded Project";
+embeddedProject.metadata.cover = null;
+embeddedProject.chapters = [
+  { id: "embedded", source: "# Embedded\n\nThis book carries its project file." },
+];
+embeddedProject.customCss = null;
+
 const paths = [
   await writeBook("minimal", minimal),
   await writeBook("multilingual-notes", multilingualNotes),
   await writeBook("images-css", imagesCss),
   await writeBook("300-chapter-long", longBook),
+  await writeBook("embedded-project", embeddedProject, { ...exportOptions(), embedProject: true }),
 ];
 console.log(`Process peak RSS: ${process.resourceUsage().maxRSS} KiB`);
 console.log(`Generated ${paths.length} deterministic AZW3 fixtures in ${resolve(outputDir)}`);

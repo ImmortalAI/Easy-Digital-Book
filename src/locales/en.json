@@ -74,6 +74,8 @@
     "fileNotFound": "File not found: {path}",
     "recentTitle": "Recent file",
     "openFailed": "Could not open project",
+    "noEmbeddedProject": "This book does not contain a project file",
+    "discardRecoveryMessage": "This book has unsaved changes kept for recovery. Opening the project from the book discards them. Continue?",
     "recoverTitle": "Recover project",
     "recoverMessage": "A newer recovery session is available. Restore it?",
     "saveFailed": "Could not save project",
@@ -213,6 +215,9 @@
     "progressAzw3": "Creating AZW3…",
     "progressZip": "Creating EPUB…",
     "saved": "{format} saved",
+    "savedWithProject": "{format} saved · with project file",
+    "embedProject": "Embed project file",
+    "embedProjectHint": "For editing. Do not publish this file: it contains the book's sources.",
     "showInFolder": "Show in folder",
     "filterName": "{format} book"
   },

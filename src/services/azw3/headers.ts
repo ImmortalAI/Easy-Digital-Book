@@ -238,8 +238,9 @@ export function buildRecordZero(input: HeaderInput): Uint8Array {
   writeUint32BE(bytes, 204, 1);
   writeUint32BE(bytes, 208, roleIndex(input.recordIndices, "flis", true));
   writeUint32BE(bytes, 212, 1);
-  writeUint32BE(bytes, 224, NULL);
-  writeUint32BE(bytes, 228, 0);
+  // SRCS: the embedded project file, when the export carries one.
+  writeUint32BE(bytes, 224, roleIndex(input.recordIndices, "srcs"));
+  writeUint32BE(bytes, 228, input.recordIndices.has("srcs") ? 1 : 0);
   writeUint32BE(bytes, 232, NULL);
   writeUint32BE(bytes, 236, NULL);
   // Every text record has overlap and TBS trailers, including an empty TBS

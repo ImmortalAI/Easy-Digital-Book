@@ -78,5 +78,20 @@
     "image_markers": [],
     "inline_image_count": 0,
     "css_image_count": 0
+  },
+  "embedded-project": {
+    "chapters": [
+      {
+        "title": "Embedded",
+        "markers": ["This book carries its project file."]
+      }
+    ],
+    "nav": ["Embedded"],
+    "notes": [],
+    "cover": null,
+    "css_markers": [],
+    "image_markers": [],
+    "inline_image_count": 0,
+    "css_image_count": 0
   }
 }

@@ -9,6 +9,8 @@ export interface ExportOptions {
   grayscale: boolean;
   titlePage: boolean;
   versionInTitle: boolean;
+  /** Embed the `.edb` project into the exported book. Export dialog state only, never persisted. */
+  embedProject?: boolean;
 }
 export interface ExportProgress {
   stage: "chapters" | "images" | "zip" | "azw3";

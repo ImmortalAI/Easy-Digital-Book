@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEndRecords } from "../records";
+import { buildEndRecords, buildSrcsRecord } from "../records";
 import { structures } from "./vectors.json";
 
 const hex = (bytes: Uint8Array) => [...bytes].map((v) => v.toString(16).padStart(2, "0")).join("");
@@ -24,5 +24,14 @@ describe("buildEndRecords", () => {
     expect(() => buildEndRecords(1, 65536)).toThrow(
       expect.objectContaining({ code: "export.azw3Limit" }),
     );
+  });
+});
+
+describe("buildSrcsRecord", () => {
+  it("prefixes the payload with the 16-byte KindleGen SRCS header", () => {
+    expect(hex(buildSrcsRecord(Uint8Array.from([1, 2, 3])))).toBe(
+      "53524353000000100000002f00000001010203",
+    );
+    expect(buildSrcsRecord(new Uint8Array())).toHaveLength(16);
   });
 });
