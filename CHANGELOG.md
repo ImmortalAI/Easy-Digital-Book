@@ -2,6 +2,17 @@
 
 All notable changes to Easy Digital Book are documented here.
 
+## [1.3.0] — 2026-10-15
+
+### Added
+
+- "Embed project file" in the export dialog puts the whole project inside the exported EPUB or AZW3, so one file serves both for reading and for editing. E-readers ignore it. The option starts off on every export; the success notification says when the project was included. A book with an embedded project carries the full sources, so it is for sending to an editor, not for publishing.
+- Open (Mod+O) accepts `.epub` and `.azw3` books exported with an embedded project and opens the project as an unsaved book. Save it with "Save as". Books without an embedded project show "This book does not contain a project file". Opening books from the OS still accepts only `.edb`.
+
+### Changed
+
+- The export dialog keeps its buttons in view on short windows.
+
 ## [1.2.1] — 2026-10-11
 
 ### Fixed
