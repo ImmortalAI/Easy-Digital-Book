@@ -1,7 +1,7 @@
 # Project file embedded in exported books — specification
 
 - **Date:** 2026-10-11
-- **Status:** approved design, not implemented
+- **Status:** implemented (plan: docs/superpowers/plans/2026-10-12-embedded-project.md)
 - **Source:** brainstorming session 2026-10-11
 - **Base specs:** `docs/superpowers/specs/2026-09-15-easy-digital-book-design.md`
   (sections 2, 3, 5), `docs/superpowers/specs/2026-10-03-azw3-export-design.md`
@@ -98,7 +98,7 @@ is described anywhere, and device and Calibre behaviour is unpredictable.
   absent means `false`.
 - The option is dialog state only. It starts **off every time the export
   dialog opens** and is never written to app settings or to the `.edb`.
-  (`use-export.ts` copies settings fields by name, so it does not leak.)
+  (`use-export.ts` copies fields by name in both directions, so it does not leak.)
 - `ExportDialog`: a checkbox "Embed project file" with a hint: "For editing.
   Do not publish this file: it contains the book's sources."
 - The payload is `writeEdb` applied to the same `Book` snapshot the export is
@@ -120,6 +120,9 @@ is described anywhere, and device and Calibre behaviour is unpredictable.
     16; otherwise `null`;
   - anything else → `null`.
     Truncated or inconsistent input returns `null`; it never throws.
+- The module also exports `findEmbeddedProject`, which returns the recognised
+  container together with the project, so the open flow can tell a book
+  without a project from a file that is not a book.
 - The Open dialog filter becomes `edb, epub, azw3`.
 - `openPathAfterGuard`: bytes that are not an `.edb` go through
   `extractEmbeddedProject`, then through the normal `readEdb`. Whether the
@@ -188,6 +191,10 @@ CI:
    message. Our CI fails on warnings, and this has not been run yet. It is the
    **first task of the plan**. If 5.2.1 warns, EPUB falls back to the rejected
    manifest variant (§3.1) and this spec is updated.
+   **Result (2026-10-15):** epubcheck 5.2.1 on Temurin 25 exits 0 with
+   "No errors or warnings detected" for the fixture with `project.edb`;
+   OPF-003 is reported only as a usage message (`-u`). The unmanifested
+   variant stays.
 2. **Kindle devices and SRCS.** Calibre is covered by CI; a real device is a
    manual check added to `docs/release-checklist.md` next to the open
    Paperwhite 3 / 12 checks.

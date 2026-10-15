@@ -141,6 +141,22 @@ flowchart LR
 > [`docs/sample/the-keeper-of-north-light.edb`](docs/sample/the-keeper-of-north-light.edb)
 > — it has a cover, an illustration, footnotes, a letter and a scene break.
 
+### 📨 One file for your editor
+
+Tick **Embed project file** in the export dialog and the exported `.epub` or
+`.azw3` also carries the book's `.edb` project. Your editor reads the book on
+a Kindle and opens the very same file in Easy Digital Book (**Open**) to get
+the editable project.
+
+> [!WARNING]
+> Such a file is for the editing loop, not for publishing.
+>
+> - It contains the full sources, unencrypted: anyone who unpacks the file gets them.
+> - The project survives only while the file itself is passed on. Send to
+>   Kindle, KDP and Calibre conversion rebuild the book and drop the project.
+> - The file is larger: images are stored twice, optimised in the book and
+>   original in the project.
+
 <a id="markup"></a>
 
 ## 📝 Write in NovLang
