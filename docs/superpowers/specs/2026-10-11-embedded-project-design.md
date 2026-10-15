@@ -139,6 +139,11 @@ is described anywhere, and device and Calibre behaviour is unpredictable.
   project's path, and a later "Restore" plus Mod+S would silently overwrite
   that project. Therefore: when a project is opened from a book, **any
   existing recovery session with the same UUID is removed before `setBook`**.
+  Unless the same book is already open (the unsaved-changes guard has asked),
+  the user confirms first, because the session may hold unsaved work; cancel
+  keeps the current project. An AZW3 whose SRCS record is not an `.edb`
+  (KindleGen stores the book's sources there) counts as a book without a
+  project.
 - Opening from the OS is unchanged: `lib.rs` and `drainOpenPaths` keep
   accepting only `.edb`.
 
