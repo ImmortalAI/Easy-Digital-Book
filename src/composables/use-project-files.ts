@@ -3,7 +3,8 @@ import { createBook, isDefaultTitle } from "@/services/book/create";
 import { updateMetadata } from "@/services/book/metadata";
 import { appErrorFromUnknown } from "@/types/errors";
 import { useNotificationsStore } from "@/stores/notifications";
-import { readEdb } from "@/services/edb/read";
+import { readEdb, type ReadEdbResult } from "@/services/edb/read";
+import { findEmbeddedProject } from "@/services/export/embedded-project";
 import { useDiagnosticsStore } from "@/stores/diagnostics";
 import { useLayoutStore } from "@/stores/layout";
 import { useProjectStore } from "@/stores/project";
@@ -172,6 +173,36 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
     return true;
   }
 
+  /** Opens a project taken out of an exported book as an unsaved book. */
+  async function openEmbeddedProject(
+    result: ReadEdbResult,
+    previousId: string | undefined,
+  ): Promise<boolean> {
+    const bookId = result.book.metadata.id;
+    // The project has the UUID of the author's original .edb, and a recovery
+    // session keeps its old originalPath when the new one is null. A leftover
+    // session would let a later restore and save overwrite that original file.
+    try {
+      await services.recovery.remove(bookId);
+    } catch (error) {
+      services.logger.error("Could not clear the recovery session of an embedded project", {
+        error,
+      });
+      await services.dialogs.message(
+        t("files.openFailed", "Could not open project"),
+        t("files.openTitle", "Open project"),
+      );
+      return false;
+    }
+    project.setBook(result.book, null, { dirty: true });
+    selectFirstChapter(result.book, layout);
+    diagnostics.clear();
+    diagnostics.setReadWarnings(result.warnings);
+    if (previousId && previousId !== bookId) await services.recovery.remove(previousId);
+    await refreshRecovery();
+    return true;
+  }
+
   async function openPathAfterGuard(path: string): Promise<boolean> {
     const previousId = project.book?.metadata.id;
     let bytes: Uint8Array;
@@ -191,9 +222,20 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
       return false;
     }
 
+    // An exported book is recognised by its bytes, never by the file extension.
+    const embedded = await findEmbeddedProject(bytes);
+    const fromBook = embedded.container !== null;
+    if (fromBook && !embedded.project) {
+      await services.dialogs.message(
+        t("files.noEmbeddedProject", "This book does not contain a project file"),
+        t("files.openTitle", "Open project"),
+      );
+      return false;
+    }
+
     let result;
     try {
-      result = await readEdb(bytes, { now });
+      result = await readEdb(embedded.project ?? bytes, { now });
     } catch (error) {
       services.logger.error("Failed to decode project", { error });
       await services.dialogs.message(
@@ -202,6 +244,7 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
       );
       return false;
     }
+    if (fromBook) return openEmbeddedProject(result, previousId);
 
     let fileMtime: number | null = null;
     try {
@@ -251,7 +294,12 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
     if (!(await guard.guard("open"))) return false;
     const path = await services.dialogs.open({
       title: t("files.openTitle", "Open project"),
-      filters: [{ name: t("files.openFilter", "Easy Digital Book"), extensions: ["edb"] }],
+      filters: [
+        {
+          name: t("files.openFilter", "Easy Digital Book"),
+          extensions: ["edb", "epub", "azw3"],
+        },
+      ],
     });
     return path ? openPathAfterGuard(path) : false;
   }

@@ -74,6 +74,7 @@
     "fileNotFound": "File not found: {path}",
     "recentTitle": "Recent file",
     "openFailed": "Could not open project",
+    "noEmbeddedProject": "This book does not contain a project file",
     "recoverTitle": "Recover project",
     "recoverMessage": "A newer recovery session is available. Restore it?",
     "saveFailed": "Could not save project",

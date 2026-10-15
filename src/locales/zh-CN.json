@@ -74,6 +74,7 @@
     "fileNotFound": "文件未找到：{path}",
     "recentTitle": "最近文件",
     "openFailed": "无法打开项目",
+    "noEmbeddedProject": "这本书不包含项目文件",
     "recoverTitle": "恢复项目",
     "recoverMessage": "有更新的恢复会话。是否恢复？",
     "saveFailed": "无法保存项目",
