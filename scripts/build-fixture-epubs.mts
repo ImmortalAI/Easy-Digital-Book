@@ -57,15 +57,26 @@ const book: Book = {
   dictionary: [],
 };
 
-const output = resolve("fixtures/task-18-fixture.epub");
+const options = {
+  imagePreset: "kindle-paperwhite",
+  grayscale: false,
+  titlePage: true,
+  versionInTitle: true,
+} as const;
+const deps = { imageProcessor: processor, now: () => new Date("2026-01-02T03:04:05Z") };
+const outputs = [
+  { path: resolve("fixtures/task-18-fixture.epub"), bytes: await buildEpub(book, options, deps) },
+  {
+    // The unmanifested project.edb entry must not produce an epubcheck warning.
+    path: resolve("fixtures/embedded-project-fixture.epub"),
+    bytes: await buildEpub(book, { ...options, embedProject: true }, deps),
+  },
+];
 await mkdir(resolve("fixtures"), { recursive: true });
-await writeFile(
-  output,
-  await buildEpub(
-    book,
-    { imagePreset: "kindle-paperwhite", grayscale: false, titlePage: true, versionInTitle: true },
-    { imageProcessor: processor, now: () => new Date("2026-01-02T03:04:05Z") },
-  ),
-);
+for (const { path, bytes } of outputs) await writeFile(path, bytes);
 
-await execFileAsync(resolve("scripts/epubcheck.sh"), [output], { stdio: "inherit" });
+await execFileAsync(
+  resolve("scripts/epubcheck.sh"),
+  outputs.map(({ path }) => path),
+  { stdio: "inherit" },
+);
