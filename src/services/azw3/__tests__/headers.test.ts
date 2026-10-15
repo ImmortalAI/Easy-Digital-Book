@@ -66,6 +66,19 @@ function exthEntries(bytes: Uint8Array): Map<number, Uint8Array[]> {
 }
 
 describe("buildRecordZero", () => {
+  it("points at the SRCS record only when one is supplied", () => {
+    const plain = buildRecordZero(input());
+    expect(u32(plain, 224)).toBe(0xffffffff);
+    expect(u32(plain, 228)).toBe(0);
+
+    const recordIndices = new Map(input().recordIndices);
+    recordIndices.set("srcs", 13);
+    const embedded = buildRecordZero(input({ recordIndices }));
+    expect(u32(embedded, 224)).toBe(13);
+    expect(u32(embedded, 228)).toBe(1);
+    expect(embedded).toHaveLength(plain.length);
+  });
+
   it("writes documented PalmDOC and MOBI v8 offsets and aligned EXTH metadata", () => {
     const bytes = buildRecordZero(input());
     expect(bytes.length).toBe(567);

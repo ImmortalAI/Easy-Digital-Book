@@ -41,3 +41,16 @@ export function buildEndRecords(textLength: number, textRecordCount: number): Ui
   writeUint16BE(fcis, 46, 1);
   return [flis, fcis, Uint8Array.from([0xe9, 0x8e, 0x0d, 0x0a])];
 }
+
+const SRCS_HEADER_LENGTH = 16;
+
+/** Wrap the project file in the SRCS record KindleGen used for a zip of the book's sources. */
+export function buildSrcsRecord(payload: Uint8Array): Uint8Array {
+  const record = new Uint8Array(SRCS_HEADER_LENGTH + payload.length);
+  record.set([0x53, 0x52, 0x43, 0x53]);
+  writeUint32BE(record, 4, SRCS_HEADER_LENGTH);
+  writeUint32BE(record, 8, 0x2f); // Fixed value in KindleGen output.
+  writeUint32BE(record, 12, 1);
+  record.set(payload, SRCS_HEADER_LENGTH);
+  return record;
+}
