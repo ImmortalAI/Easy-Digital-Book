@@ -261,7 +261,7 @@ new UUID, `created` = now.
 - **Sidebar** 160–400 px wide, edge is draggable.
 - **Central area** — by `layoutStore.center`:
   `{ kind: 'chapter', id } | { kind: 'metadata' } | { kind: 'css' } |
-{ kind: 'image', path } | { kind: 'settings' }`.
+  { kind: 'image', path } | { kind: 'settings' }`.
   Above it is a breadcrumb row ("Chapters › N Title"). No tabs — novels have
   50–300 chapters.
 - **Modes** Text / Split / Preview (buttons and Mod+1/2/3) apply to
@@ -666,7 +666,7 @@ for other languages — en).
   `collection-type = series` + `group-position`; additionally
   `<meta name="calibre:series">` and `<meta name="calibre:series_index">`.
 - Cover: resource with `properties="cover-image"` and `<meta name="cover"
-content="…">`. No separate cover page.
+  content="…">`. No separate cover page.
 - Manifest: all archive files; `nav.xhtml` with `properties="nav"`; `toc.ncx`
   in `<spine toc="ncx">`.
 - Spine: `title.xhtml` (if present), then chapters in order. `nav.xhtml` not
@@ -676,7 +676,7 @@ content="…">`. No separate cover page.
 
 - `nav.xhtml`: `<nav epub:type="toc">` — flat chapter list, followed by the
   notes page (localized title) when `notes.xhtml` exists; `<nav
-epub:type="landmarks">` — `titlepage` (if present) and `bodymatter` (first
+  epub:type="landmarks">` — `titlepage` (if present) and `bodymatter` (first
   chapter).
 - `toc.ncx`: same list (with the notes page) for old readers and Calibre, `dtb:uid` = `book.id`.
 
@@ -793,8 +793,8 @@ Network error — log only.
   doesn't work in WebView on Windows (chapter reordering, image dragging).
   Consequence — opening `.edb` by dragging to window is not supported in v1.
 - **App CSP** (`tauri.conf.json`): `default-src 'self'; img-src 'self'
-blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;
-connect-src ipc: http://ipc.localhost https://api.github.com`.
+  blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;
+  connect-src ipc: http://ipc.localhost https://api.github.com`.
 - **File association:** `bundle.fileAssociations` for `.edb`.
 - Window: minimum size ~900×560.
 - **Minimum OS:** macOS 12 (`bundle.macOS.minimumSystemVersion`),
@@ -865,7 +865,7 @@ details:
    WebKitGTK (ubuntu-22.04). Fallback — Rust command on crate `image` with
    same `ImageProcessor` interface.
 3. **HTML5 drag&drop and paste images from clipboard** with `dragDropEnabled:
-false` on three OS.
+   false` on three OS.
 4. **Send to Kindle:** test EPUB (footnotes, images, series, title page)
    accepted and displays correctly on Paperwhite.
 
