@@ -13,6 +13,7 @@ import { createProjectFiles } from "../use-project-files";
 import { buildAzw3 } from "@/services/azw3/build";
 import { exportOptions, fixtureBook, fixtureProcessor } from "@/services/azw3/__tests__/fixtures";
 import { makeZip } from "@/services/epub/zip";
+import { writePalmDb } from "@/services/azw3/palmdb";
 import { EMBEDDED_PROJECT_ENTRY } from "@/services/export/embedded-project";
 import type { Book } from "@/types/book";
 import { createAutosave } from "../use-autosave";
@@ -494,8 +495,58 @@ describe("opening a project embedded in a book", () => {
     expect(useProjectStore().book).toBeNull();
   });
 
-  it("drops a recovery session of the same book so the original file cannot be overwritten", async () => {
+  it("asks before discarding unsaved recovery work of the same book", async () => {
+    const services = createInMemoryPlatformServices({ confirm: false });
+    const original = makeBook();
+    const edb = await edbOf(original);
+    await services.files.writeFile("/inbox/novel.epub", await epubWith(edb));
+    await services.recovery.writeChanges(original, everything(original), "/books/original.edb");
+    const confirm = vi.spyOn(services.dialogs, "confirm");
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await expect(files.openPath("/inbox/novel.epub")).resolves.toBe(false);
+
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(confirm.mock.calls[0]![0]).toContain("discards them");
+    expect(await services.recovery.list()).toEqual([
+      expect.objectContaining({
+        bookId: original.metadata.id,
+        originalPath: "/books/original.edb",
+      }),
+    ]);
+    expect(useProjectStore().book).toBeNull();
+  });
+
+  it("says a KindleGen book with its own sources has no project file", async () => {
     const services = createInMemoryPlatformServices();
+    // KindleGen stores a zip of the book's sources in SRCS; it is not an .edb.
+    const sources = await makeZip([["source.html", "<p>Text</p>"]]);
+    const srcs = new Uint8Array(16 + sources.length);
+    srcs.set([0x53, 0x52, 0x43, 0x53, 0, 0, 0, 0x10, 0, 0, 0, 0x2f, 0, 0, 0, 1]);
+    srcs.set(sources, 16);
+    const zero = new Uint8Array(280);
+    const view = new DataView(zero.buffer);
+    zero.set(new TextEncoder().encode("MOBI"), 16);
+    view.setUint32(20, 264);
+    view.setUint32(224, 1);
+    view.setUint32(228, 1);
+    await services.files.writeFile(
+      "/inbox/kindlegen.azw3",
+      writePalmDb([zero, srcs], "KindleGen", { created: new Date("2026-01-01T00:00:00Z") }),
+    );
+    const message = vi.spyOn(services.dialogs, "message");
+    const files = createProjectFiles({ services, locale: "en" });
+
+    await expect(files.openPath("/inbox/kindlegen.azw3")).resolves.toBe(false);
+
+    expect(message).toHaveBeenCalledWith(
+      "This book does not contain a project file",
+      "Open project",
+    );
+  });
+
+  it("drops a recovery session of the same book so the original file cannot be overwritten", async () => {
+    const services = createInMemoryPlatformServices({ confirm: true });
     const original = makeBook();
     const edb = await edbOf(original);
     await services.files.writeFile("/books/original.edb", edb);

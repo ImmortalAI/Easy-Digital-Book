@@ -4,6 +4,7 @@ import { updateMetadata } from "@/services/book/metadata";
 import { appErrorFromUnknown } from "@/types/errors";
 import { useNotificationsStore } from "@/stores/notifications";
 import { readEdb, type ReadEdbResult } from "@/services/edb/read";
+import { AppError } from "@/types/errors";
 import { findEmbeddedProject } from "@/services/export/embedded-project";
 import { useDiagnosticsStore } from "@/stores/diagnostics";
 import { useLayoutStore } from "@/stores/layout";
@@ -183,6 +184,22 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
     // session keeps its old originalPath when the new one is null. A leftover
     // session would let a later restore and save overwrite that original file.
     try {
+      // Unsaved work of another state of this book would be lost silently. When
+      // the same book is open, the unsaved-changes guard has already asked.
+      const pending =
+        previousId !== bookId &&
+        (await services.recovery.list()).some((session) => session.bookId === bookId);
+      if (
+        pending &&
+        !(await services.dialogs.confirm(
+          t(
+            "files.discardRecoveryMessage",
+            "This book has unsaved changes kept for recovery. Opening the project from the book discards them. Continue?",
+          ),
+          t("files.openTitle", "Open project"),
+        ))
+      )
+        return false;
       await services.recovery.remove(bookId);
     } catch (error) {
       services.logger.error("Could not clear the recovery session of an embedded project", {
@@ -238,6 +255,18 @@ export function createProjectFiles(options: ProjectFilesOptions): ProjectFilesCo
       result = await readEdb(embedded.project ?? bytes, { now });
     } catch (error) {
       services.logger.error("Failed to decode project", { error });
+      // KindleGen stores a zip of the book's own sources in SRCS: not a project.
+      if (
+        embedded.container === "azw3" &&
+        error instanceof AppError &&
+        ["edb.notZip", "edb.noManifest", "edb.foreignFormat"].includes(error.code)
+      ) {
+        await services.dialogs.message(
+          t("files.noEmbeddedProject", "This book does not contain a project file"),
+          t("files.openTitle", "Open project"),
+        );
+        return false;
+      }
       await services.dialogs.message(
         t("files.openFailed", "Could not open project"),
         t("files.openTitle", "Open project"),
