@@ -161,7 +161,7 @@ New texts go to `ru`, `en` and `zh-CN` locales.
 
 - `.edb` format: unchanged, no migration.
 - Exports without the option: byte-identical (tested).
-- Versions 1.2.1 and earlier cannot open a book with an embedded project (their dialog
+- Versions 1.2.x cannot open a book with an embedded project (their dialog
   offers only `.edb`); nothing is corrupted.
 - PalmDB limits: one more record; the 4 GB file limit is already enforced in
   `palmdb.ts`.
