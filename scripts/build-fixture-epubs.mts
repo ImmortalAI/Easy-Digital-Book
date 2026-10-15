@@ -75,8 +75,6 @@ const outputs = [
 await mkdir(resolve("fixtures"), { recursive: true });
 for (const { path, bytes } of outputs) await writeFile(path, bytes);
 
-await execFileAsync(
-  resolve("scripts/epubcheck.sh"),
-  outputs.map(({ path }) => path),
-  { stdio: "inherit" },
-);
+// The epubcheck CLI validates one publication per run.
+for (const { path } of outputs)
+  await execFileAsync(resolve("scripts/epubcheck.sh"), [path], { stdio: "inherit" });
