@@ -146,9 +146,13 @@ export function createExportController(options: ExportControllerOptions): Export
       checkCancelled(request.signal);
       await services.files.writeFileAtomic(target, bytes);
       lastOutput.value = target;
+      // Named fields only: embedProject is dialog state and must not be persisted.
       const nextSettings = {
         ...settings.exportSettings,
-        ...selectedOptions,
+        imagePreset: selectedOptions.imagePreset,
+        grayscale: selectedOptions.grayscale,
+        titlePage: selectedOptions.titlePage,
+        versionInTitle: selectedOptions.versionInTitle,
         format: selectedFormat,
         lastDir: directoryOf(target),
       };

@@ -35,6 +35,8 @@ Run the following on macOS 12+, Windows 10/WebView2, and Ubuntu 22.04/WebKitGTK.
 | Recovery appears after an interrupted dirty session and restores edits                                                                                                                                                           | [ ]   | [ ]     | [ ]    |
 | EPUB export writes the selected preset, cover, title page, and custom CSS                                                                                                                                                        | [ ]   | [ ]     | [ ]    |
 | Packaged app exports AZW3/KF8 with `.azw3` extension; cancel, retry, and Show in folder work                                                                                                                                     | [ ]   | [ ]     | [ ]    |
+| Export EPUB and AZW3 with "Embed project file"; Open accepts both and shows an unsaved book; Save asks for a new `.edb`; a book without a project shows "This book does not contain a project file"                              | [ ]   | [ ]     | [ ]    |
+| The "Embed project file" box is off again when the export dialog is reopened and after an app restart                                                                                                                            | [ ]   | [ ]     | [ ]    |
 | `scripts/epubcheck.sh` validates the exported representative EPUB                                                                                                                                                                | [ ]   | [ ]     | [ ]    |
 | Send to Kindle accepts the EPUB and it renders on a Paperwhite                                                                                                                                                                   | [ ]   | [ ]     | [ ]    |
 | Footnotes: a book with notes in two chapters; in Calibre's viewer a note link opens the note; after "Send to device" (MOBI and AZW3) on a Paperwhite the note opens as a popup and the number in the note leads back to the text | [ ]   | [ ]     | [ ]    |
@@ -46,16 +48,17 @@ Run the following on macOS 12+, Windows 10/WebView2, and Ubuntu 22.04/WebKitGTK.
 
 Run these checks on a **Paperwhite 3 (7th gen, 2015)** and a **Paperwhite 12th gen (2024)** using AZW3 exported directly by the packaged app. Record firmware, app version, date, operator, USB transfer method, fixture, and result beside each device run. An unavailable device or failed check remains open.
 
-| Scenario                                                             | Paperwhite 3 | Paperwhite 12 |
-| -------------------------------------------------------------------- | ------------ | ------------- |
-| Table of contents jumps to the expected chapters                     | [ ]          | [ ]           |
-| Popup footnote opens and its return link goes to the first reference | [ ]          | [ ]           |
-| Library cover is displayed                                           | [ ]          | [ ]           |
-| Inline images are sharp and fit the screen                           | [ ]          | [ ]           |
-| `custom.css` styling is visible                                      | [ ]          | [ ]           |
-| Long chapter and 300-chapter fixture open and navigate               | [ ]          | [ ]           |
-| Title page and version-in-title options render as selected           | [ ]          | [ ]           |
-| Cancel/retry and Show in folder work in the packaged app             | [ ]          | [ ]           |
+| Scenario                                                                                                       | Paperwhite 3 | Paperwhite 12 |
+| -------------------------------------------------------------------------------------------------------------- | ------------ | ------------- |
+| Table of contents jumps to the expected chapters                                                               | [ ]          | [ ]           |
+| Popup footnote opens and its return link goes to the first reference                                           | [ ]          | [ ]           |
+| Library cover is displayed                                                                                     | [ ]          | [ ]           |
+| Inline images are sharp and fit the screen                                                                     | [ ]          | [ ]           |
+| `custom.css` styling is visible                                                                                | [ ]          | [ ]           |
+| Long chapter and 300-chapter fixture open and navigate                                                         | [ ]          | [ ]           |
+| Title page and version-in-title options render as selected                                                     | [ ]          | [ ]           |
+| Cancel/retry and Show in folder work in the packaged app                                                       | [ ]          | [ ]           |
+| AZW3 with an embedded project (SRCS record) opens, navigates and shows its cover like the same book without it | [ ]          | [ ]           |
 
 ## Environment evidence
 

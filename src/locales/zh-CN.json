@@ -74,6 +74,8 @@
     "fileNotFound": "文件未找到：{path}",
     "recentTitle": "最近文件",
     "openFailed": "无法打开项目",
+    "noEmbeddedProject": "这本书不包含项目文件",
+    "discardRecoveryMessage": "此书有保存在恢复存储中的未保存更改。从书中打开项目将丢弃这些更改。是否继续？",
     "recoverTitle": "恢复项目",
     "recoverMessage": "有更新的恢复会话。是否恢复？",
     "saveFailed": "无法保存项目",
@@ -213,6 +215,9 @@
     "progressAzw3": "正在生成 AZW3…",
     "progressZip": "正在创建 EPUB…",
     "saved": "{format} 已保存",
+    "savedWithProject": "{format} 已保存 · 含项目文件",
+    "embedProject": "嵌入项目文件",
+    "embedProjectHint": "用于编辑。请勿发布此文件：其中包含本书的源文件。",
     "showInFolder": "在文件夹中显示",
     "filterName": "{format} 书籍"
   },

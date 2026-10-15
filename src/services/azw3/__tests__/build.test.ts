@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { writeEdb } from "@/services/edb/write";
 import { buildAzw3 } from "../build";
 import { readPalmDb } from "./read-palmdb";
 import { exportOptions, fixtureBook, fixtureProcessor, jpeg, png } from "./fixtures";
@@ -420,5 +421,79 @@ describe("buildAzw3", () => {
     const recordZero = palm.records[0]!;
     const header = new DataView(recordZero.buffer, recordZero.byteOffset, recordZero.byteLength);
     expect(palm.records[header.getUint32(108)]).toEqual(cleaned);
+  });
+});
+
+describe("buildAzw3 with an embedded project", () => {
+  const deps = () => ({ imageProcessor: fixtureProcessor(), now: () => at("08") });
+  const magic = (record: Uint8Array) => new TextDecoder().decode(record.subarray(0, 4));
+
+  it("treats an explicit false like an absent option", async () => {
+    const plain = await buildAzw3(fixtureBook(), exportOptions(), deps());
+    const off = await buildAzw3(fixtureBook(), { ...exportOptions(), embedProject: false }, deps());
+    expect(off).toEqual(plain);
+  });
+
+  it("changes nothing but the added record and its two header fields", async () => {
+    const book = fixtureBook();
+    const plain = readPalmDb(await buildAzw3(book, exportOptions(), deps()));
+    const palm = readPalmDb(
+      await buildAzw3(book, { ...exportOptions(), embedProject: true }, deps()),
+    );
+    const srcsIndex = new DataView(palm.records[0]!.buffer).getUint32(224);
+
+    const others = palm.records.filter((_, index) => index !== srcsIndex);
+    expect(others.slice(1)).toEqual(plain.records.slice(1));
+    // Record 0 differs only in the SRCS index (224) and count (228).
+    const zero = palm.records[0]!.slice();
+    zero.fill(0xff, 224, 228);
+    zero.fill(0, 228, 232);
+    expect(zero).toEqual(plain.records[0]);
+  });
+  it("adds one SRCS record before EOF and points record 0 at FLIS, FCIS and SRCS", async () => {
+    const book = fixtureBook();
+    const plain = readPalmDb(await buildAzw3(book, exportOptions(), deps()));
+    const palm = readPalmDb(
+      await buildAzw3(book, { ...exportOptions(), embedProject: true }, deps()),
+    );
+    const header = new DataView(palm.records[0]!.buffer);
+
+    expect(palm.records).toHaveLength(plain.records.length + 1);
+    expect(magic(palm.records[header.getUint32(192)]!)).toBe("FDST");
+    expect(magic(palm.records[header.getUint32(200)]!)).toBe("FCIS");
+    expect(magic(palm.records[header.getUint32(208)]!)).toBe("FLIS");
+    const srcsIndex = header.getUint32(224);
+    expect(srcsIndex).toBe(palm.records.length - 2);
+    expect(srcsIndex).toBe(header.getUint32(200) + 1);
+    expect(header.getUint32(228)).toBe(1);
+    const srcs = palm.records[srcsIndex]!;
+    expect([...srcs.subarray(0, 16)]).toEqual([
+      0x53, 0x52, 0x43, 0x53, 0, 0, 0, 0x10, 0, 0, 0, 0x2f, 0, 0, 0, 1,
+    ]);
+    expect([...srcs.subarray(16)]).toEqual([
+      ...(await writeEdb(book, new Date(0), { updateModified: false })),
+    ]);
+    expect([...palm.records.at(-1)!]).toEqual([0xe9, 0x8e, 0x0d, 0x0a]);
+
+    const plainHeader = new DataView(plain.records[0]!.buffer);
+    expect(plainHeader.getUint32(224)).toBe(0xffffffff);
+    expect(plainHeader.getUint32(228)).toBe(0);
+    expect(magic(plain.records[plainHeader.getUint32(200)]!)).toBe("FCIS");
+    expect(magic(plain.records[plainHeader.getUint32(208)]!)).toBe("FLIS");
+  });
+
+  it("does not embed after cancellation", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      buildAzw3(
+        fixtureBook(),
+        { ...exportOptions(), embedProject: true },
+        {
+          ...deps(),
+          signal: controller.signal,
+        },
+      ),
+    ).rejects.toMatchObject({ code: "export.cancelled" });
   });
 });

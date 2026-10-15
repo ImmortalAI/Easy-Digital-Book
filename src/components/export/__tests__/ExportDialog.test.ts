@@ -140,6 +140,46 @@ describe("ExportDialog", () => {
     expect(screen.getByRole("combobox", { name: /format/i }).textContent).toContain("AZW3");
   });
 
+  it("offers embedding the project, off on every open, and names it in the success line", async () => {
+    const controller = makeController();
+    // A value left over from an earlier export must not survive the next open.
+    controller.options.value.embedProject = true;
+    const user = userEvent.setup();
+    const { rerender } = render(ExportDialog, { props: { controller, open: true } });
+
+    const checkbox = await screen.findByRole("checkbox", { name: /embed project file/i });
+    expect(checkbox.getAttribute("aria-checked")).toBe("false");
+    expect(controller.options.value.embedProject).toBe(false);
+    expect(screen.getByText(/do not publish this file/i)).toBeTruthy();
+
+    await user.click(checkbox);
+    expect(controller.options.value.embedProject).toBe(true);
+    await user.click(screen.getByRole("button", { name: /export/i }));
+    expect((await screen.findByRole("status")).textContent).toContain(
+      "EPUB saved · with project file",
+    );
+
+    await rerender({ controller, open: false });
+    await rerender({ controller, open: true });
+    expect(controller.options.value.embedProject).toBe(false);
+    expect(
+      (await screen.findByRole("checkbox", { name: /embed project file/i })).getAttribute(
+        "aria-checked",
+      ),
+    ).toBe("false");
+  });
+
+  it("keeps the plain success line without the project", async () => {
+    const controller = makeController();
+    render(ExportDialog, { props: { controller, open: true } });
+
+    await userEvent.click(await screen.findByRole("button", { name: /export/i }));
+
+    const status = (await screen.findByRole("status")).textContent ?? "";
+    expect(status).toContain("EPUB saved");
+    expect(status).not.toContain("project file");
+  });
+
   it("disables all export choices while an export is running", async () => {
     const controller = makeController();
     controller.exporting.value = true;
@@ -159,6 +199,9 @@ describe("ExportDialog", () => {
     );
     expect(
       screen.getByRole("checkbox", { name: /version to title/i }).hasAttribute("disabled"),
+    ).toBe(true);
+    expect(
+      screen.getByRole("checkbox", { name: /embed project file/i }).hasAttribute("disabled"),
     ).toBe(true);
   });
 

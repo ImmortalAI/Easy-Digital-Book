@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import JSZip from "jszip";
 import { describe, expect, it, vi } from "vitest";
+import { readEdb } from "@/services/edb/read";
+import { writeEdb } from "@/services/edb/write";
 import { buildEpub } from "@/services/epub/build";
 import { opf } from "@/services/epub/opf";
 import type { Book } from "@/types/book";
@@ -229,3 +231,75 @@ it.each([
     expect(book).toEqual(before);
   },
 );
+
+const embedOptions = {
+  imagePreset: "original",
+  grayscale: false,
+  titlePage: true,
+  versionInTitle: true,
+} as const;
+const embedDeps = () => ({
+  imageProcessor: processor,
+  now: () => new Date("2026-01-02T03:04:05Z"),
+});
+
+describe("buildEpub with an embedded project", () => {
+  it("only appends the project entry: everything before it is byte-identical", async () => {
+    const plain = await buildEpub(book, embedOptions, embedDeps());
+    const embedded = await buildEpub(book, { ...embedOptions, embedProject: true }, embedDeps());
+    // The zip without a comment ends with a 22-byte end record; bytes 16..19 of
+    // it hold the offset of the central directory, where the entry data ends.
+    const entriesEnd = new DataView(plain.buffer, plain.byteOffset, plain.byteLength).getUint32(
+      plain.length - 6,
+      true,
+    );
+    expect(entriesEnd).toBeGreaterThan(0);
+    expect([...embedded.subarray(0, entriesEnd)]).toEqual([...plain.subarray(0, entriesEnd)]);
+
+    const plainNames = Object.keys((await JSZip.loadAsync(plain)).files);
+    const embeddedNames = Object.keys((await JSZip.loadAsync(embedded)).files);
+    expect(embeddedNames).toEqual([...plainNames, "project.edb"]);
+  });
+
+  it("treats an explicit false like an absent option", async () => {
+    const plain = await buildEpub(book, embedOptions, embedDeps());
+    const off = await buildEpub(book, { ...embedOptions, embedProject: false }, embedDeps());
+    expect([...off]).toEqual([...plain]);
+    expect(Object.keys((await JSZip.loadAsync(off)).files)).not.toContain("project.edb");
+  });
+
+  it("stores the project last, uncompressed and outside the OPF manifest", async () => {
+    const before = structuredClone(book);
+    const bytes = await buildEpub(book, { ...embedOptions, embedProject: true }, embedDeps());
+    const zip = await JSZip.loadAsync(bytes);
+
+    expect(Object.keys(zip.files).at(-1)).toBe("project.edb");
+    expect(Object.keys(zip.files).slice(0, 2)).toEqual(["mimetype", "META-INF/container.xml"]);
+    const payload = await zip.file("project.edb")!.async("uint8array");
+    // writeEdb is deterministic when it does not stamp `modified`.
+    expect([...payload]).toEqual([
+      ...(await writeEdb(book, new Date(0), { updateModified: false })),
+    ]);
+    // STORE: the payload appears verbatim in the archive.
+    expect(Buffer.from(bytes).includes(Buffer.from(payload))).toBe(true);
+    expect(await zip.file("OEBPS/content.opf")!.async("string")).not.toContain("project.edb");
+    expect(book).toEqual(before);
+  });
+
+  it("embeds a project that reads back with the same chapters and untouched modified date", async () => {
+    // readEdb only accepts 8-character chapter IDs.
+    const project: Book = {
+      ...book,
+      chapters: book.chapters.map((chapter, index) => ({ ...chapter, id: `chapter${index + 1}` })),
+    };
+    const bytes = await buildEpub(project, { ...embedOptions, embedProject: true }, embedDeps());
+    const payload = await (await JSZip.loadAsync(bytes)).file("project.edb")!.async("uint8array");
+    const manifest = JSON.parse(
+      await (await JSZip.loadAsync(payload)).file("manifest.json")!.async("string"),
+    );
+    expect(manifest.book.modified).toBe(project.metadata.modified);
+    const opened = await readEdb(payload, { now: () => new Date("2030-01-01T00:00:00Z") });
+    expect(opened.book.chapters).toEqual(project.chapters);
+    expect([...opened.book.resources.keys()]).toEqual(["images/cover.png"]);
+  });
+});
