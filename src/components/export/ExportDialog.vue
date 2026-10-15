@@ -267,7 +267,11 @@ function requestClose(next: boolean) {
         </Button>
       </p>
 
-      <DialogFooter>
+      <!-- Sticky, so Export stays on screen when findings and options outgrow a
+           short window; the opaque mix keeps the footer's muted tint. -->
+      <DialogFooter
+        class="sticky bottom-0 bg-[color-mix(in_oklab,var(--color-muted)_50%,var(--color-popover))]"
+      >
         <Button type="button" variant="outline" @click="requestClose(false)">
           {{
             controller.exporting.value ? t("common.cancel", "Cancel") : t("common.close", "Close")
