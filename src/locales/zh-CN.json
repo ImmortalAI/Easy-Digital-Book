@@ -214,6 +214,9 @@
     "progressAzw3": "正在生成 AZW3…",
     "progressZip": "正在创建 EPUB…",
     "saved": "{format} 已保存",
+    "savedWithProject": "{format} 已保存 · 含项目文件",
+    "embedProject": "嵌入项目文件",
+    "embedProjectHint": "用于编辑。请勿发布此文件：其中包含本书的源文件。",
     "showInFolder": "在文件夹中显示",
     "filterName": "{format} 书籍"
   },

@@ -214,6 +214,9 @@
     "progressAzw3": "Создание AZW3…",
     "progressZip": "Создание EPUB…",
     "saved": "{format} сохранён",
+    "savedWithProject": "{format} сохранён · с файлом проекта",
+    "embedProject": "Вложить файл проекта",
+    "embedProjectHint": "Для редактуры. Не публикуйте этот файл: в нём исходники книги.",
     "showInFolder": "Показать в папке",
     "filterName": "Книга {format}"
   },

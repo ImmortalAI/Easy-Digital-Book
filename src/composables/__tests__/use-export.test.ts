@@ -2,6 +2,8 @@ import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createBook } from "@/services/book/create";
 import { createInMemoryPlatformServices } from "@/services/platform";
+import { readEdb } from "@/services/edb/read";
+import { extractEmbeddedProject } from "@/services/export/embedded-project";
 import { createExportController } from "@/composables/use-export";
 import { useProjectStore } from "@/stores/project";
 import { useSettingsStore } from "@/stores/settings";
@@ -58,6 +60,54 @@ function deferred<T>() {
 }
 
 describe("export controller", () => {
+  it("passes the embed option to the builder but never persists it", async () => {
+    const { services, project, settings } = setup();
+    const builder = vi.fn<ExportBuilder>(async () => new Uint8Array([1, 2, 3]));
+    const controller = createExportController({
+      services,
+      project,
+      settings,
+      imageProcessor: processor,
+      builders: { epub: builder },
+    });
+    controller.options.value.embedProject = true;
+
+    await controller.exportBook({ path: "/exports/Novel.epub" });
+
+    expect(builder.mock.calls[0]![1]).toMatchObject({ embedProject: true });
+    expect(settings.exportSettings).not.toHaveProperty("embedProject");
+    expect(await services.settings.get("export", {})).not.toHaveProperty("embedProject");
+    expect(await services.settings.get("export", {})).toMatchObject({ lastDir: "/exports" });
+  });
+
+  it("embeds a dirty, never-saved book without touching its state", async () => {
+    const { services, project, settings } = setup();
+    project.setBook(makeBook(), null, { dirty: true });
+    project.updateChapterSource("chapter1", "# Chapter 1\n\nUnsaved text.");
+    const revision = project.revision;
+    const modified = project.book!.metadata.modified;
+    const controller = createExportController({
+      services,
+      project,
+      settings,
+      imageProcessor: processor,
+    });
+    controller.options.value.embedProject = true;
+
+    await controller.exportBook({ path: "/exports/Novel.epub" });
+
+    const embedded = await extractEmbeddedProject(
+      await services.files.readFile("/exports/Novel.epub"),
+    );
+    const opened = await readEdb(embedded!, { now: () => new Date("2030-01-01T00:00:00Z") });
+    expect(opened.book.chapters[0]!.source).toBe("# Chapter 1\n\nUnsaved text.");
+    expect(opened.book.metadata.modified).toBe(modified);
+    expect(project.revision).toBe(revision);
+    expect(project.dirty).toBe(true);
+    expect(project.filePath).toBeNull();
+    expect(project.book!.metadata.modified).toBe(modified);
+  });
+
   beforeEach(() => vi.restoreAllMocks());
 
   it("previews the sanitized EPUB filename with the selected version option", () => {

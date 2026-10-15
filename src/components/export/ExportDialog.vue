@@ -36,6 +36,7 @@ const open = defineModel<boolean>("open", { default: true });
 const { t } = useSafeI18n();
 const abortController = ref<AbortController | null>(null);
 const success = ref(false);
+const savedWithProject = ref(false);
 const hasVersion = computed(() => Boolean(props.project?.book?.metadata.version));
 const formatLabel = computed(() => props.controller.format.value.toUpperCase());
 const title = computed(() =>
@@ -45,7 +46,11 @@ const filterName = computed(() =>
   t("export.filterName", `${formatLabel.value} book`, { format: formatLabel.value }),
 );
 const savedMessage = computed(() =>
-  t("export.saved", `${formatLabel.value} saved`, { format: formatLabel.value }),
+  savedWithProject.value
+    ? t("export.savedWithProject", `${formatLabel.value} saved · with project file`, {
+        format: formatLabel.value,
+      })
+    : t("export.saved", `${formatLabel.value} saved`, { format: formatLabel.value }),
 );
 /** Prefer a message for the specific failure, falling back to the generic one. */
 const errorMessage = computed(() => {
@@ -72,6 +77,16 @@ watch(open, (value) => {
   }
 });
 
+// Embedding the project is a per-export decision: it starts off on every open
+// and is never restored from settings.
+watch(
+  open,
+  (value) => {
+    if (value) props.controller.options.value.embedProject = false;
+  },
+  { immediate: true },
+);
+
 watch(
   () => props.controller.format.value,
   () => {
@@ -83,6 +98,7 @@ watch(
 async function exportBook() {
   if (props.controller.exporting.value) return;
   success.value = false;
+  const withProject = props.controller.options.value.embedProject === true;
   const controller = new AbortController();
   abortController.value = controller;
   try {
@@ -91,6 +107,7 @@ async function exportBook() {
       dialogTitle: title.value,
       dialogFilterName: filterName.value,
     });
+    savedWithProject.value = withProject;
     success.value = Boolean(target);
   } catch {
     // The controller stores a localized-safe AppError for the template.
@@ -199,6 +216,28 @@ function requestClose(next: boolean) {
           :disabled="!hasVersion || controller.exporting.value"
         />
         <Label for="export-version">{{ t("export.versionInTitle", "Add version to title") }}</Label>
+      </div>
+
+      <div class="grid gap-1">
+        <div class="flex items-center gap-2">
+          <Checkbox
+            id="export-embed-project"
+            v-model="controller.options.value.embedProject"
+            aria-describedby="export-embed-project-hint"
+            :disabled="controller.exporting.value"
+          />
+          <Label for="export-embed-project">
+            {{ t("export.embedProject", "Embed project file") }}
+          </Label>
+        </div>
+        <p id="export-embed-project-hint" class="text-muted-foreground pl-6 text-sm">
+          {{
+            t(
+              "export.embedProjectHint",
+              "For editing. Do not publish this file: it contains the book's sources.",
+            )
+          }}
+        </p>
       </div>
 
       <div v-if="controller.progress.value" class="grid gap-1.5">
